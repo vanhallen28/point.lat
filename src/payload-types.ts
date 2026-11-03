@@ -72,6 +72,9 @@ export interface Config {
     pilar: Pilar;
     subkategori: Subkategori;
     penulis: Penuli;
+    tools: Tool;
+    'parameter-tools': ParameterTool;
+    video: Video;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +87,9 @@ export interface Config {
     pilar: PilarSelect<false> | PilarSelect<true>;
     subkategori: SubkategoriSelect<false> | SubkategoriSelect<true>;
     penulis: PenulisSelect<false> | PenulisSelect<true>;
+    tools: ToolsSelect<false> | ToolsSelect<true>;
+    'parameter-tools': ParameterToolsSelect<false> | ParameterToolsSelect<true>;
+    video: VideoSelect<false> | VideoSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -309,6 +315,164 @@ export interface Penuli {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tools".
+ */
+export interface Tool {
+  id: number;
+  nama: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  pilar: number | Pilar;
+  /**
+   * Rumus kalkulator yang dipakai halaman ini (modul hitung, Rencana 5).
+   */
+  toolId: 'gaji-bersih' | 'thr' | 'cicilan-kpr' | 'dana-darurat' | 'bmi-kalori' | 'ipk';
+  /**
+   * Satu-dua kalimat di atas kalkulator. Dipakai juga sebagai meta default.
+   */
+  ringkasan: string;
+  bantuanInput?:
+    | {
+        /**
+         * Nama input di modul hitung.
+         */
+        kunci: string;
+        label: string;
+        bantuan?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  penjelasan?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  faq?:
+    | {
+        pertanyaan: string;
+        jawaban: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Sumber resmi atau tepercaya yang dipakai di tulisan ini.
+   */
+  sumberAturan?:
+    | {
+        judul: string;
+        url: string;
+        /**
+         * Contoh: DJP, BPJS Kesehatan
+         */
+        penerbit?: string | null;
+        diaksesPada?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parameter-tools".
+ */
+export interface ParameterTool {
+  id: number;
+  toolId: 'gaji-bersih' | 'thr' | 'cicilan-kpr' | 'dana-darurat' | 'bmi-kalori' | 'ipk';
+  /**
+   * Contoh: ptkp-tk0
+   */
+  kunci: string;
+  nilai: number;
+  berlakuMulai: string;
+  /**
+   * Kosongkan bila masih berlaku.
+   */
+  berlakuSampai?: string | null;
+  sumber?: {
+    judul?: string | null;
+    url?: string | null;
+  };
+  catatan?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "video".
+ */
+export interface Video {
+  id: number;
+  judul: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  /**
+   * Video vertikal 9:16, 30-60 detik.
+   */
+  file: number | Media;
+  poster?: (number | null) | Media;
+  pilar: number | Pilar;
+  durasiDetik?: number | null;
+  transkrip: string;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -350,6 +514,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'penulis';
         value: number | Penuli;
+      } | null)
+    | ({
+        relationTo: 'tools';
+        value: number | Tool;
+      } | null)
+    | ({
+        relationTo: 'parameter-tools';
+        value: number | ParameterTool;
+      } | null)
+    | ({
+        relationTo: 'video';
+        value: number | Video;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -519,6 +695,105 @@ export interface PenulisSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tools_select".
+ */
+export interface ToolsSelect<T extends boolean = true> {
+  nama?: T;
+  slug?: T;
+  pilar?: T;
+  toolId?: T;
+  ringkasan?: T;
+  bantuanInput?:
+    | T
+    | {
+        kunci?: T;
+        label?: T;
+        bantuan?: T;
+        id?: T;
+      };
+  penjelasan?: T;
+  faq?:
+    | T
+    | {
+        pertanyaan?: T;
+        jawaban?: T;
+        id?: T;
+      };
+  sumberAturan?:
+    | T
+    | {
+        judul?: T;
+        url?: T;
+        penerbit?: T;
+        diaksesPada?: T;
+        id?: T;
+      };
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parameter-tools_select".
+ */
+export interface ParameterToolsSelect<T extends boolean = true> {
+  toolId?: T;
+  kunci?: T;
+  nilai?: T;
+  berlakuMulai?: T;
+  berlakuSampai?: T;
+  sumber?:
+    | T
+    | {
+        judul?: T;
+        url?: T;
+      };
+  catatan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "video_select".
+ */
+export interface VideoSelect<T extends boolean = true> {
+  judul?: T;
+  slug?: T;
+  file?: T;
+  poster?: T;
+  pilar?: T;
+  durasiDetik?: T;
+  transkrip?: T;
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

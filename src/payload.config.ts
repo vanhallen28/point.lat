@@ -6,10 +6,13 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { Media } from './collections/Media'
+import { ParameterTools } from './collections/ParameterTools'
 import { Pengguna } from './collections/Pengguna'
 import { Penulis } from './collections/Penulis'
 import { Pilar } from './collections/Pilar'
 import { Subkategori } from './collections/Subkategori'
+import { Tools } from './collections/Tools'
+import { Video } from './collections/Video'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -19,7 +22,7 @@ export default buildConfig({
     user: Pengguna.slug,
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Pengguna, Media, Pilar, Subkategori, Penulis],
+  collections: [Pengguna, Media, Pilar, Subkategori, Penulis, Tools, ParameterTools, Video],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
