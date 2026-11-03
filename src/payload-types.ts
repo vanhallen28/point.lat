@@ -124,6 +124,7 @@ export interface PenggunaAuthOperations {
 export interface Pengguna {
   id: number;
   nama: string;
+  peran?: ('admin' | 'editor') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -243,6 +244,7 @@ export interface PayloadMigration {
  */
 export interface PenggunaSelect<T extends boolean = true> {
   nama?: T;
+  peran?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
