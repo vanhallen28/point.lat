@@ -76,6 +76,9 @@ export interface Config {
     tools: Tool;
     'parameter-tools': ParameterTool;
     video: Video;
+    halaman: Halaman;
+    redirect: Redirect;
+    'log-404': Log404;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -93,6 +96,9 @@ export interface Config {
     tools: ToolsSelect<false> | ToolsSelect<true>;
     'parameter-tools': ParameterToolsSelect<false> | ParameterToolsSelect<true>;
     video: VideoSelect<false> | VideoSelect<true>;
+    halaman: HalamanSelect<false> | HalamanSelect<true>;
+    redirect: RedirectSelect<false> | RedirectSelect<true>;
+    'log-404': Log404Select<false> | Log404Select<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -582,6 +588,160 @@ export interface ParameterTool {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "halaman".
+ */
+export interface Halaman {
+  id: number;
+  judul: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  tataLetak?: (BlokHero | BlokTeks | BlokKartu | BlokCta | BlokFaq | BlokEmbedTool)[] | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokHero".
+ */
+export interface BlokHero {
+  judul: string;
+  subjudul?: string | null;
+  gambar?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'hero';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokTeks".
+ */
+export interface BlokTeks {
+  isi: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'teks';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokKartu".
+ */
+export interface BlokKartu {
+  judul?: string | null;
+  kartu: {
+    judul: string;
+    teks?: string | null;
+    tautan?: string | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'kartu';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokCta".
+ */
+export interface BlokCta {
+  judul: string;
+  teks?: string | null;
+  labelTombol: string;
+  tautan: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'cta';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokFaq".
+ */
+export interface BlokFaq {
+  judul?: string | null;
+  faq?:
+    | {
+        pertanyaan: string;
+        jawaban: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'faqBlok';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokEmbedTool".
+ */
+export interface BlokEmbedTool {
+  tool: number | Tool;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'embedTool';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirect".
+ */
+export interface Redirect {
+  id: number;
+  dari: string;
+  kode: '301' | '410';
+  ke?: string | null;
+  sumber?: ('otomatis' | 'manual') | null;
+  jumlahHit?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "log-404".
+ */
+export interface Log404 {
+  id: number;
+  path: string;
+  jumlah?: number | null;
+  terakhir?: string | null;
+  referer?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -731,6 +891,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'video';
         value: number | Video;
+      } | null)
+    | ({
+        relationTo: 'halaman';
+        value: number | Halaman;
+      } | null)
+    | ({
+        relationTo: 'redirect';
+        value: number | Redirect;
+      } | null)
+    | ({
+        relationTo: 'log-404';
+        value: number | Log404;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1060,6 +1232,138 @@ export interface VideoSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "halaman_select".
+ */
+export interface HalamanSelect<T extends boolean = true> {
+  judul?: T;
+  slug?: T;
+  tataLetak?:
+    | T
+    | {
+        hero?: T | BlokHeroSelect<T>;
+        teks?: T | BlokTeksSelect<T>;
+        kartu?: T | BlokKartuSelect<T>;
+        cta?: T | BlokCtaSelect<T>;
+        faqBlok?: T | BlokFaqSelect<T>;
+        embedTool?: T | BlokEmbedToolSelect<T>;
+      };
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokHero_select".
+ */
+export interface BlokHeroSelect<T extends boolean = true> {
+  judul?: T;
+  subjudul?: T;
+  gambar?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokTeks_select".
+ */
+export interface BlokTeksSelect<T extends boolean = true> {
+  isi?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokKartu_select".
+ */
+export interface BlokKartuSelect<T extends boolean = true> {
+  judul?: T;
+  kartu?:
+    | T
+    | {
+        judul?: T;
+        teks?: T;
+        tautan?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokCta_select".
+ */
+export interface BlokCtaSelect<T extends boolean = true> {
+  judul?: T;
+  teks?: T;
+  labelTombol?: T;
+  tautan?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokFaq_select".
+ */
+export interface BlokFaqSelect<T extends boolean = true> {
+  judul?: T;
+  faq?:
+    | T
+    | {
+        pertanyaan?: T;
+        jawaban?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokEmbedTool_select".
+ */
+export interface BlokEmbedToolSelect<T extends boolean = true> {
+  tool?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirect_select".
+ */
+export interface RedirectSelect<T extends boolean = true> {
+  dari?: T;
+  kode?: T;
+  ke?: T;
+  sumber?: T;
+  jumlahHit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "log-404_select".
+ */
+export interface Log404Select<T extends boolean = true> {
+  path?: T;
+  jumlah?: T;
+  terakhir?: T;
+  referer?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1170,16 +1474,6 @@ export interface BlokCallout {
   id?: string | null;
   blockName?: string | null;
   blockType: 'callout';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokEmbedTool".
- */
-export interface BlokEmbedTool {
-  tool: number | Tool;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'embedTool';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

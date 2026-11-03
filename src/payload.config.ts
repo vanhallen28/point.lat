@@ -6,11 +6,14 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { Artikel } from './collections/Artikel'
+import { Halaman } from './collections/Halaman'
+import { Log404 } from './collections/Log404'
 import { Media } from './collections/Media'
 import { ParameterTools } from './collections/ParameterTools'
 import { Pengguna } from './collections/Pengguna'
 import { Penulis } from './collections/Penulis'
 import { Pilar } from './collections/Pilar'
+import { Redirect } from './collections/Redirect'
 import { Subkategori } from './collections/Subkategori'
 import { Tools } from './collections/Tools'
 import { Video } from './collections/Video'
@@ -33,6 +36,9 @@ export default buildConfig({
     Tools,
     ParameterTools,
     Video,
+    Halaman,
+    Redirect,
+    Log404,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

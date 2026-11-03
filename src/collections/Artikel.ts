@@ -7,8 +7,10 @@ import { faqField, sumberField } from '@/fields/konten'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { catatTanggalArtikel } from '@/hooks/catatTanggalArtikel'
-import { LABEL_TIPE_ARTIKEL, TIPE_ARTIKEL } from '@/lib/konstanta'
+import { redirectSaatPathBerubah } from '@/hooks/redirectSaatPathBerubah'
+import { LABEL_TIPE_ARTIKEL, TIPE_ARTIKEL, type TipeArtikel } from '@/lib/konstanta'
 import { validasiLebarGambar } from '@/lib/media'
+import type { TargetPath } from '@/lib/paths'
 
 async function validasiGambarUtama(value: unknown, { req }: { req: PayloadRequest }) {
   if (!value) return 'Gambar utama wajib diisi.'
@@ -16,6 +18,11 @@ async function validasiGambarUtama(value: unknown, { req }: { req: PayloadReques
   const media = await req.payload.findByID({ collection: 'media', id, depth: 0, req })
   return validasiLebarGambar(media.width)
 }
+
+const targetArtikel = (doc: { slug?: string | null; tipe?: unknown }): TargetPath | null =>
+  doc.slug && doc.tipe ? { jenis: 'artikel', slug: doc.slug, tipe: doc.tipe as TipeArtikel } : null
+
+const redirect = redirectSaatPathBerubah(targetArtikel)
 
 export const Artikel: CollectionConfig = {
   slug: 'artikel',
@@ -31,7 +38,8 @@ export const Artikel: CollectionConfig = {
     maxPerDoc: 50,
   },
   hooks: {
-    beforeChange: [catatTanggalArtikel],
+    beforeChange: [catatTanggalArtikel, redirect.catatPathPublik],
+    afterChange: [redirect.buatRedirect],
   },
   fields: [
     { name: 'judul', type: 'text', required: true },
@@ -94,7 +102,9 @@ export const Artikel: CollectionConfig = {
         { label: 'SEO', fields: [seoField] },
       ],
     },
-    slugField('judul'),
+    slugField('judul', {
+      tingkatAtas: { koleksi: 'artikel', berlaku: (data) => data?.tipe !== 'glosarium' },
+    }),
     {
       name: 'tipe',
       type: 'select',

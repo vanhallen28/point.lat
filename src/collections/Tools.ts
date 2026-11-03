@@ -4,13 +4,20 @@ import { isLoggedIn, publishedOrLoggedIn } from '@/access'
 import { faqField, sumberField } from '@/fields/konten'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
+import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
 import { LABEL_TOOL, TOOL_IDS } from '@/lib/konstanta'
+
+const redirect = redirectSaatPathBerubah(targetSederhana('tools'))
 
 export const Tools: CollectionConfig = {
   slug: 'tools',
   labels: { singular: 'Tool', plural: 'Tools' },
   admin: { useAsTitle: 'nama', defaultColumns: ['nama', 'toolId', 'pilar', '_status'], group: 'Tools' },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
+  hooks: {
+    beforeChange: [redirect.catatPathPublik],
+    afterChange: [redirect.buatRedirect],
+  },
   versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 50 },
   fields: [
     { name: 'nama', type: 'text', required: true },

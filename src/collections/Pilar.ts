@@ -3,7 +3,10 @@ import type { CollectionConfig } from 'payload'
 import { anyone, isAdmin } from '@/access'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
+import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
 import { WARNA_PILAR } from '@/lib/konstanta'
+
+const redirect = redirectSaatPathBerubah(targetSederhana('pilar'))
 
 export const Pilar: CollectionConfig = {
   slug: 'pilar',
@@ -15,9 +18,13 @@ export const Pilar: CollectionConfig = {
     group: 'Konten',
   },
   access: { read: anyone, create: isAdmin, update: isAdmin, delete: isAdmin },
+  hooks: {
+    beforeChange: [redirect.catatPathPublik],
+    afterChange: [redirect.buatRedirect],
+  },
   fields: [
     { name: 'nama', type: 'text', required: true },
-    slugField('nama'),
+    slugField('nama', { tingkatAtas: { koleksi: 'pilar' } }),
     {
       name: 'warna',
       type: 'select',
