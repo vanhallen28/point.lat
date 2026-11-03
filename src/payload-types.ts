@@ -72,10 +72,12 @@ export interface Config {
     pilar: Pilar;
     subkategori: Subkategori;
     penulis: Penuli;
+    artikel: Artikel;
     tools: Tool;
     'parameter-tools': ParameterTool;
     video: Video;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -87,10 +89,12 @@ export interface Config {
     pilar: PilarSelect<false> | PilarSelect<true>;
     subkategori: SubkategoriSelect<false> | SubkategoriSelect<true>;
     penulis: PenulisSelect<false> | PenulisSelect<true>;
+    artikel: ArtikelSelect<false> | ArtikelSelect<true>;
     tools: ToolsSelect<false> | ToolsSelect<true>;
     'parameter-tools': ParameterToolsSelect<false> | ParameterToolsSelect<true>;
     video: VideoSelect<false> | VideoSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -107,7 +111,13 @@ export interface Config {
   };
   user: Pengguna;
   jobs: {
-    tasks: unknown;
+    tasks: {
+      schedulePublish: TaskSchedulePublish;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
 }
@@ -315,6 +325,147 @@ export interface Penuli {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "artikel".
+ */
+export interface Artikel {
+  id: number;
+  judul: string;
+  /**
+   * Satu-dua kalimat di bawah judul.
+   */
+  deck: string;
+  /**
+   * Dua sampai empat poin jawaban langsung. Wajib sebelum terbit.
+   */
+  intinya: {
+    poin: string;
+    id?: string | null;
+  }[];
+  /**
+   * Minimal 1200px lebarnya.
+   */
+  gambarUtama: number | Media;
+  isi: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  faq?:
+    | {
+        pertanyaan: string;
+        jawaban: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Sumber resmi atau tepercaya yang dipakai di tulisan ini.
+   */
+  sumber?:
+    | {
+        judul: string;
+        url: string;
+        /**
+         * Contoh: DJP, BPJS Kesehatan
+         */
+        penerbit?: string | null;
+        diaksesPada?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  videoTerkait?: (number | null) | Video;
+  toolsTerkait?: (number | Tool)[] | null;
+  artikelTerkait?: (number | Artikel)[] | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  tipe: 'panduan' | 'explainer' | 'daftar' | 'glosarium';
+  pilar: number | Pilar;
+  subkategori?: (number | null) | Subkategori;
+  penulis: number | Penuli;
+  /**
+   * Centang bila isi berubah signifikan. Tanggal "Diperbarui" dan lastmod sitemap ikut berubah saat terbit.
+   */
+  perubahanBesar?: boolean | null;
+  terbitPada?: string | null;
+  diperbaruiBesar?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "video".
+ */
+export interface Video {
+  id: number;
+  judul: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  /**
+   * Video vertikal 9:16, 30-60 detik.
+   */
+  file: number | Media;
+  poster?: (number | null) | Media;
+  pilar: number | Pilar;
+  durasiDetik?: number | null;
+  transkrip: string;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tools".
  */
 export interface Tool {
@@ -431,48 +582,6 @@ export interface ParameterTool {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "video".
- */
-export interface Video {
-  id: number;
-  judul: string;
-  /**
-   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
-   */
-  slug?: string | null;
-  /**
-   * Video vertikal 9:16, 30-60 detik.
-   */
-  file: number | Media;
-  poster?: (number | null) | Media;
-  pilar: number | Pilar;
-  durasiDetik?: number | null;
-  transkrip: string;
-  seo?: {
-    keyphrase?: string | null;
-    keyphraseSekunder?: string[] | null;
-    /**
-     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
-     */
-    judulSEO?: string | null;
-    /**
-     * Ideal 150-160 karakter.
-     */
-    metaDeskripsi?: string | null;
-    /**
-     * Kosongkan untuk dibuat otomatis.
-     */
-    gambarOG?: (number | null) | Media;
-    canonical?: string | null;
-    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
-    noindex?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -487,6 +596,98 @@ export interface PayloadKv {
     | number
     | boolean
     | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: number;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'schedulePublish';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'schedulePublish') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -514,6 +715,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'penulis';
         value: number | Penuli;
+      } | null)
+    | ({
+        relationTo: 'artikel';
+        value: number | Artikel;
       } | null)
     | ({
         relationTo: 'tools';
@@ -698,6 +903,64 @@ export interface PenulisSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "artikel_select".
+ */
+export interface ArtikelSelect<T extends boolean = true> {
+  judul?: T;
+  deck?: T;
+  intinya?:
+    | T
+    | {
+        poin?: T;
+        id?: T;
+      };
+  gambarUtama?: T;
+  isi?: T;
+  faq?:
+    | T
+    | {
+        pertanyaan?: T;
+        jawaban?: T;
+        id?: T;
+      };
+  sumber?:
+    | T
+    | {
+        judul?: T;
+        url?: T;
+        penerbit?: T;
+        diaksesPada?: T;
+        id?: T;
+      };
+  videoTerkait?: T;
+  toolsTerkait?: T;
+  artikelTerkait?: T;
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  slug?: T;
+  tipe?: T;
+  pilar?: T;
+  subkategori?: T;
+  penulis?: T;
+  perubahanBesar?: T;
+  terbitPada?: T;
+  diperbaruiBesar?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tools_select".
  */
 export interface ToolsSelect<T extends boolean = true> {
@@ -805,6 +1068,37 @@ export interface PayloadKvSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
@@ -844,6 +1138,79 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSchedulePublish".
+ */
+export interface TaskSchedulePublish {
+  input: {
+    type?: ('publish' | 'unpublish') | null;
+    locale?: string | null;
+    doc?: {
+      relationTo: 'artikel';
+      value: number | Artikel;
+    } | null;
+    global?: string | null;
+    user?: {
+      relationTo: 'pengguna';
+      value: number | Pengguna;
+    } | null;
+  };
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokCallout".
+ */
+export interface BlokCallout {
+  gaya: 'info' | 'tips' | 'peringatan';
+  judul?: string | null;
+  isi: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'callout';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokEmbedTool".
+ */
+export interface BlokEmbedTool {
+  tool: number | Tool;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'embedTool';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokEmbedVideo".
+ */
+export interface BlokEmbedVideo {
+  video: number | Video;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'embedVideo';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokTabelPerbandingan".
+ */
+export interface BlokTabelPerbandingan {
+  judul?: string | null;
+  kolom: {
+    label: string;
+    id?: string | null;
+  }[];
+  baris: {
+    sel: {
+      teks: string;
+      id?: string | null;
+    }[];
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tabelPerbandingan';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

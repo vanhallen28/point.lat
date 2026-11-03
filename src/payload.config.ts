@@ -5,6 +5,7 @@ import { buildConfig } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
+import { Artikel } from './collections/Artikel'
 import { Media } from './collections/Media'
 import { ParameterTools } from './collections/ParameterTools'
 import { Pengguna } from './collections/Pengguna'
@@ -22,7 +23,17 @@ export default buildConfig({
     user: Pengguna.slug,
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Pengguna, Media, Pilar, Subkategori, Penulis, Tools, ParameterTools, Video],
+  collections: [
+    Pengguna,
+    Media,
+    Pilar,
+    Subkategori,
+    Penulis,
+    Artikel,
+    Tools,
+    ParameterTools,
+    Video,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
