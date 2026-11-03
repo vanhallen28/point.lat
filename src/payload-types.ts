@@ -157,7 +157,15 @@ export interface Pengguna {
  */
 export interface Media {
   id: number;
-  alt: string;
+  /**
+   * Jelaskan isi gambar untuk pembaca layar. Wajib untuk gambar.
+   */
+  alt?: string | null;
+  caption?: string | null;
+  /**
+   * Contoh: Foto: Nama Fotografer / Sumber
+   */
+  kredit?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -416,6 +424,8 @@ export interface PenggunaSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  caption?: T;
+  kredit?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
