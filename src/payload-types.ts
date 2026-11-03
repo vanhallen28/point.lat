@@ -69,6 +69,9 @@ export interface Config {
   collections: {
     pengguna: Pengguna;
     media: Media;
+    pilar: Pilar;
+    subkategori: Subkategori;
+    penulis: Penuli;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +81,9 @@ export interface Config {
   collectionsSelect: {
     pengguna: PenggunaSelect<false> | PenggunaSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    pilar: PilarSelect<false> | PilarSelect<true>;
+    subkategori: SubkategoriSelect<false> | SubkategoriSelect<true>;
+    penulis: PenulisSelect<false> | PenulisSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -166,6 +172,135 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pilar".
+ */
+export interface Pilar {
+  id: number;
+  nama: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  warna: 'hijau' | 'oranye' | 'kuning' | 'koral';
+  deskripsi: string;
+  intro?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  urutan?: number | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subkategori".
+ */
+export interface Subkategori {
+  id: number;
+  nama: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  pilar: number | Pilar;
+  deskripsi?: string | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "penulis".
+ */
+export interface Penuli {
+  id: number;
+  nama: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  foto?: (number | null) | Media;
+  bio: string;
+  keahlian?: string[] | null;
+  tautan?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -195,6 +330,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'pilar';
+        value: number | Pilar;
+      } | null)
+    | ({
+        relationTo: 'subkategori';
+        value: number | Subkategori;
+      } | null)
+    | ({
+        relationTo: 'penulis';
+        value: number | Penuli;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -280,6 +427,88 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pilar_select".
+ */
+export interface PilarSelect<T extends boolean = true> {
+  nama?: T;
+  slug?: T;
+  warna?: T;
+  deskripsi?: T;
+  intro?: T;
+  urutan?: T;
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subkategori_select".
+ */
+export interface SubkategoriSelect<T extends boolean = true> {
+  nama?: T;
+  slug?: T;
+  pilar?: T;
+  deskripsi?: T;
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "penulis_select".
+ */
+export interface PenulisSelect<T extends boolean = true> {
+  nama?: T;
+  slug?: T;
+  foto?: T;
+  bio?: T;
+  keahlian?: T;
+  tautan?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
