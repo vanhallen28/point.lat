@@ -109,8 +109,20 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    header: Header;
+    footer: Footer;
+    beranda: Beranda;
+    'pengaturan-seo': PengaturanSeo;
+    newsletter: Newsletter;
+  };
+  globalsSelect: {
+    header: HeaderSelect<false> | HeaderSelect<true>;
+    footer: FooterSelect<false> | FooterSelect<true>;
+    beranda: BerandaSelect<false> | BerandaSelect<true>;
+    'pengaturan-seo': PengaturanSeoSelect<false> | PengaturanSeoSelect<true>;
+    newsletter: NewsletterSelect<false> | NewsletterSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -1432,6 +1444,357 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header".
+ */
+export interface Header {
+  id: number;
+  menu?:
+    | {
+        label: string;
+        jenis: 'pilar' | 'tautan';
+        pilar?: (number | null) | Pilar;
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  tombolTools?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer".
+ */
+export interface Footer {
+  id: number;
+  tautan?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  sosial?:
+    | {
+        platform: 'instagram' | 'tiktok' | 'youtube' | 'x' | 'facebook' | 'threads' | 'linkedin';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  saluranWhatsApp?: string | null;
+  teksHakCipta?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beranda".
+ */
+export interface Beranda {
+  id: number;
+  tataLetak?:
+    (BlokHeroBeranda | BlokMozaikPilihan | BlokStripVideo | BlokPalingDibaca | BlokNewsletter | BlokSlotIklan)[] | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokHeroBeranda".
+ */
+export interface BlokHeroBeranda {
+  judul: string;
+  subjudul?: string | null;
+  placeholderCari?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'heroBeranda';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokMozaikPilihan".
+ */
+export interface BlokMozaikPilihan {
+  judul?: string | null;
+  /**
+   * Urutan pertama tampil paling besar.
+   */
+  artikel: (number | Artikel)[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mozaikPilihan';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokStripVideo".
+ */
+export interface BlokStripVideo {
+  judul?: string | null;
+  video?: (number | Video)[] | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'stripVideo';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokPalingDibaca".
+ */
+export interface BlokPalingDibaca {
+  judul?: string | null;
+  jumlah?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'palingDibaca';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokNewsletter".
+ */
+export interface BlokNewsletter {
+  judul?: string | null;
+  teks?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'newsletterBlok';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokSlotIklan".
+ */
+export interface BlokSlotIklan {
+  /**
+   * ID slot dari pengaturan iklan (Rencana 8).
+   */
+  idSlot: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'slotIklan';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pengaturan-seo".
+ */
+export interface PengaturanSeo {
+  id: number;
+  namaSitus: string;
+  urlSitus: string;
+  /**
+   * %s diganti judul halaman.
+   */
+  polaJudul: string;
+  metaDefault?: string | null;
+  gambarOgDefault?: (number | null) | Media;
+  organisasi?: {
+    nama?: string | null;
+    logo?: (number | null) | Media;
+    /**
+     * URL akun resmi point.
+     */
+    sameAs?: string[] | null;
+  };
+  verifikasi?: {
+    google?: string | null;
+    bing?: string | null;
+  };
+  /**
+   * Ditambahkan di bawah aturan bawaan (Rencana 3).
+   */
+  robotsTambahan?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter".
+ */
+export interface Newsletter {
+  id: number;
+  aktif?: boolean | null;
+  penyedia?: ('belum' | 'kit' | 'mailchimp' | 'brevo' | 'lainnya') | null;
+  urlForm?: string | null;
+  judul?: string | null;
+  deskripsi?: string | null;
+  tautanArsip?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header_select".
+ */
+export interface HeaderSelect<T extends boolean = true> {
+  menu?:
+    | T
+    | {
+        label?: T;
+        jenis?: T;
+        pilar?: T;
+        url?: T;
+        id?: T;
+      };
+  tombolTools?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer_select".
+ */
+export interface FooterSelect<T extends boolean = true> {
+  tautan?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  sosial?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  saluranWhatsApp?: T;
+  teksHakCipta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beranda_select".
+ */
+export interface BerandaSelect<T extends boolean = true> {
+  tataLetak?:
+    | T
+    | {
+        heroBeranda?: T | BlokHeroBerandaSelect<T>;
+        mozaikPilihan?: T | BlokMozaikPilihanSelect<T>;
+        stripVideo?: T | BlokStripVideoSelect<T>;
+        palingDibaca?: T | BlokPalingDibacaSelect<T>;
+        newsletterBlok?: T | BlokNewsletterSelect<T>;
+        slotIklan?: T | BlokSlotIklanSelect<T>;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokHeroBeranda_select".
+ */
+export interface BlokHeroBerandaSelect<T extends boolean = true> {
+  judul?: T;
+  subjudul?: T;
+  placeholderCari?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokMozaikPilihan_select".
+ */
+export interface BlokMozaikPilihanSelect<T extends boolean = true> {
+  judul?: T;
+  artikel?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokStripVideo_select".
+ */
+export interface BlokStripVideoSelect<T extends boolean = true> {
+  judul?: T;
+  video?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokPalingDibaca_select".
+ */
+export interface BlokPalingDibacaSelect<T extends boolean = true> {
+  judul?: T;
+  jumlah?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokNewsletter_select".
+ */
+export interface BlokNewsletterSelect<T extends boolean = true> {
+  judul?: T;
+  teks?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokSlotIklan_select".
+ */
+export interface BlokSlotIklanSelect<T extends boolean = true> {
+  idSlot?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pengaturan-seo_select".
+ */
+export interface PengaturanSeoSelect<T extends boolean = true> {
+  namaSitus?: T;
+  urlSitus?: T;
+  polaJudul?: T;
+  metaDefault?: T;
+  gambarOgDefault?: T;
+  organisasi?:
+    | T
+    | {
+        nama?: T;
+        logo?: T;
+        sameAs?: T;
+      };
+  verifikasi?:
+    | T
+    | {
+        google?: T;
+        bing?: T;
+      };
+  robotsTambahan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter_select".
+ */
+export interface NewsletterSelect<T extends boolean = true> {
+  aktif?: T;
+  penyedia?: T;
+  urlForm?: T;
+  judul?: T;
+  deskripsi?: T;
+  tautanArsip?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

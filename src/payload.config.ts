@@ -17,6 +17,11 @@ import { Redirect } from './collections/Redirect'
 import { Subkategori } from './collections/Subkategori'
 import { Tools } from './collections/Tools'
 import { Video } from './collections/Video'
+import { Beranda } from './globals/Beranda'
+import { Footer } from './globals/Footer'
+import { Header } from './globals/Header'
+import { Newsletter } from './globals/Newsletter'
+import { PengaturanSEO } from './globals/PengaturanSEO'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -40,6 +45,7 @@ export default buildConfig({
     Redirect,
     Log404,
   ],
+  globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
