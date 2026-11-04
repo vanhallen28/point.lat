@@ -4,9 +4,11 @@ import { anyone, isLoggedIn } from '@/access'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
+import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { validasiUrlOpsional } from '@/lib/validasi'
 
 const redirect = redirectSaatPathBerubah(targetSederhana('penulis'))
+const revalidasi = revalidasiPublik('penulis')
 
 export const Penulis: CollectionConfig = {
   slug: 'penulis',
@@ -15,7 +17,8 @@ export const Penulis: CollectionConfig = {
   access: { read: anyone, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
   hooks: {
     beforeChange: [redirect.catatPathPublik],
-    afterChange: [redirect.buatRedirect],
+    afterChange: [redirect.buatRedirect, revalidasi.afterChange],
+    afterDelete: [revalidasi.afterDelete],
   },
   fields: [
     { name: 'nama', type: 'text', required: true },

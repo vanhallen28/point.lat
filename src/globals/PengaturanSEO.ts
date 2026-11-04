@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { anyone, isAdmin } from '@/access'
+import { revalidasiPengaturanSeo } from '@/hooks/revalidasiPublik'
 import { validasiPolaJudul } from '@/lib/seo-dasar'
 import { validasiUrlOpsional } from '@/lib/validasi'
 
@@ -10,6 +11,7 @@ export const PengaturanSEO: GlobalConfig = {
   label: 'Pengaturan SEO',
   admin: { group: 'SEO' },
   access: { read: anyone, update: isAdmin },
+  hooks: { afterChange: [revalidasiPengaturanSeo] },
   fields: [
     { name: 'namaSitus', type: 'text', required: true, defaultValue: 'point.' },
     {

@@ -5,9 +5,11 @@ import { faqField, sumberField } from '@/fields/konten'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
+import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { LABEL_TOOL, TOOL_IDS } from '@/lib/konstanta'
 
 const redirect = redirectSaatPathBerubah(targetSederhana('tools'))
+const revalidasi = revalidasiPublik('tools')
 
 export const Tools: CollectionConfig = {
   slug: 'tools',
@@ -15,8 +17,9 @@ export const Tools: CollectionConfig = {
   admin: { useAsTitle: 'nama', defaultColumns: ['nama', 'toolId', 'pilar', '_status'], group: 'Tools' },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
   hooks: {
-    beforeChange: [redirect.catatPathPublik],
-    afterChange: [redirect.buatRedirect],
+    beforeChange: [redirect.catatPathPublik, revalidasi.beforeChange],
+    afterChange: [redirect.buatRedirect, revalidasi.afterChange],
+    afterDelete: [revalidasi.afterDelete],
   },
   versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 50 },
   fields: [

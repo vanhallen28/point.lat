@@ -8,6 +8,7 @@ import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { catatTanggalArtikel } from '@/hooks/catatTanggalArtikel'
 import { redirectSaatPathBerubah } from '@/hooks/redirectSaatPathBerubah'
+import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { LABEL_TIPE_ARTIKEL, TIPE_ARTIKEL, type TipeArtikel } from '@/lib/konstanta'
 import { validasiLebarGambar } from '@/lib/media'
 import type { TargetPath } from '@/lib/paths'
@@ -23,6 +24,7 @@ const targetArtikel = (doc: { slug?: string | null; tipe?: unknown }): TargetPat
   doc.slug && doc.tipe ? { jenis: 'artikel', slug: doc.slug, tipe: doc.tipe as TipeArtikel } : null
 
 const redirect = redirectSaatPathBerubah(targetArtikel)
+const revalidasi = revalidasiPublik('artikel')
 
 export const Artikel: CollectionConfig = {
   slug: 'artikel',
@@ -38,8 +40,9 @@ export const Artikel: CollectionConfig = {
     maxPerDoc: 50,
   },
   hooks: {
-    beforeChange: [catatTanggalArtikel, redirect.catatPathPublik],
-    afterChange: [redirect.buatRedirect],
+    beforeChange: [catatTanggalArtikel, redirect.catatPathPublik, revalidasi.beforeChange],
+    afterChange: [redirect.buatRedirect, revalidasi.afterChange],
+    afterDelete: [revalidasi.afterDelete],
   },
   fields: [
     { name: 'judul', type: 'text', required: true },
