@@ -1,9 +1,15 @@
 /**
  * Modul SEO (spesifikasi §5): antarmuka kecil, fungsi murni.
- * - `metadata(masukan, situs)` untuk `generateMetadata` halaman publik.
- * - `jsonLd(masukan, situs)` untuk `<script type="application/ld+json">` (pakai `serialisasiJsonLd`).
+ *
+ * - `metadata(masukan, situs)` untuk `generateMetadata` halaman publik (Rencana 4).
+ * - `jsonLd(masukan, situs)` untuk `<script type="application/ld+json">`, dirender dengan `serialisasiJsonLd`.
  * - `analisis(artikel, { urlSitus })` untuk checklist panel SEO di editor.
- * - Pembentuk sitemap, news sitemap, robots.txt, dan RSS untuk rute teknis.
+ * - `remahRoti(masukan)` untuk breadcrumb tampil (sama dengan schema BreadcrumbList).
+ * - `ambilSitus(payload)` mengisi argumen `situs` dari global `pengaturan-seo`.
+ *
+ * Rute teknis (`/sitemap.xml`, `/sitemap/{jenis}.xml`, `/news-sitemap.xml`, `/robots.txt`,
+ * `/feed.xml`) ada di `src/app/(frontend)/` dan memakai `rute.ts`. Ekspor ini aman untuk server;
+ * komponen admin mengimpor `panel.ts` langsung.
  */
 export { metadata, canonicalDokumen, PATH_FEED } from './metadata'
 export { jsonLd, remahRoti, serialisasiJsonLd, tipeSchemaArtikel } from './jsonld'
@@ -13,4 +19,5 @@ export type { ArtikelAnalisis, Cek, IdCek, StatusCek } from './analisis'
 export { entriFeed, entriNews, entriSitemap, lastmodDokumen, layakSitemap } from './sitemap'
 export * from './xml'
 export { judulSeo, deskripsiDokumen, gambarOgDokumen, pathDokumen, urlAbsolut } from './dokumen'
+export { ambilSitus } from './situs'
 export type * from './tipe'

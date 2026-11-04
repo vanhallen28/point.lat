@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { ambilEntriFeed, ambilEntriNews, ambilEntriSitemap, ambilIndexSitemap, ambilPengaturan } from '@/modules/seo/data'
+import { ambilSitus } from '@/modules/seo/situs'
 import type { PengaturanSitus } from '@/modules/seo/tipe'
 import { saringNews } from '@/modules/seo/xml'
 
@@ -93,5 +94,13 @@ describe('data rute teknis dari Payload', () => {
     const item = feed.find((e) => e.link === url(`/glosarium/${glosarium.slug}`))
     expect(item?.penulis).toBeTruthy()
     expect(item?.kategori).toBeTruthy()
+  })
+})
+
+describe('ambilSitus', () => {
+  it('menggabungkan pengaturan SEO dengan cloud name klien media', async () => {
+    const payload = await getTestPayload()
+    const hasil = await ambilSitus(payload)
+    expect(hasil).toMatchObject({ namaSitus: 'point.', urlSitus: 'https://point.lat', cloudName: 'palsu' })
   })
 })
