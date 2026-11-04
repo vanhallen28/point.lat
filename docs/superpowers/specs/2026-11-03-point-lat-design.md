@@ -307,7 +307,7 @@ Pengaman:
 | LCP | < 2,5 dtk (uji lab HP, 4G lambat) |
 | INP | < 200 ms |
 | CLS | < 0,1 |
-| JS klien halaman artikel | < 70 KB gzip (tanpa skrip iklan) |
+| JS klien halaman artikel | Total < 160 KiB gzip, dan JS milik point. di luar kerangka Next/React < 25 KB (tanpa skrip iklan). Diubah pemilik 2026-11-04 dari < 70 KB, karena kerangka Next 16 + React 19 saja sudah 139,5 KB. Dijaga tes E2E `motion.spec.ts`. |
 | Font | 1 file variable Archivo subset, `font-display: swap`, preload satu file |
 | Gambar hero | prioritas tinggi, ukuran tepat, AVIF/WebP |
 
