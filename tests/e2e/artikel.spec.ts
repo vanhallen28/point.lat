@@ -72,6 +72,19 @@ test('artikel pilar Sehat menampilkan disclaimer pilarnya', async ({ page }) => 
   await expect(page.getByRole('note').filter({ hasText: 'Catatan' })).toContainText('bukan pengganti diagnosis')
 })
 
+test('jarak FAQ ke "Baca juga" sama di 768 dan 1440 px, tidak bergantung jumlah blok isi', async ({ page }) => {
+  const jarak: number[] = []
+  for (const lebar of [768, 1440]) {
+    await page.setViewportSize({ width: lebar, height: 900 })
+    await page.goto(`/${SLUG.panduan}`)
+    const faq = await page.getByRole('region', { name: 'Pertanyaan yang sering muncul' }).boundingBox()
+    const terkait = await page.getByRole('region', { name: 'Baca juga' }).boundingBox()
+    jarak.push(Math.round(terkait!.y - (faq!.y + faq!.height)))
+  }
+  // --ruang-16 di atas bagian "Baca juga"; tanpa baris grid kosong dari kolom daftar isi.
+  expect(jarak).toEqual([64, 64])
+})
+
 test('draf dan path yang tidak ada menjawab 404', async ({ request }) => {
   for (const path of [`/${SLUG.draf}`, '/tidak/ada/sama-sekali', '/favicon.ico']) {
     expect((await request.get(path)).status(), path).toBe(404)

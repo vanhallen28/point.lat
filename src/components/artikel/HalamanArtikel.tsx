@@ -71,16 +71,18 @@ export function HalamanArtikel({ artikel, situs }: { artikel: DataArtikel; situs
             <DaftarIsi subjudul={artikel.daftarIsi} />
           </div>
         )}
-        {gambar && artikel.gambar && (
-          <figure className={gaya.gambar}>
-            <Image {...gambar} alt={gambar.alt} sizes={UKURAN_KOLOM_ISI} fetchPriority="high" loading="eager" />
-            <Keterangan media={artikel.gambar} />
-          </figure>
-        )}
-        <IsiArtikel isi={artikel.isi} cloudName={situs.cloudName} />
-        <Catatan teks={artikel.pilar?.disclaimer ?? null} />
-        <BlokSumber sumber={artikel.sumber} />
-        <Faq faq={artikel.faq} />
+        <div className={gaya.utama}>
+          {gambar && artikel.gambar && (
+            <figure className={gaya.gambar}>
+              <Image {...gambar} alt={gambar.alt} sizes={UKURAN_KOLOM_ISI} fetchPriority="high" loading="eager" />
+              <Keterangan media={artikel.gambar} />
+            </figure>
+          )}
+          <IsiArtikel isi={artikel.isi} cloudName={situs.cloudName} />
+          <Catatan teks={artikel.pilar?.disclaimer ?? null} />
+          <BlokSumber sumber={artikel.sumber} />
+          <Faq faq={artikel.faq} />
+        </div>
       </div>
 
       {artikel.terkait.length > 0 && (
