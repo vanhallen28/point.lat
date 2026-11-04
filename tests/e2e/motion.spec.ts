@@ -1,14 +1,43 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Browser } from '@playwright/test'
 
 import { cegatCloudinary } from './bantu'
-import { SLUG } from './data'
+import { SLUG, SLUG_SUB, SLUG_VIDEO } from './data'
 
 /**
- * Anggaran JavaScript halaman artikel (byte gzip yang diunduh). Spesifikasi §12 menulis 70 KB, tetapi
- * kerangka Next 16 + React 19 saja sudah sekitar 135 KB; angka ini menjaga supaya JS milik point.
- * tetap kecil di atas kerangka itu. Lihat bagian Risiko Rencana 4A.
+ * Anggaran JavaScript per halaman (byte terkompresi yang diunduh), spesifikasi §12: total di bawah
+ * 160 KiB. Kerangka Next 16 + React 19 sendiri sekitar 140 KB, jadi angka ini juga menjaga JS milik
+ * point. tetap kecil di atasnya.
  */
-const ANGGARAN_JS_ARTIKEL = 160 * 1024
+const ANGGARAN_JS = 160 * 1024
+
+/** Setiap jenis halaman publik: beranda, artikel, rubrik, halaman statis, penulis, video, tools, cari. */
+const HALAMAN_ANGGARAN = [
+  '/',
+  `/${SLUG.panduan}`,
+  `/uang-karier/${SLUG_SUB.pajak}`,
+  '/tentang',
+  '/penulis/redaksi',
+  '/video',
+  `/video/${SLUG_VIDEO.pph21}`,
+  '/tools',
+  '/cari?q=gaji',
+]
+
+/** Byte JS halaman di konteks baru (tanpa cache browser dari halaman sebelumnya). */
+async function byteJs(browser: Browser, path: string): Promise<number> {
+  const konteks = await browser.newContext()
+  const page = await konteks.newPage()
+  await cegatCloudinary(page)
+  await page.goto(path)
+  const byte = await page.evaluate(() =>
+    performance
+      .getEntriesByType('resource')
+      .filter((e) => (e as PerformanceResourceTiming).initiatorType === 'script')
+      .reduce((jumlah, e) => jumlah + (e as PerformanceResourceTiming).encodedBodySize, 0),
+  )
+  await konteks.close()
+  return byte
+}
 
 test.beforeEach(async ({ page }) => {
   await cegatCloudinary(page)
@@ -55,15 +84,34 @@ test('kartu ke artikel memakai View Transitions dengan judul sebagai elemen bers
   expect(nama.some((n) => n.startsWith('judul-artikel-'))).toBe(true)
 })
 
-test('JavaScript halaman artikel di bawah anggaran', async ({ page }) => {
-  await page.goto(`/${SLUG.panduan}`)
-  const byte = await page.evaluate(() =>
-    performance
-      .getEntriesByType('resource')
-      .filter((e) => (e as PerformanceResourceTiming).initiatorType === 'script')
-      .reduce((jumlah, e) => jumlah + (e as PerformanceResourceTiming).encodedBodySize, 0),
-  )
-  test.info().annotations.push({ type: 'JS artikel (gzip)', description: `${Math.round(byte / 1024)} KB` })
-  expect(byte).toBeGreaterThan(0)
-  expect(byte).toBeLessThan(ANGGARAN_JS_ARTIKEL)
+test('JavaScript setiap jenis halaman di bawah anggaran', async ({ browser }) => {
+  for (const path of HALAMAN_ANGGARAN) {
+    const byte = await byteJs(browser, path)
+    test.info().annotations.push({ type: `JS ${path}`, description: `${(byte / 1024).toFixed(1)} KiB` })
+    expect(byte, path).toBeGreaterThan(0)
+    expect(byte, path).toBeLessThan(ANGGARAN_JS)
+  }
+})
+
+test('reveal judul beranda tanpa JavaScript tambahan: JS beranda tidak melebihi JS artikel', async ({ browser }) => {
+  expect(await byteJs(browser, '/')).toBeLessThanOrEqual(await byteJs(browser, `/${SLUG.panduan}`))
+})
+
+test('judul raksasa beranda muncul per kata walau JavaScript mati, dan diam saat reduced motion', async ({ browser }) => {
+  const tanpaJs = await browser.newContext({ javaScriptEnabled: false })
+  const halaman = await tanpaJs.newPage()
+  await cegatCloudinary(halaman)
+  await halaman.goto('/')
+  const kata = halaman.getByRole('heading', { level: 1 }).locator('span')
+  await expect(kata).toHaveText(['Intinya', 'dulu.'])
+  await expect(kata.first()).toHaveCSS('animation-name', /muncul/)
+  await expect(kata.last()).toHaveCSS('opacity', '1')
+  await tanpaJs.close()
+
+  const tenang = await browser.newContext({ reducedMotion: 'reduce' })
+  const halamanTenang = await tenang.newPage()
+  await cegatCloudinary(halamanTenang)
+  await halamanTenang.goto('/')
+  await expect(halamanTenang.getByRole('heading', { level: 1 }).locator('span').first()).toHaveCSS('animation-name', 'none')
+  await tenang.close()
 })

@@ -34,7 +34,9 @@ const html = renderToStaticMarkup(h(Beranda, { bagian, situs }))
 describe('Beranda', () => {
   it('hero: satu H1 dan form cari besar dengan placeholder dari CMS', () => {
     expect(html.match(/<h1/g)).toHaveLength(1)
-    expect(html).toMatch(/<section aria-labelledby="judul-beranda" class="kontainer [^"]*"><h1 id="judul-beranda" class="[^"]*">Intinya dulu\.<\/h1>/)
+    expect(html).toMatch(
+      /<h1 id="judul-beranda" class="[^"]*"><span class="[^"]*" style="--urutan:0">Intinya<\/span> <span class="[^"]*" style="--urutan:1">dulu\.<\/span><\/h1>/,
+    )
     expect(html).toContain('placeholder="misal: cara hitung THR"')
     expect(html).toContain('"@type":"WebSite"')
   })

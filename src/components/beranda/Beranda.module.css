@@ -22,6 +22,24 @@
   text-transform: uppercase;
 }
 
+/* Reveal judul raksasa: setiap kata naik 0,3em dan muncul, 400 ms dengan kurva khas, berurutan 80 ms.
+   Hanya transform dan opacity, mulai di paint pertama tanpa JavaScript, dan tidak ada sama sekali
+   saat reduced motion (aturan di dalam `no-preference`). */
+@keyframes muncul {
+  from {
+    opacity: 0;
+    transform: translateY(0.3em);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kata {
+    display: inline-block;
+    animation: muncul var(--durasi-halaman) var(--kurva) both;
+    animation-delay: calc(var(--urutan, 0) * 2 * var(--jeda-urut));
+  }
+}
+
 .heroBaris {
   display: flex;
   flex-wrap: wrap;
