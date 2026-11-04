@@ -8,11 +8,10 @@ const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
   images: {
-    localPatterns: [
-      {
-        pathname: '/api/media/file/**',
-      },
-    ],
+    // Semua gambar dikirim Cloudinary (f_auto,q_auto, lebar srcset lewat c_limit). Next tidak
+    // mengoptimasi ulang, jadi tidak ada /_next/image dan tidak ada biaya Image Optimization Vercel.
+    loader: 'custom',
+    loaderFile: './src/modules/media/loader.ts',
   },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
