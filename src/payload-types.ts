@@ -467,6 +467,10 @@ export interface Video {
   pilar: number | Pilar;
   durasiDetik?: number | null;
   transkrip: string;
+  /**
+   * Opsional. Tempel isi berkas .vtt (baris pertama WEBVTT, lalu cue bertanda waktu). Transkrip tetap tampil di bawah video.
+   */
+  takarir?: string | null;
   seo?: {
     keyphrase?: string | null;
     keyphraseSekunder?: string[] | null;
@@ -1239,6 +1243,7 @@ export interface VideoSelect<T extends boolean = true> {
   pilar?: T;
   durasiDetik?: T;
   transkrip?: T;
+  takarir?: T;
   seo?:
     | T
     | {

@@ -11,6 +11,11 @@ export const MAKS_VIDEO_LAIN = 4
 
 type VideoUntukKartu = Pick<Video, 'id' | 'judul' | 'slug' | 'durasiDetik' | 'pilar' | 'file' | 'poster'>
 
+/** Path takarir WebVTT sebuah video, dilayani `src/app/(frontend)/video/[slug]/takarir.vtt/route.ts`. */
+export function pathTakarir(slug: string): string {
+  return `${pathFor({ jenis: 'video', slug })}/takarir.vtt`
+}
+
 /** Lama video untuk pembaca: "45 detik", "1 menit", "1 menit 5 detik". */
 export function labelDurasi(detik: number): string {
   const total = Math.max(1, Math.round(detik))
@@ -44,7 +49,15 @@ export function susunVideo(doc: Video, induk: KartuArtikel | null, lain: KartuVi
   if (!kartu) return null
   return {
     ...kartu,
-    semat: { judul: doc.judul, file: doc.file, poster: doc.poster, transkrip: doc.transkrip, _status: doc._status },
+    semat: {
+      judul: doc.judul,
+      slug: doc.slug,
+      file: doc.file,
+      poster: doc.poster,
+      transkrip: doc.transkrip,
+      takarir: doc.takarir,
+      _status: doc._status,
+    },
     induk,
     lain,
     seo: doc as VideoSeo,

@@ -59,7 +59,19 @@ const dasar = { _status: 'published' as const, penulis: redaksi.id, gambarUtama:
 
 // Video vertikal: file MP4 kecil lewat klien palsu (1080x1920, 30 detik). Tanpa poster unggahan,
 // kartu memakai frame video dari Cloudinary.
-async function buatVideo({ pilar: slugPilar, draf = false, ...data }: { judul: string; slug: string; pilar: string; durasiDetik: number; transkrip: string; draf?: boolean }) {
+async function buatVideo({
+  pilar: slugPilar,
+  draf = false,
+  ...data
+}: {
+  judul: string
+  slug: string
+  pilar: string
+  durasiDetik: number
+  transkrip: string
+  takarir?: string
+  draf?: boolean
+}) {
   const isiMp4 = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.from([0, 0, 2, 0]), Buffer.from('isommp41'), Buffer.from([0, 0, 0, 8]), Buffer.from('free')])
   const file = await payload.create({ collection: 'media', data: {}, file: { data: isiMp4, mimetype: 'video/mp4', name: `${data.slug}.mp4`, size: isiMp4.length } })
   return payload.create({
@@ -75,6 +87,7 @@ const videoPph21 = await buatVideo({
   pilar: 'uang-karier',
   durasiDetik: 45,
   transkrip: 'Ambil slip gaji bulan lalu.\n\nCari baris PPh 21 di slip gajimu. Angka itu dipotong setiap bulan memakai tarif efektif.',
+  takarir: 'WEBVTT\n\n00:00.000 --> 00:03.000\nAmbil slip gaji bulan lalu.\n\n00:03.000 --> 00:08.000\nCari baris PPh 21 di slip gajimu.',
 })
 await buatVideo({
   judul: 'Kenapa kode OTP tidak boleh dibagikan',

@@ -5,6 +5,7 @@ import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
 import { revalidasiPublik } from '@/hooks/revalidasiPublik'
+import { validasiVtt } from '@/lib/validasi'
 
 /** Artikel induk tidak disimpan di sini: frontend mencari artikel yang `videoTerkait`-nya video ini. */
 const redirect = redirectSaatPathBerubah(targetSederhana('video'))
@@ -41,6 +42,15 @@ export const Video: CollectionConfig = {
     { name: 'pilar', type: 'relationship', relationTo: 'pilar', required: true },
     { name: 'durasiDetik', type: 'number', label: 'Durasi (detik)', min: 1 },
     { name: 'transkrip', type: 'textarea', required: true },
+    {
+      name: 'takarir',
+      type: 'textarea',
+      label: 'Takarir (WebVTT)',
+      validate: (value: unknown) => validasiVtt(value),
+      admin: {
+        description: 'Opsional. Tempel isi berkas .vtt (baris pertama WEBVTT, lalu cue bertanda waktu). Transkrip tetap tampil di bawah video.',
+      },
+    },
     seoField,
   ],
 }

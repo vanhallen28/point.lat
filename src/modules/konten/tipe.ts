@@ -114,8 +114,8 @@ export type DataPenulis = PenulisRingkas & { tautan: Tautan[]; artikel: KartuArt
 /** Kartu video vertikal 9:16 untuk indeks `/video` dan "Video lain". `poster`: unggahan editor atau frame video. */
 export type KartuVideo = { id: number; judul: string; href: string; durasi: number | null; pilar: PilarRingkas | null; poster: MediaTampil | null }
 
-/** Dokumen video yang diputar `VideoSemat` (sumber HLS dan MP4, poster, transkrip). */
-export type VideoUntukSemat = Pick<Video, 'judul' | 'file' | 'poster' | 'transkrip' | '_status'>
+/** Dokumen video yang diputar `VideoSemat` (sumber HLS dan MP4, poster, transkrip, takarir). */
+export type VideoUntukSemat = Pick<Video, 'judul' | 'slug' | 'file' | 'poster' | 'transkrip' | 'takarir' | '_status'>
 
 /** Halaman `/video/{slug}`: video, artikel induknya (yang `videoTerkait`-nya video ini), dan video lain. */
 export type DataVideo = KartuVideo & { semat: VideoUntukSemat; induk: KartuArtikel | null; lain: KartuVideo[]; seo: VideoSeo }

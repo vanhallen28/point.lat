@@ -15,6 +15,7 @@ import {
   ambilHeader,
   ambilPenulis,
   ambilRubrik,
+  ambilTakarir,
   ambilTerbaru,
   ambilTools,
   ambilVideo,
@@ -143,5 +144,11 @@ export const muatCari = unstable_cache(async (kueri: string) => cariArtikel(awai
  */
 export const muatBeranda = unstable_cache(async () => ambilBeranda(await payload()), ['konten', 'beranda'], {
   tags: [TAG.beranda, TAG.media],
+  revalidate: SEJAM,
+})
+
+/** Takarir WebVTT per video; dibuang saat video berubah. */
+export const muatTakarir = unstable_cache(async (slug: string) => ambilTakarir(await payload(), slug), ['konten', 'takarir'], {
+  tags: [TAG.koleksi('video')],
   revalidate: SEJAM,
 })

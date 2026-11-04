@@ -59,7 +59,7 @@ const POPULATE_ARTIKEL = {
   media: { alt: true, publicId: true, jenis: true, width: true, height: true, caption: true, kredit: true },
   artikel: { judul: true, slug: true, tipe: true, pilar: true, intinya: true, _status: true },
   tools: { nama: true, slug: true, ringkasan: true, _status: true },
-  video: { judul: true, slug: true, file: true, poster: true, transkrip: true, _status: true },
+  video: { judul: true, slug: true, file: true, poster: true, transkrip: true, takarir: true, _status: true },
   halaman: { judul: true, slug: true, _status: true },
 } as const
 
@@ -330,4 +330,18 @@ export async function ambilBeranda(payload: Payload): Promise<BagianBeranda[]> {
     tools: (await ambilTools(payload)).flatMap((k) => k.tools),
     newsletter: susunNewsletter(newsletter),
   })
+}
+
+/** Isi takarir WebVTT video terbit dengan slug ini, `null` bila video tidak ada atau belum punya takarir. */
+export async function ambilTakarir(payload: Payload, slug: string): Promise<string | null> {
+  if (validasiFormatSlug(slug) !== true) return null
+  const { docs } = await payload.find({
+    collection: 'video',
+    where: { and: [{ slug: { equals: slug } }, terbit] },
+    depth: 0,
+    limit: 1,
+    pagination: false,
+    select: { takarir: true },
+  })
+  return docs[0]?.takarir?.trim() || null
 }
