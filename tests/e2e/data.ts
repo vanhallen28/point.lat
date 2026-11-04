@@ -14,6 +14,8 @@ export const SLUG = {
   sehat: 'butuh-tidur-berapa-jam',
   draf: 'draf-belum-terbit',
   danaDarurat: 'cara-menyiapkan-dana-darurat',
+  belajar: 'jadwal-snbt-2027',
+  tekno: 'penipuan-suara-ai',
   danaDaruratLama: 'dana-darurat-lama',
 } as const
 

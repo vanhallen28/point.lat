@@ -33,6 +33,9 @@
   --tombol: var(--ink);
   --tombol-teks: var(--paper);
   --fokus: var(--ink);
+  /* Permukaan gelap: strip video beranda */
+  --latar-terbalik: var(--ink);
+  --teks-terbalik: var(--paper);
 
   /* Tipografi: satu keluarga variable (Archivo, sumbu wdth dan wght), di-host sendiri */
   --font-sans: var(--font-archivo), system-ui, sans-serif;

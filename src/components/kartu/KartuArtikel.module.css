@@ -57,3 +57,49 @@
   font-size: var(--teks-kecil);
   font-weight: 600;
 }
+
+/* Kartu utama mozaik beranda: label pilar berupa pil, judul dan Intinya turun ke bawah kartu. */
+.besar {
+  min-height: 440px;
+  padding: var(--ruang-8);
+  gap: var(--ruang-4);
+}
+
+.besar .label {
+  align-self: flex-start;
+  padding: 6px var(--ruang-3);
+  border-radius: var(--radius-pil);
+  background: var(--pilar-teks);
+  color: var(--pilar);
+}
+
+.besar .judul {
+  margin-top: auto;
+  font-size: var(--teks-h1);
+  font-weight: 900;
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.besar .intinya {
+  max-width: 46ch;
+  font-size: 18px;
+}
+
+.besar .tipe {
+  margin-top: var(--ruang-2);
+}
+
+/* Kartu baris kedua mozaik beranda. */
+.sedang {
+  min-height: 300px;
+  padding: 28px;
+}
+
+.sedang .judul {
+  font-size: 34px;
+  font-weight: 900;
+  font-stretch: var(--lebar-h1);
+  line-height: 1.02;
+}

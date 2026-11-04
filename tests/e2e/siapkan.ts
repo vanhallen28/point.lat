@@ -146,7 +146,7 @@ const panduan = await payload.create({
   },
 })
 
-await payload.create({
+const sehat = await payload.create({
   collection: 'artikel',
   data: {
     ...dasar,
@@ -247,6 +247,56 @@ await terbitkanHalaman(SLUG_HALAMAN.tentang, [
 await terbitkanHalaman(SLUG_HALAMAN.kebijakanRedaksi, [
   { blockType: 'teks', isi: isi(h2('Sumber dan koreksi'), p('Setiap angka di point. punya sumber. Koreksi dicatat di akhir tulisan.')) },
 ])
+
+// Beranda: artikel Belajar dan Tekno untuk mozaik, newsletter aktif ke form penyedia (tidak pernah dibuka tes).
+const belajar = await payload.create({
+  collection: 'artikel',
+  data: {
+    ...dasar,
+    judul: 'Jadwal SNBT 2027 dan apa yang berubah',
+    slug: SLUG.belajar,
+    tipe: 'explainer',
+    pilar: pilar.belajar,
+    deck: 'Pendaftaran SNBT 2027 punya tiga tanggal penting. Ini yang perlu kamu catat.',
+    intinya: [{ poin: 'Catat tiga tanggal ini sebelum mendaftar.' }, { poin: 'Siapkan akun SNPMB lebih awal.' }],
+    isi: isi(p('Jadwal resmi diumumkan panitia SNPMB.')),
+  },
+})
+const tekno = await payload.create({
+  collection: 'artikel',
+  data: {
+    ...dasar,
+    judul: 'Cara mengenali penipuan yang memakai suara AI',
+    slug: SLUG.tekno,
+    tipe: 'panduan',
+    pilar: pilar.tekno,
+    deck: 'Suara keluarga bisa ditiru AI. Begini cara memastikan yang menelepon benar-benar dia.',
+    intinya: [{ poin: 'Tutup telepon, lalu hubungi balik lewat nomor resmi.' }, { poin: 'Sepakati kata sandi keluarga.' }],
+    isi: isi(p('Penipu cukup butuh beberapa detik rekaman suara.')),
+  },
+})
+await payload.updateGlobal({
+  slug: 'newsletter',
+  data: { aktif: true, penyedia: 'kit', urlForm: 'https://point.kit.com/intinya', judul: 'Intinya, tiap Senin.', deskripsi: 'Lima tulisan terbaik pekan ini, langsung ke email.' },
+})
+await payload.updateGlobal({
+  slug: 'beranda',
+  data: {
+    tataLetak: [
+      {
+        blockType: 'heroBeranda',
+        judul: 'Intinya dulu.',
+        subjudul: 'Uang, karier, teknologi, pendidikan, dan kesehatan. Dijelaskan dari intinya, lalu bisa langsung kamu hitung.',
+        placeholderCari: 'misal: cara hitung THR',
+      },
+      { blockType: 'mozaikPilihan', artikel: [panduan.id, belajar.id, sehat.id, tekno.id] },
+      { blockType: 'stripVideo', judul: 'Intinya dalam 45 detik' },
+      { blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 4 },
+      { blockType: 'slotIklan', idSlot: 'beranda-samping' },
+      { blockType: 'newsletterBlok' },
+    ],
+  },
+})
 
 await payload.create({ collection: 'redirect', data: { dari: '/promo-lama', ke: '/glosarium', kode: '301' } })
 await payload.create({ collection: 'redirect', data: { dari: '/glosarium/ptkp-lama', ke: '/glosarium/ptkp', kode: '301' } })

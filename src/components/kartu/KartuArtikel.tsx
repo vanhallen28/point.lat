@@ -7,12 +7,13 @@ import gaya from './KartuArtikel.module.css'
 
 /**
  * Kartu artikel berlatar warna pilar (Arah 3 "Kartu Intinya"): label pilar, judul, dan poin Intinya
- * pertama. Seluruh kartu satu tautan; judulnya heading supaya daftar kartu bisa dinavigasi.
+ * pertama. Seluruh kartu satu tautan; judulnya heading supaya daftar kartu bisa dinavigasi. `ukuran`
+ * untuk mozaik beranda: `besar` (kartu utama, judul seukuran H1) dan `sedang` (baris kedua).
  */
-export function KartuArtikel({ kartu, tingkat = 'h3' }: { kartu: DataKartu; tingkat?: 'h2' | 'h3' }) {
+export function KartuArtikel({ kartu, tingkat = 'h3', ukuran }: { kartu: DataKartu; tingkat?: 'h2' | 'h3'; ukuran?: 'besar' | 'sedang' }) {
   const Judul = tingkat
   return (
-    <Tautan href={kartu.href} className={gaya.kartu} data-warna={kartu.pilar?.warna}>
+    <Tautan href={kartu.href} className={ukuran ? `${gaya.kartu} ${gaya[ukuran]}` : gaya.kartu} data-warna={kartu.pilar?.warna}>
       {kartu.pilar && <span className={gaya.label}>{kartu.pilar.nama}</span>}
       <JudulBersama id={kartu.id}>
         <Judul className={gaya.judul}>{kartu.judul}</Judul>

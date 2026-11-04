@@ -64,6 +64,16 @@
   line-height: 1.25;
 }
 
+/* Strip video beranda: teks terang di latar gelap, label durasi dibalik. */
+.gelap {
+  color: var(--teks-terbalik);
+}
+
+.gelap .putar {
+  background: var(--teks-terbalik);
+  color: var(--latar-terbalik);
+}
+
 .halaman {
   display: grid;
   gap: var(--ruang-6);

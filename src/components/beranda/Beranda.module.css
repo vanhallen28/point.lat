@@ -1,0 +1,298 @@
+/*
+ * Beranda (mockup Arah 3 "Kartu Intinya"). Jarak antarbagian hanya dari `margin-top` `.bagian`
+ * (56px, 40px tepat setelah hero), jadi editor bisa mengubah urutan blok tanpa celah ganda.
+ */
+.hero {
+  padding-top: var(--ruang-10);
+}
+
+.bagian {
+  margin-top: var(--ruang-14);
+}
+
+.hero + .bagian {
+  margin-top: var(--ruang-10);
+}
+
+.judulRaksasa {
+  font-size: var(--teks-display);
+  font-stretch: var(--lebar-display);
+  line-height: var(--tinggi-display);
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+
+.heroBaris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ruang-6);
+  margin-top: var(--ruang-6);
+}
+
+.pembuka {
+  flex: 1 1 360px;
+  max-width: 34ch;
+  font-size: var(--teks-deck);
+  line-height: 1.4;
+}
+
+.heroCari {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.subjudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+/* Mozaik: baris flex-wrap seperti mockup, bukan grid kartu seragam. */
+.mozaik {
+  display: grid;
+  gap: var(--ruang-4);
+}
+
+.baris {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-4);
+}
+
+.utama {
+  flex: 2 1 520px;
+  display: flex;
+}
+
+.utama > *,
+.sedang > * {
+  flex: 1;
+}
+
+/* Dua kartu samping bertumpuk saat kolomnya sempit (desktop, HP) dan berdampingan saat kolom
+   selebar layar (tablet). Baris yang membungkus ikut meregang mengisi tinggi kartu utama. */
+.kolom {
+  flex: 1 1 320px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-4);
+}
+
+/* Kartu memakai `height: 100%` (KartuArtikel); di sini tinggi diatur baris flex, jadi selektornya
+   lebih spesifik supaya tidak bergantung urutan file CSS. */
+.mozaik .kolom > * {
+  flex: 1 1 280px;
+  height: auto;
+}
+
+.sedang {
+  flex: 1 1 280px;
+  display: flex;
+}
+
+.tools {
+  flex: 2 1 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-5);
+  padding: 28px;
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kartu);
+}
+
+.toolsKepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ruang-2);
+}
+
+.toolsJudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.semua {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-1);
+  min-height: var(--sentuh-min);
+  font-size: var(--teks-kecil);
+  font-weight: 700;
+}
+
+.toolsDaftar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.toolsDaftar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 var(--ruang-5);
+  border-radius: var(--radius-kontrol);
+  background: var(--permukaan);
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.toolsDaftar a:hover {
+  text-decoration: underline;
+}
+
+.toolsDaftar a:active {
+  transform: scale(0.97);
+}
+
+.toolsCatatan {
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+  line-height: 1.5;
+}
+
+/* Strip video gelap selebar layar. Fokus memakai warna terang supaya tetap terlihat. */
+.strip {
+  --fokus: var(--teks-terbalik);
+  background: var(--latar-terbalik);
+  color: var(--teks-terbalik);
+}
+
+.stripIsi {
+  padding-block: var(--ruang-12) var(--ruang-14);
+}
+
+.stripKepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ruang-3);
+  margin-bottom: var(--ruang-6);
+}
+
+.stripJudul {
+  font-size: clamp(36px, 5vw, 64px);
+  font-stretch: var(--lebar-display);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+/* Tulisan terbaru dan kolom samping (newsletter). */
+.terbaruBaris {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-10);
+}
+
+.terbaru {
+  flex: 2 1 520px;
+  min-width: 0;
+}
+
+.terbaru .subjudul {
+  margin-bottom: var(--ruang-3);
+}
+
+.daftar {
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--garis-tipis) solid var(--garis);
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-block: var(--ruang-4);
+  border-top: var(--garis-tipis) solid var(--garis);
+  text-decoration: none;
+}
+
+.item:hover .itemJudul {
+  text-decoration: underline;
+}
+
+.titik {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--pilar, var(--teks));
+  box-shadow: inset 0 0 0 1px var(--garis);
+}
+
+.itemTeks {
+  display: grid;
+  gap: var(--ruang-1);
+}
+
+.itemJudul {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.itemPilar {
+  color: var(--teks-sekunder);
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.samping {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-4);
+}
+
+.newsletter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ruang-3);
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}
+
+.lepas {
+  max-width: 640px;
+}
+
+.newsletterJudul {
+  font-size: 26px;
+  font-stretch: var(--lebar-h1);
+}
+
+.tombol {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  min-height: 52px;
+  margin-top: var(--ruang-1);
+  padding: 0 var(--ruang-6);
+  border-radius: 12px;
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.tombol:hover {
+  text-decoration: underline;
+}
+
+.tombol:active {
+  transform: scale(0.98);
+}
