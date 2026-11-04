@@ -4,6 +4,7 @@ import type { Artikel } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
 
 import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
+import { kataKueri, MAKS_HASIL_CARI, urutkanHasil } from './cari'
 import { kelompokkanIstilah } from './glosarium'
 import { susunHalaman } from './halaman'
 import { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'
@@ -280,4 +281,28 @@ export async function ambilTools(payload: Payload): Promise<KelompokTools[]> {
     populate: { pilar: { ...POPULATE_ARTIKEL.pilar, urutan: true } },
   })
   return kelompokkanTools(docs)
+}
+
+/** Kolom yang dicari `/cari`: judul, deck, poin Intinya, dan keyphrase SEO. */
+const KOLOM_CARI = ['judul', 'deck', 'intinya.poin', 'seo.keyphrase'] as const
+
+/**
+ * Pencarian `/cari`: artikel terbit (termasuk glosarium) yang memuat setiap kata kueri di salah satu
+ * kolom `KOLOM_CARI` (tanpa beda huruf besar), judul yang memuat semua kata di atas. Pencarian teks
+ * penuh Postgres bisa menggantikannya bila jumlah artikel sudah ribuan.
+ */
+export async function cariArtikel(payload: Payload, kueri: string): Promise<KartuArtikel[]> {
+  const kata = kataKueri(kueri)
+  if (kata.length === 0) return []
+  const { docs } = await payload.find({
+    collection: 'artikel',
+    where: { and: [terbit, ...kata.map((k) => ({ or: KOLOM_CARI.map((kolom) => ({ [kolom]: { like: k } })) }))] },
+    sort: '-terbitPada',
+    limit: MAKS_HASIL_CARI,
+    depth: 1,
+    pagination: false,
+    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
+    populate: { pilar: POPULATE_ARTIKEL.pilar },
+  })
+  return urutkanHasil(kueri, docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null))
 }

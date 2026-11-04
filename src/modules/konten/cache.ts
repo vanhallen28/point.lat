@@ -17,6 +17,7 @@ import {
   ambilTerbaru,
   ambilTools,
   ambilVideo,
+  cariArtikel,
   cariRedirect,
 } from './data'
 
@@ -126,5 +127,11 @@ export const muatVideo = unstable_cache(async (slug: string) => ambilVideo(await
 /** Indeks `/tools`: nama, ringkasan, dan pilar (nama, warna, urutan) setiap kalkulator terbit. */
 export const muatTools = unstable_cache(async () => ambilTools(await payload()), ['konten', 'tools'], {
   tags: [TAG.koleksi('tools'), TAG.koleksi('pilar')],
+  revalidate: SEJAM,
+})
+
+/** Hasil `/cari` per kueri (sudah dirapikan `rapikanKueri`), dibuang saat artikel atau pilar berubah. */
+export const muatCari = unstable_cache(async (kueri: string) => cariArtikel(await payload(), kueri), ['konten', 'cari'], {
+  tags: [TAG.koleksi('artikel'), TAG.koleksi('pilar')],
   revalidate: SEJAM,
 })

@@ -6,7 +6,7 @@ export type TargetPath =
   | { jenis: 'pilar' | 'tools' | 'video' | 'penulis' | 'halaman'; slug: string }
 
 /** Halaman indeks yang tidak mewakili satu dokumen. */
-export const PATH_INDEKS = { glosarium: '/glosarium', tools: '/tools', video: '/video' } as const
+export const PATH_INDEKS = { cari: '/cari', glosarium: '/glosarium', tools: '/tools', video: '/video' } as const
 
 /** Satu-satunya tempat path publik dirangkai. Dipakai redirect, SEO, sitemap, dan indexer. */
 export function pathFor(target: TargetPath): string {

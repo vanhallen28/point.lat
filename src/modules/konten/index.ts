@@ -10,6 +10,7 @@
  */
 export {
   muatArtikel,
+  muatCari,
   muatDaftarVideo,
   muatFooter,
   muatGlosarium,
@@ -36,8 +37,10 @@ export {
   ambilTerbaru,
   ambilTools,
   ambilVideo,
+  cariArtikel,
   cariRedirect,
 } from './data'
+export { kataKueri, MAKS_HASIL_CARI, MAKS_KATA, MAKS_KUERI, rapikanKueri, urutkanHasil } from './cari'
 export { itemTools, kelompokkanTools } from './tools'
 export { kartuVideo, labelDurasi, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 export { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'

@@ -1,0 +1,96 @@
+/* Form cari (beranda, /cari, 404) dan halaman hasil. */
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ruang-2);
+  max-width: 640px;
+}
+
+.label {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.input {
+  min-height: 52px;
+  padding: 0 var(--ruang-4);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kontrol);
+  background: var(--latar);
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.input::placeholder {
+  color: var(--teks-sekunder);
+  opacity: 1;
+}
+
+.tombol {
+  min-height: 52px;
+  padding: 0 var(--ruang-6);
+  border: 0;
+  border-radius: var(--radius-kontrol);
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.tombol:active {
+  transform: scale(0.98);
+}
+
+.besar .input {
+  min-height: 56px;
+  padding-inline: 18px;
+}
+
+.besar .tombol {
+  min-height: 60px;
+  padding-inline: 26px;
+}
+
+.halaman {
+  display: grid;
+  gap: var(--ruang-10);
+  padding-top: var(--ruang-4);
+}
+
+.kepala {
+  display: grid;
+  gap: var(--ruang-4);
+}
+
+.judul {
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.hasil {
+  display: grid;
+  gap: var(--ruang-6);
+}
+
+.status {
+  max-width: 40ch;
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  font-weight: 800;
+}
+
+.petunjuk {
+  max-width: 60ch;
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}
