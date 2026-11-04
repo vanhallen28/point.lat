@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { pathFor } from '@/lib/paths'
+import { judulHalaman } from '@/lib/seo-dasar'
 
 import {
   ambil,
@@ -80,4 +81,17 @@ export function metadata(masukan: MasukanSeo, situs: Situs): Metadata {
     }
   }
   return hasil
+}
+
+export const JUDUL_TIDAK_DITEMUKAN = 'Halaman tidak ditemukan'
+
+/**
+ * Metadata halaman 404 (`not-found.tsx`). Tanpa canonical dan Open Graph karena halaman ini tidak
+ * diindeks; Next menambahkan `noindex` sendiri untuk status 404.
+ */
+export function metadataTidakDitemukan(situs: Pick<PengaturanSitus, 'urlSitus' | 'polaJudul'>): Metadata {
+  return {
+    metadataBase: new URL(situs.urlSitus),
+    title: { absolute: judulHalaman(situs.polaJudul, JUDUL_TIDAK_DITEMUKAN) },
+  }
 }

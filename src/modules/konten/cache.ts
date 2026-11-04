@@ -5,7 +5,7 @@ import { getPayload } from 'payload'
 import { TAG } from '@/lib/tag'
 import { ambilSitus } from '@/modules/seo/situs'
 
-import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader } from './data'
+import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader, ambilTerbaru, cariRedirect } from './data'
 
 /**
  * Data halaman publik yang di-cache dengan tag (spesifikasi §5 "Rendering"). Halaman dirender statis
@@ -61,5 +61,17 @@ export const muatArtikel = unstable_cache(
 /** Indeks glosarium hanya berisi artikel bertipe glosarium. */
 export const muatGlosarium = unstable_cache(async () => ambilGlosarium(await payload()), ['konten', 'glosarium'], {
   tags: [TAG.koleksi('artikel')],
+  revalidate: SEJAM,
+})
+
+/** Redirect per path. Hook koleksi `redirect` membuang cache ini beserta halaman yang memakainya. */
+export const muatRedirect = unstable_cache(async (path: string) => cariRedirect(await payload(), path), ['konten', 'redirect'], {
+  tags: [TAG.redirect],
+  revalidate: SEJAM,
+})
+
+/** Kartu tulisan terbaru di halaman 404. */
+export const muatTerbaru = unstable_cache(async (jumlah: number) => ambilTerbaru(await payload(), jumlah), ['konten', 'terbaru'], {
+  tags: [TAG.koleksi('artikel'), TAG.koleksi('pilar')],
   revalidate: SEJAM,
 })

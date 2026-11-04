@@ -134,7 +134,7 @@ export function revalidasiPublik(koleksi: KoleksiPublik): {
   return { beforeChange, afterChange, afterDelete }
 }
 
-/** Hook koleksi pendukung (media): merevalidasi tag tetap setiap kali dokumen disimpan atau dihapus. */
+/** Hook koleksi pendukung (media, redirect): merevalidasi tag tetap setiap kali dokumen disimpan atau dihapus. */
 export function revalidasiKoleksi(tag: string[]): {
   afterChange: CollectionAfterChangeHook
   afterDelete: CollectionAfterDeleteHook

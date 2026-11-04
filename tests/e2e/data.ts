@@ -13,6 +13,8 @@ export const SLUG = {
   explainer: 'apa-itu-ter-pph-21',
   sehat: 'butuh-tidur-berapa-jam',
   draf: 'draf-belum-terbit',
+  danaDarurat: 'cara-menyiapkan-dana-darurat',
+  danaDaruratLama: 'dana-darurat-lama',
 } as const
 
 export const JUDUL_PANDUAN = 'Cara hitung gaji bersih setelah PPh 21 dan BPJS'

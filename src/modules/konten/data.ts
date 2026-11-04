@@ -3,8 +3,10 @@ import type { Payload, Where } from 'payload'
 import type { Artikel } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
 
-import { gabungTerkait, MAKS_TERKAIT, susunArtikel } from './artikel'
+import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
 import { kelompokkanIstilah } from './glosarium'
+import { MAKS_PATH } from './log404'
+import type { RedirectTersimpan } from './redirect'
 import { susunFooter, susunHeader } from './tampilan'
 import type { DataArtikel, DataFooter, DataHeader, KartuArtikel, KelompokIstilah } from './tipe'
 
@@ -107,4 +109,33 @@ export async function ambilGlosarium(payload: Payload): Promise<KelompokIstilah[
     select: { judul: true, slug: true, deck: true, intinya: true },
   })
   return kelompokkanIstilah(docs)
+}
+
+/** Redirect untuk path ini dari koleksi `redirect` (Local API, jadi akses admin tidak berlaku). */
+export async function cariRedirect(payload: Payload, path: string): Promise<RedirectTersimpan | null> {
+  if (path.length > MAKS_PATH) return null
+  const { docs } = await payload.find({
+    collection: 'redirect',
+    where: { dari: { equals: path } },
+    limit: 1,
+    depth: 0,
+    pagination: false,
+    select: { kode: true, ke: true },
+  })
+  return docs[0] ? { kode: docs[0].kode, ke: docs[0].ke ?? null } : null
+}
+
+/** Artikel terbit terbaru (bukan glosarium) untuk halaman 404. */
+export async function ambilTerbaru(payload: Payload, jumlah: number): Promise<KartuArtikel[]> {
+  const { docs } = await payload.find({
+    collection: 'artikel',
+    where: { and: [terbit, { tipe: { not_equals: 'glosarium' } }] },
+    sort: '-terbitPada',
+    limit: jumlah,
+    depth: 1,
+    pagination: false,
+    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
+    populate: { pilar: POPULATE_ARTIKEL.pilar },
+  })
+  return docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null)
 }

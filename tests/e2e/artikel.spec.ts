@@ -13,7 +13,7 @@ test('artikel panduan: urutan bagian sesuai spesifikasi §4', async ({ page }) =
   await expect(remah.getByRole('link')).toHaveText(['Beranda', 'Uang & Karier'])
   await expect(remah.locator('[aria-current="page"]')).toHaveText(JUDUL_PANDUAN)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(JUDUL_PANDUAN)
-  await expect(page.getByText('Panduan', { exact: true })).toBeVisible()
+  await expect(page.getByRole('article').locator('header').getByText('Panduan', { exact: true })).toBeVisible()
   await expect(page.getByText(/^Diperbarui \d{1,2} \w+ 20\d\d$/)).toBeVisible()
   await expect(page.getByText('1 menit baca')).toBeVisible()
 
@@ -36,7 +36,9 @@ test('artikel panduan: urutan bagian sesuai spesifikasi §4', async ({ page }) =
   await faq.getByText('Apakah THR ikut dipotong PPh 21?').click()
   await expect(faq.getByText(/THR menambah penghasilan bruto/)).toBeVisible()
 
-  await expect(page.getByRole('region', { name: 'Baca juga' }).getByRole('link')).toHaveAttribute('href', `/${SLUG.explainer}`)
+  // Pilihan editor dulu, lalu artikel sepilar terbaru.
+  await expect(page.getByRole('region', { name: 'Baca juga' }).getByRole('link')).toHaveCount(2)
+  await expect(page.getByRole('region', { name: 'Baca juga' }).getByRole('link').first()).toHaveAttribute('href', `/${SLUG.explainer}`)
   const penulis = page.getByRole('region', { name: 'Tentang penulis' })
   await expect(penulis.getByRole('link', { name: 'Redaksi point.' })).toHaveAttribute('href', '/penulis/redaksi')
 })

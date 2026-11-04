@@ -1,14 +1,20 @@
 import type { CollectionConfig } from 'payload'
 
 import { isLoggedIn } from '@/access'
+import { revalidasiKoleksi } from '@/hooks/revalidasiPublik'
 import { validasiPathRedirect } from '@/lib/redirect'
+import { TAG } from '@/lib/tag'
 import { validasiUrlOpsional } from '@/lib/validasi'
+
+/** Halaman 404 dan redirect yang sudah tersimpan (ISR) dibuang saat tabel redirect berubah. */
+const revalidasi = revalidasiKoleksi([TAG.redirect])
 
 export const Redirect: CollectionConfig = {
   slug: 'redirect',
   labels: { singular: 'Redirect', plural: 'Redirect' },
   admin: { useAsTitle: 'dari', defaultColumns: ['dari', 'ke', 'kode', 'sumber', 'jumlahHit'], group: 'SEO' },
   access: { read: isLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
+  hooks: { afterChange: [revalidasi.afterChange], afterDelete: [revalidasi.afterDelete] },
   fields: [
     {
       name: 'dari',

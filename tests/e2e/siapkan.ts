@@ -139,5 +139,25 @@ await payload.create({
   data: { ...dasar, _status: 'draft', judul: 'Draf yang belum terbit', slug: SLUG.draf, tipe: 'panduan', pilar: pilar['uang-karier'], deck: 'Draf.', intinya: [{ poin: 'Satu.' }, { poin: 'Dua.' }], isi: isi(p('Draf.')) },
 })
 
+// Slug artikel terbit diganti: hook Rencana 1 membuat redirect otomatis dari path lama.
+const danaDarurat = await payload.create({
+  collection: 'artikel',
+  data: {
+    ...dasar,
+    judul: 'Cara menyiapkan dana darurat',
+    slug: SLUG.danaDaruratLama,
+    tipe: 'panduan',
+    pilar: pilar['uang-karier'],
+    deck: 'Dana darurat idealnya tiga sampai enam kali pengeluaran bulanan.',
+    intinya: [{ poin: 'Dana darurat untuk kebutuhan mendadak, bukan untuk belanja.' }, { poin: 'Simpan di tempat yang mudah dicairkan.' }],
+    isi: isi(p('Mulai dari target kecil, lalu tambah setiap bulan.')),
+  },
+})
+await payload.update({ collection: 'artikel', id: danaDarurat.id, data: { _status: 'published', slug: SLUG.danaDarurat } })
+
+await payload.create({ collection: 'redirect', data: { dari: '/promo-lama', ke: '/glosarium', kode: '301' } })
+await payload.create({ collection: 'redirect', data: { dari: '/glosarium/ptkp-lama', ke: '/glosarium/ptkp', kode: '301' } })
+await payload.create({ collection: 'redirect', data: { dari: '/tulisan-dihapus', kode: '410' } })
+
 payload.logger.info('Data E2E siap.')
 process.exit(0)

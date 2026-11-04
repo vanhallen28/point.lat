@@ -1,0 +1,58 @@
+.halaman {
+  display: grid;
+  gap: var(--ruang-6);
+  padding-top: var(--ruang-12);
+}
+
+.kode {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.judul {
+  max-width: 14ch;
+  /* Gaya display beranda, sedikit lebih kecil supaya jalan kembali tetap di atas lipatan. */
+  font-size: clamp(56px, 9vw, 128px);
+  font-stretch: var(--lebar-display);
+  line-height: var(--tinggi-display);
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+
+.teks {
+  max-width: 46ch;
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.tombol {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  min-height: 52px;
+  padding: 0 var(--ruang-6);
+  border-radius: var(--radius-kontrol);
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.tombol:active {
+  transform: scale(0.98);
+}
+
+.terbaru {
+  display: grid;
+  gap: var(--ruang-6);
+  margin-top: var(--ruang-10);
+}
+
+.subjudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}

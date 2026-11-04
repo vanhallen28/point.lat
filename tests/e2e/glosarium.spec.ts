@@ -24,7 +24,7 @@ test('istilah glosarium di /glosarium/{slug}, tidak di /{slug}', async ({ page, 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('PTKP')
   await expect(page.getByText('Glosarium', { exact: true }).first()).toBeVisible()
   // Pilihan editor (panduan) dulu, lalu artikel sepilar terbaru melengkapi.
-  await expect(page.getByRole('region', { name: 'Baca juga' }).getByRole('link')).toHaveCount(2)
+  await expect(page.getByRole('region', { name: 'Baca juga' }).getByRole('link')).toHaveCount(3)
   await expect(page.getByRole('region', { name: 'Baca juga' }).getByRole('link').first()).toHaveAttribute('href', `/${SLUG.panduan}`)
   expect((await request.get('/ptkp')).status()).toBe(404)
   expect((await request.get(`/glosarium/${SLUG.panduan}`)).status()).toBe(404)

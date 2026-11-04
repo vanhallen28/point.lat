@@ -64,7 +64,8 @@ describe('revalidasi tag saat konten berubah', () => {
     tag = []
     const slugBaru = unik('sehat-baru')
     await payload.update({ collection: 'pilar', id: pilar.id, data: { slug: slugBaru } })
-    expect(tag).toEqual(['pilar', `pilar:${pilar.id}`, `pilar:${slugBaru}`, `pilar:${pilar.slug}`, 'beranda', 'sitemap'])
+    // Ganti slug membuat redirect otomatis, jadi tag `redirect` ikut direvalidasi lebih dulu.
+    expect(tag).toEqual(['redirect', 'pilar', `pilar:${pilar.id}`, `pilar:${slugBaru}`, `pilar:${pilar.slug}`, 'beranda', 'sitemap'])
 
     tag = []
     const penulis = await payload.create({ collection: 'penulis', data: { nama: unik('Penulis'), bio: 'Bio.' } })

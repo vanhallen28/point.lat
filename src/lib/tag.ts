@@ -8,6 +8,7 @@
  * - `beranda`, `sitemap` (sitemap, news sitemap, RSS), `pengaturan-seo` (robots.txt, metadata situs).
  * - `header`, `footer`: global tampilan yang dirender layout di setiap halaman publik.
  * - `media`: dokumen media (alt, caption, kredit, ukuran) yang ditampilkan halaman.
+ * - `redirect`: tabel redirect yang dibaca halaman saat path tidak cocok dengan dokumen.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const
@@ -20,6 +21,7 @@ export const TAG = {
   header: 'header',
   footer: 'footer',
   media: 'media',
+  redirect: 'redirect',
   koleksi: (koleksi: KoleksiPublik) => koleksi,
   dokumen: (koleksi: KoleksiPublik, id: number | string) => `${koleksi}:${id}`,
   pilar: (slug: string) => `pilar:${slug}`,

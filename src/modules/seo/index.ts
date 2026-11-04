@@ -11,7 +11,7 @@
  * `/feed.xml`) ada di `src/app/(frontend)/` dan memakai `rute.ts`. Ekspor ini aman untuk server;
  * komponen admin mengimpor `panel.ts` langsung.
  */
-export { metadata, canonicalDokumen, PATH_FEED } from './metadata'
+export { metadata, canonicalDokumen, JUDUL_TIDAK_DITEMUKAN, metadataTidakDitemukan, PATH_FEED } from './metadata'
 export { jsonLd, remahRoti, serialisasiJsonLd, tipeSchemaArtikel } from './jsonld'
 export type { JsonLd, NodeJsonLd, RemahRoti } from './jsonld'
 export { analisis, skor, BATAS } from './analisis'
