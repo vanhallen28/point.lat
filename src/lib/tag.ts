@@ -9,6 +9,7 @@
  * - `header`, `footer`: global tampilan yang dirender layout di setiap halaman publik.
  * - `media`: dokumen media (alt, caption, kredit, ukuran) yang ditampilkan halaman.
  * - `redirect`: tabel redirect yang dibaca halaman saat path tidak cocok dengan dokumen.
+ * - `parameter-tools`: angka aturan kalkulator yang dibaca halaman `/tools/{slug}`.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const
@@ -22,6 +23,7 @@ export const TAG = {
   footer: 'footer',
   media: 'media',
   redirect: 'redirect',
+  parameterTools: 'parameter-tools',
   koleksi: (koleksi: KoleksiPublik) => koleksi,
   dokumen: (koleksi: KoleksiPublik, id: number | string) => `${koleksi}:${id}`,
   pilar: (slug: string) => `pilar:${slug}`,

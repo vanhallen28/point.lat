@@ -586,6 +586,8 @@ export interface Tool {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Untuk mengganti angka yang berubah (misalnya batas upah JP tahun depan), buat dokumen baru dengan kunci yang sama dan tanggal berlaku baru, lalu isi tanggal akhir dokumen lama.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "parameter-tools".
  */
@@ -593,10 +595,24 @@ export interface ParameterTool {
   id: number;
   toolId: 'gaji-bersih' | 'thr' | 'cicilan-kpr' | 'dana-darurat' | 'bmi-kalori' | 'ipk';
   /**
-   * Contoh: ptkp-tk0
+   * Nama parameter di modul hitung, misalnya ptkp-dasar atau ter-a. Kunci yang tidak dikenal ditolak beserta daftar kunci yang benar.
    */
   kunci: string;
-  nilai: number;
+  /**
+   * Untuk parameter satu angka. Persen ditulis seperti di peraturan: 1,5 berarti 1,5%.
+   */
+  nilai?: number | null;
+  /**
+   * Untuk parameter berbentuk tabel: tarif TER, lapisan Pasal 17, kategori IMT, faktor aktivitas, kelipatan dana darurat, konversi nilai. Batas berarti "sampai dengan"; kosongkan batas baris terakhir untuk tanpa batas.
+   */
+  tabel?:
+    | {
+        label?: string | null;
+        batas?: number | null;
+        nilai?: number | null;
+        id?: string | null;
+      }[]
+    | null;
   berlakuMulai: string;
   /**
    * Kosongkan bila masih berlaku.
@@ -1219,6 +1235,14 @@ export interface ParameterToolsSelect<T extends boolean = true> {
   toolId?: T;
   kunci?: T;
   nilai?: T;
+  tabel?:
+    | T
+    | {
+        label?: T;
+        batas?: T;
+        nilai?: T;
+        id?: T;
+      };
   berlakuMulai?: T;
   berlakuSampai?: T;
   sumber?:

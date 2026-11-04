@@ -13,6 +13,7 @@ describe('TAG', () => {
   it('tag tampilan dan tag koleksi untuk data halaman publik', () => {
     expect([TAG.header, TAG.footer]).toEqual(['header', 'footer'])
     expect(TAG.koleksi('penulis')).toBe('penulis')
+    expect(TAG.parameterTools).toBe('parameter-tools')
   })
 })
 

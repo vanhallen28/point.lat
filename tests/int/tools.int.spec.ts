@@ -38,14 +38,14 @@ describe('tools dan parameter', () => {
       payload.create({
         collection: 'parameter-tools',
         data: {
-          toolId: 'thr',
-          kunci: unik('contoh'),
-          nilai: 1,
+          toolId: 'gaji-bersih',
+          kunci: 'jkk',
+          nilai: 0.24,
           berlakuMulai: '2026-06-01',
           berlakuSampai: '2026-01-01',
         },
       }),
     )
-    expect(pesan).toMatch(/Tanggal akhir/)
+    expect(pesan).toBe('berlakuSampai: Tanggal akhir harus sama atau sesudah tanggal mulai.')
   })
 })
