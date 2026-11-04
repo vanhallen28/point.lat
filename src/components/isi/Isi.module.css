@@ -1,0 +1,204 @@
+/* Isi artikel: lebar baris 60-75 karakter, body 18px (min 16px di HP), leading 1,6 (spesifikasi §4). */
+.prosa {
+  max-width: var(--baris-isi);
+  font-size: var(--teks-isi);
+  line-height: var(--tinggi-isi);
+}
+
+.prosa > * + * {
+  margin-top: 1.1em;
+}
+
+.prosa h2 {
+  margin-top: var(--ruang-12);
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  scroll-margin-top: var(--ruang-6);
+}
+
+.prosa h3,
+.prosa h4 {
+  margin-top: var(--ruang-8);
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  font-weight: 800;
+  scroll-margin-top: var(--ruang-6);
+}
+
+.prosa h2 + *,
+.prosa h3 + *,
+.prosa h4 + * {
+  margin-top: var(--ruang-3);
+}
+
+.prosa a {
+  text-decoration: underline;
+  text-decoration-thickness: var(--garis-tipis);
+}
+
+.prosa ul,
+.prosa ol {
+  padding-left: 1.4em;
+}
+
+.prosa li + li {
+  margin-top: var(--ruang-2);
+}
+
+.prosa blockquote {
+  padding-left: var(--ruang-5);
+  border-left: 4px solid var(--garis);
+  font-size: var(--teks-deck);
+  font-weight: 600;
+}
+
+.prosa hr {
+  margin-block: var(--ruang-10);
+  border: 0;
+  border-top: var(--garis-tebal) solid var(--garis);
+}
+
+.prosa code {
+  padding: 0.1em 0.3em;
+  border-radius: 6px;
+  background: var(--permukaan);
+  font-size: 0.9em;
+}
+
+.gambar img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-kontrol);
+}
+
+.keterangan {
+  margin-top: var(--ruang-2);
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+  line-height: 1.45;
+}
+
+.callout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ruang-1) var(--ruang-3);
+  padding: var(--ruang-5);
+  border-radius: var(--radius-kontrol);
+  background: var(--permukaan);
+}
+
+.callout[data-gaya='peringatan'] {
+  border: var(--garis-tebal) solid var(--garis);
+}
+
+.callout svg {
+  margin-top: 3px;
+}
+
+.callout > div > * + * {
+  margin-top: var(--ruang-2);
+}
+
+.label {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.calloutJudul {
+  font-weight: 800;
+}
+
+.tabel {
+  max-width: 100%;
+  overflow-x: auto;
+  border: var(--garis-tipis) solid var(--garis);
+  border-radius: var(--radius-kontrol);
+}
+
+.tabel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--teks-kecil);
+  line-height: 1.45;
+}
+
+.tabel caption {
+  padding: var(--ruang-3) var(--ruang-4);
+  font-weight: 800;
+  text-align: left;
+}
+
+.tabel th,
+.tabel td {
+  padding: var(--ruang-3) var(--ruang-4);
+  border-top: 1px solid var(--garis);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabel thead th {
+  background: var(--permukaan);
+  font-weight: 800;
+}
+
+.kartuTool {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--ruang-2) var(--ruang-4);
+  padding: var(--ruang-5);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kartu);
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.prosa .kartuTool {
+  text-decoration: none;
+}
+
+.kartuTool:hover {
+  transform: translateY(-2px);
+}
+
+.kartuTool strong {
+  display: block;
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  font-weight: 800;
+  line-height: var(--tinggi-judul);
+}
+
+.ajakan {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  font-weight: 700;
+}
+
+.video {
+  width: min(100%, 360px);
+}
+
+.video video {
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+}
+
+.transkrip summary {
+  min-height: var(--sentuh-min);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bacaJuga {
+  font-weight: 700;
+}
