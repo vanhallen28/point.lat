@@ -1,41 +1,48 @@
 import { defineConfig, devices } from '@playwright/test'
+import { config as muatEnv } from 'dotenv'
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
+ * E2E memakai build produksi (`next build` + `next start`) supaya cache ISR, kode status, dan ukuran
+ * JavaScript sama dengan produksi. Database: nama database tes ditambah `_e2e` (dibuat otomatis oleh
+ * Payload), diisi ulang `tests/e2e/siapkan.ts` setiap kali server E2E dinyalakan. Cache data Next
+ * (`.next/cache/fetch-cache`) dihapus sebelum build supaya data dari run sebelumnya tidak terbawa.
  */
-import 'dotenv/config'
+muatEnv({ path: '.env.test' })
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
+const PORT = 3100
+const BASE_URL = `http://localhost:${PORT}`
+
+function urlDatabaseE2E(): string {
+  const url = new URL(process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/pointlat_test')
+  url.pathname = `${url.pathname}_e2e`
+  return url.toString()
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  retries: 0,
+  reporter: 'list',
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    baseURL: BASE_URL,
+    trace: 'retain-on-failure',
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
-    },
-  ],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'pnpm dev',
-    reuseExistingServer: true,
-    url: 'http://localhost:3000',
+    command: 'pnpm payload run tests/e2e/siapkan.ts && rm -rf .next/cache/fetch-cache && pnpm build && pnpm start',
+    url: `${BASE_URL}/robots.txt`,
+    reuseExistingServer: false,
+    timeout: 600_000,
+    env: {
+      PORT: String(PORT),
+      DATABASE_URL: urlDatabaseE2E(),
+      PAYLOAD_SECRET: process.env.PAYLOAD_SECRET ?? '',
+      NEXT_PUBLIC_SITE_URL: BASE_URL,
+      // Kredensial palsu: memenuhi pengaman produksi modul media (Rencana 2) tanpa memanggil
+      // Cloudinary. Server hanya membangun URL gambar; browser tes mencegat res.cloudinary.com.
+      CLOUDINARY_CLOUD_NAME: 'e2e',
+      CLOUDINARY_API_KEY: 'e2e',
+      CLOUDINARY_API_SECRET: 'e2e',
+    },
   },
 })
