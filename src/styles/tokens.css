@@ -1,0 +1,119 @@
+/*
+ * Token desain point. (spesifikasi §4 "Kartu Intinya", §13 Motion).
+ *
+ * Tiga lapis: primitif (nilai mentah dari spesifikasi), semantik (peran di UI), dan komponen
+ * (dipakai di CSS Module). Komponen hanya memakai token semantik supaya mode gelap (Fase 2) cukup
+ * mengganti lapis semantik. Nilai primitif dikunci `tests/unit/token.test.ts`.
+ *
+ * Breakpoint (tidak bisa jadi custom property di media query): 48rem (768px), 64rem (1024px),
+ * 90rem (1440px). Desain dasar untuk 375px.
+ */
+:root {
+  /* Primitif: warna */
+  --ink: #111111;
+  --paper: #ffffff;
+  --sand: #f4f1ec;
+  --muted: #5c5852;
+  --pilar-uang: #1f7a4d;
+  --pilar-tekno: #c2410c;
+  --pilar-belajar: #f2c230;
+  --pilar-sehat: #ff8a80;
+  /* Versi lembut (16% warna pilar di atas putih) untuk latar kotak Intinya. Teks di atasnya ink. */
+  --pilar-uang-lembut: #dbeae3;
+  --pilar-tekno-lembut: #f5e1d8;
+  --pilar-belajar-lembut: #fdf5de;
+  --pilar-sehat-lembut: #ffeceb;
+
+  /* Semantik: warna */
+  --latar: var(--paper);
+  --permukaan: var(--sand);
+  --teks: var(--ink);
+  --teks-sekunder: var(--muted);
+  --garis: var(--ink);
+  --tombol: var(--ink);
+  --tombol-teks: var(--paper);
+  --fokus: var(--ink);
+
+  /* Tipografi: satu keluarga variable (Archivo, sumbu wdth dan wght), di-host sendiri */
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --teks-display: clamp(72px, 14vw, 196px);
+  --teks-h1: clamp(34px, 4.4vw, 58px);
+  --teks-h2: clamp(28px, 2.4vw, 34px);
+  --teks-h3: 22px;
+  --teks-deck: clamp(19px, 1.6vw, 22px);
+  --teks-isi: clamp(16px, 15.2px + 0.4vw, 18px);
+  --teks-kecil: 15px;
+  --teks-label: 13px;
+  --lebar-display: 68%;
+  --lebar-h1: 80%;
+  --lebar-h2: 82%;
+  --lebar-h3: 90%;
+  --lebar-logo: 75%;
+  --tinggi-display: 0.86;
+  --tinggi-h1: 0.98;
+  --tinggi-judul: 1.05;
+  --tinggi-isi: 1.6;
+  --jarak-label: 0.04em;
+  --baris-isi: 68ch;
+
+  /* Spasi: kelipatan 4px */
+  --ruang-1: 4px;
+  --ruang-2: 8px;
+  --ruang-3: 12px;
+  --ruang-4: 16px;
+  --ruang-5: 20px;
+  --ruang-6: 24px;
+  --ruang-8: 32px;
+  --ruang-10: 40px;
+  --ruang-12: 48px;
+  --ruang-14: 56px;
+  --ruang-16: 64px;
+
+  /* Bentuk */
+  --radius-kontrol: 14px;
+  --radius-kartu: 24px;
+  --radius-pil: 999px;
+  --garis-tebal: 2px;
+  --garis-tipis: 1.5px;
+  --sentuh-min: 44px;
+  --fokus-tebal: 2px;
+  --fokus-jarak: 2px;
+
+  /* Tata letak */
+  --lebar-kontainer: 1200px;
+  --gutter: clamp(16px, 4vw, 40px);
+
+  /* Motion: hanya transform dan opacity, tanpa animasi yang berjalan terus */
+  --kurva: cubic-bezier(0.2, 0, 0, 1);
+  --kurva-keluar: cubic-bezier(0.3, 0, 1, 1);
+  --durasi-cepat: 150ms;
+  --durasi-sedang: 250ms;
+  --durasi-halaman: 400ms;
+  --jeda-urut: 40ms;
+  --geser-masuk: 12px;
+}
+
+/* Warna pilar per dokumen: komponen memberi `data-warna` dari field `warna` pilar di CMS. */
+[data-warna='hijau'] {
+  --pilar: var(--pilar-uang);
+  --pilar-lembut: var(--pilar-uang-lembut);
+  --pilar-teks: var(--paper);
+}
+
+[data-warna='oranye'] {
+  --pilar: var(--pilar-tekno);
+  --pilar-lembut: var(--pilar-tekno-lembut);
+  --pilar-teks: var(--paper);
+}
+
+[data-warna='kuning'] {
+  --pilar: var(--pilar-belajar);
+  --pilar-lembut: var(--pilar-belajar-lembut);
+  --pilar-teks: var(--ink);
+}
+
+[data-warna='koral'] {
+  --pilar: var(--pilar-sehat);
+  --pilar-lembut: var(--pilar-sehat-lembut);
+  --pilar-teks: var(--ink);
+}

@@ -1,0 +1,147 @@
+/*
+ * Gaya dasar situs publik: reset ringan, elemen HTML, fokus, skip link, kontainer, dan reduced
+ * motion. Gaya komponen ada di CSS Module masing-masing. Dilarang: gradien biru-ungu, teks
+ * gradien, efek kaca, glow (spesifikasi §4).
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--latar);
+  color: var(--teks);
+  font-family: var(--font-sans);
+  font-size: var(--teks-isi);
+  font-weight: 400;
+  line-height: var(--tinggi-isi);
+  /* Satu file font tanpa versi italic (§12): miring boleh disintesis, tebal sudah dari sumbu wght. */
+  font-synthesis: style;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: var(--garis-tipis);
+  text-underline-offset: 0.18em;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 900;
+  line-height: var(--tinggi-judul);
+  text-wrap: balance;
+}
+
+p,
+ul,
+ol,
+figure,
+blockquote {
+  margin: 0;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Fokus selalu terlihat: ring 2px ink dengan jarak (spesifikasi §14). */
+:focus-visible {
+  outline: var(--fokus-tebal) solid var(--fokus);
+  outline-offset: var(--fokus-jarak);
+}
+
+/* Skip link: tersembunyi sampai mendapat fokus keyboard. */
+.lewati {
+  position: absolute;
+  top: var(--ruang-2);
+  left: var(--ruang-2);
+  z-index: 10;
+  padding: var(--ruang-3) var(--ruang-4);
+  border-radius: var(--radius-kontrol);
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.lewati:focus-visible {
+  transform: none;
+  outline-color: var(--tombol);
+}
+
+/* Teks hanya untuk pembaca layar. */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.kontainer {
+  width: 100%;
+  max-width: var(--lebar-kontainer);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Reduced motion mematikan semua animasi dan View Transitions; konten tetap utuh (spesifikasi §13). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

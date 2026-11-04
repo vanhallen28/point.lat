@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import React from 'react'
 
-import './styles.css'
+import '@/styles/tokens.css'
+import '@/styles/dasar.css'
+
+import { archivo } from './font'
 
 export const metadata: Metadata = {
   title: 'point.',
@@ -10,9 +13,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
+    <html lang="id" className={archivo.variable}>
       <body>
-        <main>{children}</main>
+        <main id="isi">{children}</main>
       </body>
     </html>
   )
