@@ -5,6 +5,7 @@ import { tengahKalimat } from './format'
 import { bacaMasukan, contohMasukan } from './masukan'
 import { buatAturan, ParameterKosong, periksaDokumen, type GalatParameter } from './parameter'
 import type { Rumus } from './rumus'
+import { thr } from './thr'
 import type { DefinisiParameter, Hasil, Kalkulator, Masukan, ParameterTersimpan } from './tipe'
 
 /**
@@ -20,6 +21,7 @@ import type { DefinisiParameter, Hasil, Kalkulator, Masukan, ParameterTersimpan 
 
 const RUMUS: Partial<Record<ToolId, Rumus>> = {
   'gaji-bersih': gajiBersih,
+  thr,
 }
 
 const BELUM_TERSEDIA = 'Kalkulator ini belum tersedia.'
