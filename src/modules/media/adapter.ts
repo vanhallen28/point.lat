@@ -2,7 +2,9 @@ import type { Adapter, GeneratedAdapter } from '@payloadcms/plugin-cloud-storage
 import { APIError } from 'payload'
 
 import type { KlienCloudinary } from './klien'
+import { isKonteksUnggahLangsung } from './tandaTangan'
 import { jenisDariMime, jenisDariPublicId, resourceType, unggah } from './unggah'
+import { asetLangsung, KUNCI_ASET_LANGSUNG } from './unggahLangsung'
 import { urlDokumen } from './url'
 
 export const NAMA_ADAPTER = 'cloudinary'
@@ -22,17 +24,21 @@ type DokumenMedia = {
  * Adapter penyimpanan Cloudinary untuk `@payloadcms/plugin-cloud-storage` (antarmuka
  * `GeneratedAdapter`). Klien disuntikkan lewat fungsi supaya tes memakai klien palsu dan klien
  * sungguhan baru dibuat saat dibutuhkan.
- *
- * Unggahan langsung dari browser tidak lewat `handleUpload`: plugin melewatinya bila file membawa
- * `clientUploadContext`. Metadata unggahan itu diisi hook koleksi (Task 5).
  */
 export function adapterCloudinary({ klien }: { klien: () => KlienCloudinary }): Adapter {
   return (): GeneratedAdapter => ({
     name: NAMA_ADAPTER,
+    clientUploads: true,
+    // Payload memverifikasi receipt dari endpoint tanda tangan sebelum menerima unggahan langsung.
+    requiresClientUploadReceipt: true,
 
     generateURL: ({ data }) => urlDokumen(klien().cloudName, (data ?? {}) as DokumenMedia),
 
     handleUpload: async ({ data, file, req }) => {
+      // Unggahan langsung sudah ada di Cloudinary. Plugin melewatinya, kecuali bila sharp
+      // memproses ulang GIF/WebP dan menghapus konteksnya; aset dari browser tetap dipakai.
+      if (asetLangsung(req.context)) return {}
+
       const doc = data as DokumenMedia
       try {
         const { publicId, meta } = await unggah(klien(), {
@@ -69,8 +75,17 @@ export function adapterCloudinary({ klien }: { klien: () => KlienCloudinary }): 
       }
     },
 
-    /** `/api/media/file/<nama>` diarahkan ke CDN Cloudinary, file tidak pernah dialirkan lewat server. */
-    staticHandler: async (_req, { doc }) => {
+    staticHandler: async (req, { doc, params }) => {
+      // Unggahan langsung: Payload mengambil file untuk memeriksa jenis dan ukurannya sebelum
+      // dokumen dibuat. Aset dicatat di req.context supaya hook tidak memanggil Admin API lagi.
+      if (!doc && isKonteksUnggahLangsung(params.clientUploadContext)) {
+        const { publicId } = params.clientUploadContext
+        const aset = await klien().ambil(publicId, resourceType(jenisDariPublicId(publicId)))
+        if (!aset) return new Response(null, { status: 404 })
+        req.context[KUNCI_ASET_LANGSUNG] = aset
+        return klien().unduh(aset)
+      }
+      // `/api/media/file/<nama>` diarahkan ke CDN Cloudinary, file tidak dialirkan lewat server.
       const publicId = (doc as DokumenMedia | undefined)?.publicId
       if (!publicId) return new Response(null, { status: 404 })
       return Response.redirect(urlDokumen(klien().cloudName, { publicId, jenis: jenisDariPublicId(publicId) }), 302)

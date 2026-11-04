@@ -4,12 +4,14 @@ import { describe, expect, it, vi } from 'vitest'
 import { klienDariEnv } from '@/modules/media'
 import { adapterCloudinary, NAMA_ADAPTER, PESAN_UNGGAH_GAGAL } from '@/modules/media/adapter'
 import { klienPalsu } from '@/modules/media/palsu'
+import { siapkanUnggahan } from '@/modules/media/unggah'
+import { KUNCI_ASET_LANGSUNG } from '@/modules/media/unggahLangsung'
 
 const koleksi = { slug: 'media', fields: [] } as unknown as CollectionConfig
 
 function reqPalsu() {
   const logger = { error: vi.fn(), warn: vi.fn() }
-  return { req: { payload: { logger } } as unknown as PayloadRequest, logger }
+  return { req: { context: {}, payload: { logger } } as unknown as PayloadRequest, logger }
 }
 
 function siapkan() {
@@ -166,5 +168,48 @@ describe('klienDariEnv', () => {
   it('menolak jalan di produksi tanpa kredensial, kecuali saat next build', () => {
     expect(() => klienDariEnv({ NODE_ENV: 'production' })).toThrow(/wajib diisi di produksi/)
     expect(klienDariEnv({ NODE_ENV: 'production', NEXT_PHASE: 'phase-production-build' }).cloudName).toBe('palsu')
+  })
+})
+
+describe('adapterCloudinary untuk unggahan langsung', () => {
+  it('mengaktifkan clientUploads dengan receipt wajib', () => {
+    const { adapter } = siapkan()
+    expect(adapter.clientUploads).toBe(true)
+    expect(adapter.requiresClientUploadReceipt).toBe(true)
+  })
+
+  it('staticHandler mengambil file dari Cloudinary dan mencatat asetnya', async () => {
+    const { klien, adapter } = siapkan()
+    const { req } = reqPalsu()
+    const { field } = siapkanUnggahan(klien, { namaFile: 'a.png', mimeType: 'image/png', waktu: 1 })
+    await klien.unggahDariBrowser(field, { buffer: Buffer.from('png'), mimeType: 'image/png', width: 10, height: 10 })
+
+    const respons = await adapter.staticHandler(req, {
+      params: { collection: 'media', filename: 'a.png', clientUploadContext: { publicId: field.public_id } },
+    })
+    expect(respons.status).toBe(200)
+    expect(await respons.text()).toBe('png')
+    expect(req.context[KUNCI_ASET_LANGSUNG]).toMatchObject({ publicId: field.public_id, width: 10 })
+
+    const hilang = await adapter.staticHandler(req, {
+      params: { collection: 'media', filename: 'b.png', clientUploadContext: { publicId: 'point/gambar/tidak-ada-1' } },
+    })
+    expect(hilang.status).toBe(404)
+  })
+
+  it('handleUpload tidak mengunggah ulang aset yang sudah dikirim browser', async () => {
+    const { klien, adapter } = siapkan()
+    const { req } = reqPalsu()
+    req.context[KUNCI_ASET_LANGSUNG] = { publicId: 'point/gambar/a-1', resourceType: 'image' }
+    const hasil = await adapter.handleUpload({
+      clientUploadContext: undefined,
+      collection: koleksi,
+      data: { filename: 'a.gif', mimeType: 'image/gif' },
+      file: berkas('image/gif', 'a.gif'),
+      req,
+      storageFilePath: 'a.gif',
+    })
+    expect(hasil).toEqual({})
+    expect(klien.aset.size).toBe(0)
   })
 })
