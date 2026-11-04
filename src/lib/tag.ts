@@ -6,6 +6,7 @@
  * - `{koleksi}:{id}`: satu dokumen (halaman artikel, tools, video, penulis, halaman statis).
  * - `pilar:{slug}`: halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`.
  * - `beranda`, `sitemap` (sitemap, news sitemap, RSS), `pengaturan-seo` (robots.txt, metadata situs).
+ * - `header`, `footer`: global tampilan yang dirender layout di setiap halaman publik.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const
@@ -15,6 +16,9 @@ export const TAG = {
   beranda: 'beranda',
   sitemap: 'sitemap',
   pengaturanSeo: 'pengaturan-seo',
+  header: 'header',
+  footer: 'footer',
+  koleksi: (koleksi: KoleksiPublik) => koleksi,
   dokumen: (koleksi: KoleksiPublik, id: number | string) => `${koleksi}:${id}`,
   pilar: (slug: string) => `pilar:${slug}`,
 } as const

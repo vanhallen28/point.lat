@@ -1,0 +1,14 @@
+.logo {
+  font-weight: 900;
+  font-stretch: var(--lebar-logo);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.besar {
+  font-size: 36px;
+}
+
+.kecil {
+  font-size: 30px;
+}

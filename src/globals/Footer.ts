@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { anyone, isAdmin } from '@/access'
+import { revalidasiFooter } from '@/hooks/revalidasiPublik'
 import { validasiUrlOpsional } from '@/lib/validasi'
 
 export const Footer: GlobalConfig = {
@@ -8,6 +9,7 @@ export const Footer: GlobalConfig = {
   label: 'Footer',
   admin: { group: 'Tampilan' },
   access: { read: anyone, update: isAdmin },
+  hooks: { afterChange: [revalidasiFooter] },
   fields: [
     {
       name: 'tautan',

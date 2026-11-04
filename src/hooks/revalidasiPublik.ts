@@ -134,8 +134,17 @@ export function revalidasiPublik(koleksi: KoleksiPublik): {
   return { beforeChange, afterChange, afterDelete }
 }
 
-/** Pengaturan SEO memengaruhi robots.txt, metadata semua halaman, dan URL absolut di sitemap. */
-export const revalidasiPengaturanSeo: GlobalAfterChangeHook = ({ doc }) => {
-  revalidasi([TAG.pengaturanSeo, TAG.sitemap])
-  return doc
+/** Hook global: merevalidasi tag tetap setiap kali global disimpan. */
+export function revalidasiGlobal(tag: string[]): GlobalAfterChangeHook {
+  return ({ doc }) => {
+    revalidasi(tag)
+    return doc
+  }
 }
+
+/** Pengaturan SEO memengaruhi robots.txt, metadata semua halaman, dan URL absolut di sitemap. */
+export const revalidasiPengaturanSeo = revalidasiGlobal([TAG.pengaturanSeo, TAG.sitemap])
+
+/** Header dan footer dirender layout di semua halaman publik. */
+export const revalidasiHeader = revalidasiGlobal([TAG.header])
+export const revalidasiFooter = revalidasiGlobal([TAG.footer])

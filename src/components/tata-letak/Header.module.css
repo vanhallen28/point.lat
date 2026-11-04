@@ -1,0 +1,103 @@
+.header {
+  border-bottom: var(--garis-tebal) solid var(--garis);
+}
+
+/* HP dan tablet: logo dan tombol Tools di baris pertama, pill rubrik bisa digeser di baris kedua. */
+.baris {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'logo tools'
+    'nav nav';
+  align-items: center;
+  gap: var(--ruang-3) var(--ruang-4);
+  padding-block: var(--ruang-4);
+}
+
+.logo {
+  grid-area: logo;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  text-decoration: none;
+}
+
+.nav {
+  grid-area: nav;
+  min-width: 0;
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.daftar {
+  display: flex;
+  gap: var(--ruang-2);
+  width: max-content;
+  padding: var(--ruang-1) 0;
+  list-style: none;
+}
+
+.pil,
+.tools {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  min-height: var(--sentuh-min);
+  padding: 0 var(--ruang-4);
+  border-radius: var(--radius-pil);
+  font-size: var(--teks-kecil);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.pil {
+  border: var(--garis-tipis) solid var(--garis);
+}
+
+.titik {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pilar);
+  box-shadow: inset 0 0 0 1px var(--garis);
+}
+
+.tools {
+  grid-area: tools;
+  padding-inline: 18px;
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+}
+
+.pil:hover,
+.tools:hover {
+  text-decoration: underline;
+}
+
+.pil:active,
+.tools:active {
+  transform: scale(0.97);
+}
+
+@media (min-width: 64rem) {
+  .baris {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'logo nav tools';
+    padding-block: var(--ruang-5);
+  }
+
+  .nav {
+    justify-self: end;
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+}

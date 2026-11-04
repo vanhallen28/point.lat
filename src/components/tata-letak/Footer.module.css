@@ -1,0 +1,59 @@
+.footer {
+  margin-top: var(--ruang-16);
+  border-top: var(--garis-tebal) solid var(--garis);
+}
+
+.isi {
+  display: grid;
+  gap: var(--ruang-6);
+  padding-block: var(--ruang-8) var(--ruang-10);
+  font-size: var(--teks-kecil);
+}
+
+.merek {
+  display: grid;
+  gap: var(--ruang-1);
+}
+
+.tagline {
+  color: var(--teks-sekunder);
+}
+
+.daftar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--ruang-5);
+  list-style: none;
+  padding: 0;
+}
+
+.daftar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  text-decoration: none;
+}
+
+.daftar a:hover {
+  text-decoration: underline;
+}
+
+.hakCipta {
+  color: var(--teks-sekunder);
+}
+
+@media (min-width: 64rem) {
+  .isi {
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    column-gap: var(--ruang-10);
+  }
+
+  .tautan {
+    justify-self: center;
+  }
+
+  .hakCipta {
+    grid-column: 1 / -1;
+  }
+}

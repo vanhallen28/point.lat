@@ -9,6 +9,11 @@ describe('TAG', () => {
     expect(TAG.pilar('uang-karier')).toBe('pilar:uang-karier')
     expect([TAG.beranda, TAG.sitemap, TAG.pengaturanSeo]).toEqual(['beranda', 'sitemap', 'pengaturan-seo'])
   })
+
+  it('tag tampilan dan tag koleksi untuk data halaman publik', () => {
+    expect([TAG.header, TAG.footer]).toEqual(['header', 'footer'])
+    expect(TAG.koleksi('penulis')).toBe('penulis')
+  })
 })
 
 describe('tagRevalidasi', () => {

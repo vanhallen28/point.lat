@@ -1,12 +1,14 @@
 import type { GlobalConfig } from 'payload'
 
 import { anyone, isAdmin } from '@/access'
+import { revalidasiHeader } from '@/hooks/revalidasiPublik'
 
 export const Header: GlobalConfig = {
   slug: 'header',
   label: 'Header',
   admin: { group: 'Tampilan' },
   access: { read: anyone, update: isAdmin },
+  hooks: { afterChange: [revalidasiHeader] },
   fields: [
     {
       name: 'menu',
