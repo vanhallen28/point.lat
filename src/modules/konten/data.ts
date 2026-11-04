@@ -4,6 +4,7 @@ import type { Artikel } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
 
 import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
+import { MAKS_TERBARU_BERANDA, MAKS_VIDEO_BERANDA, susunBeranda, susunNewsletter } from './beranda'
 import { kataKueri, MAKS_HASIL_CARI, urutkanHasil } from './cari'
 import { kelompokkanIstilah } from './glosarium'
 import { susunHalaman } from './halaman'
@@ -15,6 +16,7 @@ import { susunFooter, susunHeader } from './tampilan'
 import { kelompokkanTools } from './tools'
 import { kartuVideo, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 import type {
+  BagianBeranda,
   DataArtikel,
   DataFooter,
   DataHalaman,
@@ -305,4 +307,27 @@ export async function cariArtikel(payload: Payload, kueri: string): Promise<Kart
     populate: { pilar: POPULATE_ARTIKEL.pilar },
   })
   return urutkanHasil(kueri, docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null))
+}
+
+/** Relasi blok beranda (depth 2): kartu artikel dengan pilarnya, video dengan file dan posternya. */
+const POPULATE_BERANDA = {
+  artikel: POPULATE_ARTIKEL.artikel,
+  video: { judul: true, slug: true, durasiDetik: true, pilar: true, file: true, poster: true, _status: true },
+  pilar: POPULATE_ARTIKEL.pilar,
+  media: POPULATE_VIDEO.media,
+} as const
+
+/**
+ * Beranda: blok global `beranda` (versi yang tersimpan tanpa draf) ditambah data yang tidak disimpan
+ * di global itu: tulisan terbaru, video terbaru (cadangan strip video), tools terbit, dan newsletter.
+ */
+export async function ambilBeranda(payload: Payload): Promise<BagianBeranda[]> {
+  const beranda = await payload.findGlobal({ slug: 'beranda', depth: 2, populate: POPULATE_BERANDA })
+  const newsletter = await payload.findGlobal({ slug: 'newsletter', depth: 0 })
+  return susunBeranda(beranda.tataLetak ?? [], {
+    terbaru: await kartuTerbit(payload, [], MAKS_TERBARU_BERANDA),
+    video: await kartuVideoTerbit(payload, [], MAKS_VIDEO_BERANDA),
+    tools: (await ambilTools(payload)).flatMap((k) => k.tools),
+    newsletter: susunNewsletter(newsletter),
+  })
 }

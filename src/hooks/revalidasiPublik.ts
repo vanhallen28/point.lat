@@ -162,6 +162,15 @@ export function revalidasiGlobal(tag: string[]): GlobalAfterChangeHook {
 /** Pengaturan SEO memengaruhi robots.txt, metadata semua halaman, dan URL absolut di sitemap. */
 export const revalidasiPengaturanSeo = revalidasiGlobal([TAG.pengaturanSeo, TAG.sitemap])
 
+/**
+ * Beranda dirender dari global `beranda`; `lastmod` beranda di sitemap halaman ikut tanggal global itu.
+ * Menyimpan draf global juga memicu ini, dan itu murah: beranda hanya dirender ulang sekali.
+ */
+export const revalidasiBeranda = revalidasiGlobal([TAG.beranda, TAG.sitemap])
+
+/** Blok newsletter beranda membaca global `newsletter`. */
+export const revalidasiNewsletter = revalidasiGlobal([TAG.beranda])
+
 /** Header dan footer dirender layout di semua halaman publik. */
 export const revalidasiHeader = revalidasiGlobal([TAG.header])
 export const revalidasiFooter = revalidasiGlobal([TAG.footer])

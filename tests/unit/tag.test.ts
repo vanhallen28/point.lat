@@ -31,7 +31,10 @@ describe('tagRevalidasi', () => {
   it('koleksi yang tidak tampil di beranda tidak merevalidasi beranda', () => {
     expect(tagRevalidasi('penulis', { id: 3 })).toEqual(['penulis', 'penulis:3', 'sitemap'])
     expect(tagRevalidasi('halaman', { id: 4 })).toEqual(['halaman', 'halaman:4', 'sitemap'])
-    expect(tagRevalidasi('tools', { id: 5 }, ['uang-karier'])).toEqual(['tools', 'tools:5', 'pilar:uang-karier', 'sitemap'])
+  })
+
+  it('tools tampil di kotak "Hitung sendiri" beranda', () => {
+    expect(tagRevalidasi('tools', { id: 5 }, ['uang-karier'])).toEqual(['tools', 'tools:5', 'pilar:uang-karier', 'beranda', 'sitemap'])
   })
 })
 

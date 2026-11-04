@@ -27,8 +27,8 @@ export const TAG = {
   pilar: (slug: string) => `pilar:${slug}`,
 } as const
 
-/** Koleksi yang tampil di beranda (mozaik artikel, strip video, menu pilar). */
-const DI_BERANDA: ReadonlySet<KoleksiPublik> = new Set(['artikel', 'pilar', 'video'])
+/** Koleksi yang tampil di beranda (mozaik dan tulisan terbaru, strip video, warna pilar, kotak "Hitung sendiri"). */
+const DI_BERANDA: ReadonlySet<KoleksiPublik> = new Set(['artikel', 'pilar', 'video', 'tools'])
 
 export type DokumenTag = { id: number | string; slug?: string | null }
 

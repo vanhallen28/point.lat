@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { anyone, isAdmin } from '@/access'
+import { revalidasiNewsletter } from '@/hooks/revalidasiPublik'
 import { validasiUrlOpsional } from '@/lib/validasi'
 
 export const Newsletter: GlobalConfig = {
@@ -8,6 +9,7 @@ export const Newsletter: GlobalConfig = {
   label: 'Newsletter',
   admin: { group: 'Tampilan' },
   access: { read: anyone, update: isAdmin },
+  hooks: { afterChange: [revalidasiNewsletter] },
   fields: [
     { name: 'aktif', type: 'checkbox', defaultValue: false },
     {

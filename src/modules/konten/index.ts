@@ -10,6 +10,7 @@
  */
 export {
   muatArtikel,
+  muatBeranda,
   muatCari,
   muatDaftarVideo,
   muatFooter,
@@ -27,6 +28,7 @@ export {
 } from './cache'
 export {
   ambilArtikel,
+  ambilBeranda,
   ambilDaftarVideo,
   ambilFooter,
   ambilGlosarium,
@@ -41,6 +43,17 @@ export {
   cariRedirect,
 } from './data'
 export { kataKueri, MAKS_HASIL_CARI, MAKS_KATA, MAKS_KUERI, rapikanKueri, urutkanHasil } from './cari'
+export {
+  HERO_BAWAAN,
+  JUDUL_TERBARU,
+  JUDUL_VIDEO_BAWAAN,
+  JUMLAH_TERBARU_BAWAAN,
+  MAKS_TERBARU_BERANDA,
+  MAKS_VIDEO_BERANDA,
+  susunBeranda,
+  susunNewsletter,
+  type SumberBeranda,
+} from './beranda'
 export { itemTools, kelompokkanTools } from './tools'
 export { kartuVideo, labelDurasi, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 export { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'

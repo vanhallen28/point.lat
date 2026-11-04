@@ -106,11 +106,23 @@ async function ambilEntriSubkategori(payload: Payload, situs: Pick<PengaturanSit
 }
 
 /**
- * Halaman indeks tanpa dokumen sendiri ikut sitemap halaman bila ada isinya, dengan `lastmod` isi
- * terbarunya: `/glosarium` (istilah, `diperbaruiBesar ?? terbitPada` seperti artikel), `/tools` dan
- * `/video` (`updatedAt`, koleksi itu tidak punya tanggal terbit).
+ * Halaman indeks tanpa dokumen sendiri ikut sitemap halaman. Beranda `/` selalu ada, dengan `lastmod`
+ * terbaru dari global `beranda` dan artikel yang terakhir terbit (beranda menampilkan tulisan
+ * terbaru). Indeks lain hanya bila ada isinya, dengan `lastmod` isi terbarunya: `/glosarium`
+ * (istilah, `diperbaruiBesar ?? terbitPada` seperti artikel), `/tools` dan `/video` (`updatedAt`,
+ * koleksi itu tidak punya tanggal terbit).
  */
 async function ambilEntriIndeks(payload: Payload, situs: Pick<PengaturanSitus, 'urlSitus'>): Promise<EntriSitemap[]> {
+  const beranda = await payload.findGlobal({ slug: 'beranda', depth: 0, select: { updatedAt: true } })
+  const artikelBaru = await payload.find({
+    collection: 'artikel',
+    where: syaratSitemap('artikel'),
+    sort: '-terbitPada',
+    depth: 0,
+    limit: 1,
+    pagination: false,
+    select: { terbitPada: true },
+  })
   const istilah = await payload.find({
     collection: 'artikel',
     where: { and: [syaratSitemap('artikel'), { tipe: { equals: 'glosarium' } }] },
@@ -140,9 +152,12 @@ async function ambilEntriIndeks(payload: Payload, situs: Pick<PengaturanSitus, '
     [PATH_INDEKS.tools, tools.docs.map((d) => d.updatedAt)],
     [PATH_INDEKS.video, video.docs.map((d) => d.updatedAt)],
   ]
-  return indeks
-    .filter(([, tanggal]) => tanggal.length > 0)
-    .map(([path, tanggal]) => ({ loc: new URL(path, situs.urlSitus).toString(), lastmod: terbaru(tanggal) }))
+  return [
+    { loc: new URL('/', situs.urlSitus).toString(), lastmod: terbaru([beranda.updatedAt, ...artikelBaru.docs.map((d) => d.terbitPada)]) },
+    ...indeks
+      .filter(([, tanggal]) => tanggal.length > 0)
+      .map(([path, tanggal]) => ({ loc: new URL(path, situs.urlSitus).toString(), lastmod: terbaru(tanggal) })),
+  ]
 }
 
 /** Isi sitemap index: semua jenis, `lastmod` = entri terbaru jenis itu. Jenis kosong tetap dicantumkan. */

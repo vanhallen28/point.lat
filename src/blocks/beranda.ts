@@ -27,6 +27,13 @@ export const BlokMozaikPilihan: Block = {
       maxRows: 5,
       admin: { description: 'Urutan pertama tampil paling besar.' },
     },
+    {
+      name: 'tampilkanTools',
+      type: 'checkbox',
+      label: 'Tampilkan kotak "Hitung sendiri"',
+      defaultValue: true,
+      admin: { description: 'Daftar kalkulator terbit di baris kedua mozaik.' },
+    },
   ],
 }
 
@@ -45,7 +52,12 @@ export const BlokPalingDibaca: Block = {
   interfaceName: 'BlokPalingDibaca',
   labels: { singular: 'Paling dibaca', plural: 'Paling dibaca' },
   fields: [
-    { name: 'judul', type: 'text', defaultValue: 'Paling dibaca pekan ini' },
+    {
+      name: 'judul',
+      type: 'text',
+      defaultValue: 'Paling dibaca pekan ini',
+      admin: { description: 'Sementara data pembaca belum tersedia, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".' },
+    },
     { name: 'jumlah', type: 'number', defaultValue: 4, min: 1, max: 10 },
   ],
 }

@@ -7,6 +7,7 @@ import { ambilSitus } from '@/modules/seo/situs'
 
 import {
   ambilArtikel,
+  ambilBeranda,
   ambilDaftarVideo,
   ambilFooter,
   ambilGlosarium,
@@ -133,5 +134,14 @@ export const muatTools = unstable_cache(async () => ambilTools(await payload()),
 /** Hasil `/cari` per kueri (sudah dirapikan `rapikanKueri`), dibuang saat artikel atau pilar berubah. */
 export const muatCari = unstable_cache(async (kueri: string) => cariArtikel(await payload(), kueri), ['konten', 'cari'], {
   tags: [TAG.koleksi('artikel'), TAG.koleksi('pilar')],
+  revalidate: SEJAM,
+})
+
+/**
+ * Beranda. Tag `beranda` dibuang saat global beranda atau newsletter disimpan dan saat artikel, pilar,
+ * video, atau tools terbit (`tagRevalidasi`); `media` untuk poster video.
+ */
+export const muatBeranda = unstable_cache(async () => ambilBeranda(await payload()), ['konten', 'beranda'], {
+  tags: [TAG.beranda, TAG.media],
   revalidate: SEJAM,
 })

@@ -125,3 +125,14 @@ export type ItemTools = { id: number; nama: string; href: string; ringkasan: str
 
 /** Kalkulator per pilar di `/tools`, urut sesuai urutan pilar di CMS. */
 export type KelompokTools = { pilar: PilarRingkas; tools: ItemTools[] }
+
+/** Ajakan newsletter: pendaftaran di form penyedia (global `newsletter`), bukan di point. */
+export type DataNewsletter = { judul: string; teks: string | null; href: string }
+
+/** Bagian beranda siap render, urut sesuai global `beranda`. `id` dari blok Payload. */
+export type BagianBeranda =
+  | { jenis: 'hero'; id: string; judul: string; subjudul: string | null; placeholder: string }
+  | { jenis: 'mozaik'; id: string; judul: string | null; artikel: KartuArtikel[]; tools: ItemTools[] }
+  | { jenis: 'video'; id: string; judul: string; video: KartuVideo[] }
+  | { jenis: 'terbaru'; id: string; judul: string; artikel: KartuArtikel[]; newsletter: DataNewsletter | null }
+  | { jenis: 'newsletter'; id: string; newsletter: DataNewsletter }

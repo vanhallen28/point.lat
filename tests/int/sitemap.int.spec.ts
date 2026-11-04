@@ -76,6 +76,15 @@ describe('data rute teknis dari Payload', () => {
     expect(index[0].lastmod).toBeTruthy()
   })
 
+  it('sitemap halaman selalu dimulai dengan beranda; lastmod ikut artikel yang terakhir terbit', async () => {
+    const payload = await getTestPayload()
+    const relasi = await siapkanRelasiArtikel(payload)
+    const baru = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
+    const [beranda] = await ambilEntriSitemap(payload, 'halaman', situs)
+    expect(beranda.loc).toBe(url('/'))
+    expect(new Date(beranda.lastmod as string).getTime()).toBeGreaterThanOrEqual(new Date(terbaru([baru.terbitPada]) as string).getTime())
+  })
+
   it('sitemap halaman memuat indeks /glosarium dengan lastmod istilah terbaru', async () => {
     const payload = await getTestPayload()
     const relasi = await siapkanRelasiArtikel(payload)

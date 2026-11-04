@@ -1539,6 +1539,10 @@ export interface BlokMozaikPilihan {
    * Urutan pertama tampil paling besar.
    */
   artikel: (number | Artikel)[];
+  /**
+   * Daftar kalkulator terbit di baris kedua mozaik.
+   */
+  tampilkanTools?: boolean | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'mozaikPilihan';
@@ -1559,6 +1563,9 @@ export interface BlokStripVideo {
  * via the `definition` "BlokPalingDibaca".
  */
 export interface BlokPalingDibaca {
+  /**
+   * Sementara data pembaca belum tersedia, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".
+   */
   judul?: string | null;
   jumlah?: number | null;
   id?: string | null;
@@ -1724,6 +1731,7 @@ export interface BlokHeroBerandaSelect<T extends boolean = true> {
 export interface BlokMozaikPilihanSelect<T extends boolean = true> {
   judul?: T;
   artikel?: T;
+  tampilkanTools?: T;
   id?: T;
   blockName?: T;
 }
