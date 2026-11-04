@@ -106,7 +106,7 @@ Archivo (variable, sumbu `wdth` 62-125 dan `wght` 400-900), di-host sendiri dan 
 ### Pola tata letak
 
 - Header: logo `point.` + pill rubrik dengan titik warna pilar + tombol Tools hitam.
-- Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dibaca pekan ini"; slot iklan; newsletter; footer.
+- Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dibaca pekan ini" (sampai data kunjungan ada di Rencana 6, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru", keputusan pemilik 2026-11-05); slot iklan; newsletter; footer.
 - Halaman artikel: kicker pilar, H1, deck, byline + diperbarui + waktu baca, kotak Intinya (latar warna pilar versi lembut atau sand, label "Intinya"), daftar isi, isi, blok sumber, FAQ, artikel terkait, profil penulis.
 - Halaman tools: kalkulator di atas lipatan, hasil besar, lalu artikel penjelasan rumus.
 - Radius 14px (kontrol), 24px (kartu). Target sentuh minimal 44px. Spasi kelipatan 4px.
@@ -176,7 +176,7 @@ point-lat/
 | `subkategori` | nama, slug, pilar induk, deskripsi |
 | `tools` | nama, slug, pilar, kalkulator (`toolId` yang dipetakan ke modul `hitung`), label & bantuan input, artikel penjelasan (blok), FAQ, sumber aturan, SEO |
 | `parameterTools` | `toolId`, kunci (mis. PTKP TK/0), nilai, berlaku mulai, berlaku sampai, sumber |
-| `video` | judul, slug, media Cloudinary (9:16), poster, transkrip, durasi, artikel induk, pilar, SEO |
+| `video` | judul, slug, media Cloudinary (9:16), poster, transkrip, takarir WebVTT (opsional, dilayani `/video/{slug}/takarir.vtt`), durasi, artikel induk, pilar, SEO |
 | `penulis` | nama, slug, foto, bio, keahlian, tautan (LinkedIn dsb.), artikel |
 | `halaman` | judul, slug, page builder (blok: hero, teks, kartu, CTA, FAQ, embed tool), SEO |
 | `media` | publicId Cloudinary, jenis, lebar, tinggi, durasi, alt (wajib untuk gambar), caption, kredit |
@@ -307,7 +307,7 @@ Pengaman:
 | LCP | < 2,5 dtk (uji lab HP, 4G lambat) |
 | INP | < 200 ms |
 | CLS | < 0,1 |
-| JS klien halaman artikel | Total < 160 KiB gzip, dan JS milik point. di luar kerangka Next/React < 25 KB (tanpa skrip iklan). Diubah pemilik 2026-11-04 dari < 70 KB, karena kerangka Next 16 + React 19 saja sudah 139,5 KB. Dijaga tes E2E `motion.spec.ts`. |
+| JS klien setiap jenis halaman | Total < 160 KiB gzip, beranda tidak melebihi artikel, dan JS milik point. di luar kerangka Next/React < 25 KB (tanpa skrip iklan). Diubah pemilik 2026-11-04 dari < 70 KB, karena kerangka Next 16 + React 19 saja sudah 139,5 KB. Dijaga tes E2E `motion.spec.ts`. |
 | Font | 1 file variable Archivo subset, `font-display: swap`, preload satu file |
 | Gambar hero | prioritas tinggi, ukuran tepat, AVIF/WebP |
 
@@ -319,7 +319,8 @@ Lighthouse CI menolak build bila skor Performance HP < 90 di halaman contoh (ber
 - Durasi: 150 ms (hover, tekan), 250 ms (kartu, panel), 400 ms (perpindahan halaman).
 - Masuk kartu: naik 12px + opacity, berurutan 40 ms, total < 300 ms, hanya sekali saat pertama terlihat.
 - Perpindahan halaman: View Transitions API (CSS), elemen bersama untuk kartu → judul artikel.
-- GSAP hanya untuk: reveal judul raksasa beranda dan angka hasil kalkulator. Dimuat dinamis hanya di dua halaman itu.
+- Reveal judul raksasa beranda: animasi CSS per kata (naik 0,3em + opacity, 400 ms, berurutan 80 ms), tanpa JavaScript, judul tampil di paint pertama. Diubah pemilik 2026-11-05 dari GSAP, karena GSAP membuat JS beranda 168,6 KiB (di atas anggaran §12) dan membuat judul menunggu skrip atau berkedip.
+- Angka hasil kalkulator: GSAP atau CSS diputuskan di Rencana 5 dengan anggaran §12 yang sama.
 - Tidak ada animasi berjalan terus (ambient). Hanya `transform` dan `opacity`.
 - `prefers-reduced-motion: reduce` mematikan semua animasi dan View Transitions; konten tetap utuh.
 
