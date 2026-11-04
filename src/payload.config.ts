@@ -22,6 +22,8 @@ import { Footer } from './globals/Footer'
 import { Header } from './globals/Header'
 import { Newsletter } from './globals/Newsletter'
 import { PengaturanSEO } from './globals/PengaturanSEO'
+import { klienMedia } from './modules/media'
+import { mediaCloudinary } from './modules/media/plugin'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -53,5 +55,5 @@ export default buildConfig({
     pool: { connectionString: process.env.DATABASE_URL || '' },
   }),
   sharp,
-  plugins: [],
+  plugins: [mediaCloudinary({ klien: klienMedia })],
 })

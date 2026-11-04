@@ -14,6 +14,22 @@ export async function gambarPng(lebar: number, tinggi: number) {
   return { data, mimetype: 'image/png', name: `${unik('tes')}.png`, size: data.length }
 }
 
+/**
+ * MP4 terkecil yang lolos pemeriksaan Payload (kotak `ftyp` lalu `free`). Isinya tidak diputar:
+ * klien palsu tidak mentranskode, cukup jenis file yang benar.
+ */
+export function videoMp4() {
+  const data = Buffer.concat([
+    Buffer.from([0, 0, 0, 24]),
+    Buffer.from('ftypisom'),
+    Buffer.from([0, 0, 2, 0]),
+    Buffer.from('isommp41'),
+    Buffer.from([0, 0, 0, 8]),
+    Buffer.from('free'),
+  ])
+  return { data, mimetype: 'video/mp4', name: `${unik('video')}.mp4`, size: data.length }
+}
+
 export async function buatGambar(payload: Payload, lebar = 1600, tinggi = 900) {
   return payload.create({
     collection: 'media',

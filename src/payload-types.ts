@@ -200,6 +200,10 @@ export interface Media {
    * Contoh: Foto: Nama Fotografer / Sumber
    */
   kredit?: string | null;
+  publicId?: string | null;
+  jenis?: ('gambar' | 'video') | null;
+  durasi?: number | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -991,6 +995,10 @@ export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
   kredit?: T;
+  publicId?: T;
+  jenis?: T;
+  durasi?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
