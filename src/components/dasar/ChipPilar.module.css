@@ -1,0 +1,14 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: var(--ruang-1) var(--ruang-3);
+  border-radius: var(--radius-pil);
+  background: var(--pilar);
+  color: var(--pilar-teks);
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  line-height: 1.2;
+  text-transform: uppercase;
+}

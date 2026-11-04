@@ -1,0 +1,59 @@
+.daftar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--ruang-4);
+  padding: 0;
+  list-style: none;
+}
+
+.kartu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-3);
+  height: 100%;
+  min-height: 220px;
+  padding: 26px;
+  border-radius: var(--radius-kartu);
+  background: var(--pilar, var(--permukaan));
+  color: var(--pilar-teks, var(--teks));
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.kartu:hover {
+  transform: translateY(-2px);
+}
+
+.kartu:active {
+  transform: scale(0.99);
+}
+
+.label {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.judul {
+  font-size: 26px;
+  font-weight: 800;
+  font-stretch: 85%;
+  line-height: var(--tinggi-judul);
+}
+
+.kartu:hover .judul {
+  text-decoration: underline;
+  text-decoration-thickness: var(--garis-tebal);
+}
+
+.intinya {
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.tipe {
+  margin-top: auto;
+  font-size: var(--teks-kecil);
+  font-weight: 600;
+}

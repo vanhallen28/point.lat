@@ -1,0 +1,40 @@
+.remah ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--ruang-1);
+  padding: 0;
+  list-style: none;
+  font-size: var(--teks-kecil);
+}
+
+.remah li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-1);
+  min-width: 0;
+}
+
+.remah a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  text-decoration: none;
+}
+
+.remah a:hover {
+  text-decoration: underline;
+}
+
+.remah svg {
+  flex: none;
+  color: var(--teks-sekunder);
+}
+
+.sekarang {
+  color: var(--teks-sekunder);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 32ch;
+}
