@@ -107,8 +107,8 @@ async function ambilEntriSubkategori(payload: Payload, situs: Pick<PengaturanSit
 
 /**
  * Halaman indeks tanpa dokumen sendiri ikut sitemap halaman bila ada isinya, dengan `lastmod` isi
- * terbarunya: `/glosarium` (istilah, `diperbaruiBesar ?? terbitPada` seperti artikel) dan `/video`
- * (`updatedAt` video, koleksi itu tidak punya tanggal terbit).
+ * terbarunya: `/glosarium` (istilah, `diperbaruiBesar ?? terbitPada` seperti artikel), `/tools` dan
+ * `/video` (`updatedAt`, koleksi itu tidak punya tanggal terbit).
  */
 async function ambilEntriIndeks(payload: Payload, situs: Pick<PengaturanSitus, 'urlSitus'>): Promise<EntriSitemap[]> {
   const istilah = await payload.find({
@@ -118,6 +118,14 @@ async function ambilEntriIndeks(payload: Payload, situs: Pick<PengaturanSitus, '
     limit: MAKS_URL_SITEMAP,
     pagination: false,
     select: { terbitPada: true, diperbaruiBesar: true },
+  })
+  const tools = await payload.find({
+    collection: 'tools',
+    where: syaratSitemap('tools'),
+    depth: 0,
+    limit: MAKS_URL_SITEMAP,
+    pagination: false,
+    select: { updatedAt: true },
   })
   const video = await payload.find({
     collection: 'video',
@@ -129,6 +137,7 @@ async function ambilEntriIndeks(payload: Payload, situs: Pick<PengaturanSitus, '
   })
   const indeks: [string, (string | null | undefined)[]][] = [
     [PATH_INDEKS.glosarium, istilah.docs.map((d) => d.diperbaruiBesar ?? d.terbitPada)],
+    [PATH_INDEKS.tools, tools.docs.map((d) => d.updatedAt)],
     [PATH_INDEKS.video, video.docs.map((d) => d.updatedAt)],
   ]
   return indeks

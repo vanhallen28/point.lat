@@ -17,7 +17,7 @@ import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_HALAMAN,
 pakaiKlien(klienPalsu('e2e'))
 const payload = await getPayload({ config })
 
-for (const koleksi of ['artikel', 'video', 'subkategori', 'redirect', 'log-404', 'media'] as const) {
+for (const koleksi of ['artikel', 'tools', 'video', 'subkategori', 'redirect', 'log-404', 'media'] as const) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
 }
 await seed(payload, { emailAdmin: ADMIN_E2E.email, passwordAdmin: ADMIN_E2E.password })
@@ -204,6 +204,20 @@ const danaDarurat = await payload.create({
   },
 })
 await payload.update({ collection: 'artikel', id: danaDarurat.id, data: { _status: 'published', slug: SLUG.danaDarurat } })
+
+// Kalkulator: tiga terbit di dua pilar, satu draf. Halaman `/tools/{slug}` dibangun di Rencana 5.
+for (const [toolId, nama, slugPilar, status] of [
+  ['gaji-bersih', 'Gaji Bersih', 'uang-karier', 'published'],
+  ['thr', 'THR', 'uang-karier', 'published'],
+  ['bmi-kalori', 'BMI & Kalori', 'sehat', 'published'],
+  ['ipk', 'IPK', 'belajar', 'draft'],
+] as const) {
+  await payload.create({
+    collection: 'tools',
+    draft: status === 'draft',
+    data: { _status: status, nama, slug: toolId, toolId, pilar: pilar[slugPilar], ringkasan: `Hitung ${nama} dengan rumus dan sumber aturan resmi.` },
+  })
+}
 
 // Halaman statis dari seed (draf) diterbitkan dengan blok page builder.
 async function terbitkanHalaman(slug: string, tataLetak: NonNullable<Halaman['tataLetak']>) {

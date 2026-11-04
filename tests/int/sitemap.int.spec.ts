@@ -84,6 +84,19 @@ describe('data rute teknis dari Payload', () => {
     expect(entri?.lastmod).toBe(terbaru([istilah.terbitPada]))
   })
 
+  it('sitemap halaman memuat indeks /tools bila ada kalkulator terbit', async () => {
+    const payload = await getTestPayload()
+    const pilar = await payload.create({ collection: 'pilar', data: { nama: unik('Sehat'), warna: 'koral', deskripsi: 'Sehat.' } })
+    await payload.delete({ collection: 'tools', where: { toolId: { equals: 'bmi-kalori' } } })
+    const tool = await payload.create({
+      collection: 'tools',
+      data: { _status: 'published', nama: unik('BMI'), toolId: 'bmi-kalori', pilar: pilar.id, ringkasan: 'Hitung BMI.' },
+    })
+    const entri = (await ambilEntriSitemap(payload, 'halaman', situs)).find((e) => e.loc === url('/tools'))
+    expect(entri?.lastmod).toBeTruthy()
+    await payload.delete({ collection: 'tools', id: tool.id })
+  })
+
   it('sitemap halaman memuat indeks /video dengan lastmod video terbaru', async () => {
     const payload = await getTestPayload()
     const relasi = await siapkanRelasiArtikel(payload)

@@ -119,3 +119,9 @@ export type VideoUntukSemat = Pick<Video, 'judul' | 'file' | 'poster' | 'transkr
 
 /** Halaman `/video/{slug}`: video, artikel induknya (yang `videoTerkait`-nya video ini), dan video lain. */
 export type DataVideo = KartuVideo & { semat: VideoUntukSemat; induk: KartuArtikel | null; lain: KartuVideo[]; seo: VideoSeo }
+
+/** Satu kalkulator di indeks `/tools` dan kotak "Hitung sendiri" beranda. */
+export type ItemTools = { id: number; nama: string; href: string; ringkasan: string }
+
+/** Kalkulator per pilar di `/tools`, urut sesuai urutan pilar di CMS. */
+export type KelompokTools = { pilar: PilarRingkas; tools: ItemTools[] }

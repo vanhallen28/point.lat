@@ -1,9 +1,9 @@
 import type { Footer, Header } from '@/payload-types'
-import { pathFor } from '@/lib/paths'
+import { PATH_INDEKS, pathFor } from '@/lib/paths'
 
 import type { DataFooter, DataHeader, ItemMenu, Tautan } from './tipe'
 
-export const TOOLS_BAWAAN: Tautan = { label: 'Tools', href: '/tools' }
+export const TOOLS_BAWAAN: Tautan = { label: 'Tools', href: PATH_INDEKS.tools }
 export const HAK_CIPTA_BAWAAN = '© 2026 point.lat'
 
 /** Nama platform sosial seperti ditulis pemiliknya. */

@@ -1,0 +1,100 @@
+/* Indeks tools: kalkulator per pilar, kartu bergaris seperti kotak "Hitung sendiri" di mockup. */
+.halaman {
+  display: grid;
+  gap: var(--ruang-10);
+  padding-top: var(--ruang-4);
+}
+
+.kepala {
+  display: grid;
+  gap: var(--ruang-4);
+  max-width: 880px;
+}
+
+.judul {
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.deck {
+  max-width: 60ch;
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.kelompok {
+  display: grid;
+  gap: var(--ruang-4);
+}
+
+.subjudul {
+  display: flex;
+  align-items: center;
+  gap: var(--ruang-3);
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.titik {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pilar);
+  box-shadow: inset 0 0 0 1px var(--garis);
+}
+
+.daftar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--ruang-4);
+  padding: 0;
+  list-style: none;
+}
+
+.kartu {
+  display: grid;
+  align-content: start;
+  gap: var(--ruang-3);
+  height: 100%;
+  padding: var(--ruang-6);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kartu);
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.kartu:hover {
+  transform: translateY(-2px);
+}
+
+.kartu:hover .nama {
+  text-decoration: underline;
+}
+
+.kartu:active {
+  transform: scale(0.99);
+}
+
+.nama {
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  font-weight: 800;
+}
+
+.ajakan {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  margin-top: var(--ruang-2);
+  font-weight: 700;
+}
+
+.kosong {
+  max-width: 60ch;
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}

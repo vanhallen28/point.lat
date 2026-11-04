@@ -11,6 +11,7 @@ import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
 import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
+import { kelompokkanTools } from './tools'
 import { kartuVideo, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 import type {
   DataArtikel,
@@ -23,6 +24,7 @@ import type {
   KartuArtikel,
   KartuVideo,
   KelompokIstilah,
+  KelompokTools,
 } from './tipe'
 
 /**
@@ -264,4 +266,18 @@ export async function ambilVideo(payload: Payload, slug: string): Promise<DataVi
   if (!doc) return null
   const [induk] = await kartuTerbit(payload, [{ videoTerkait: { equals: doc.id } }], 1)
   return susunVideo(doc, induk ?? null, await kartuVideoTerbit(payload, [{ id: { not_equals: doc.id } }], MAKS_VIDEO_LAIN))
+}
+
+/** Semua tools terbit untuk `/tools`, dikelompokkan per pilar. */
+export async function ambilTools(payload: Payload): Promise<KelompokTools[]> {
+  const { docs } = await payload.find({
+    collection: 'tools',
+    where: terbit,
+    depth: 1,
+    limit: 100,
+    pagination: false,
+    select: { nama: true, slug: true, ringkasan: true, pilar: true },
+    populate: { pilar: { ...POPULATE_ARTIKEL.pilar, urutan: true } },
+  })
+  return kelompokkanTools(docs)
 }
