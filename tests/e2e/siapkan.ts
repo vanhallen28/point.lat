@@ -7,7 +7,7 @@ import type { Halaman } from '@/payload-types'
 import { klienPalsu } from '@/modules/media/palsu'
 import { seed } from '@/seed/seed'
 
-import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_HALAMAN, SLUG_SUB, tautanKe } from './data'
+import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_HALAMAN, SLUG_SUB, SLUG_VIDEO, tautanKe } from './data'
 
 /**
  * Mengisi database E2E sebelum server dibangun dan dinyalakan (`webServer` di playwright.config.ts).
@@ -17,7 +17,7 @@ import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_HALAMAN,
 pakaiKlien(klienPalsu('e2e'))
 const payload = await getPayload({ config })
 
-for (const koleksi of ['artikel', 'subkategori', 'redirect', 'log-404', 'media'] as const) {
+for (const koleksi of ['artikel', 'video', 'subkategori', 'redirect', 'log-404', 'media'] as const) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
 }
 await seed(payload, { emailAdmin: ADMIN_E2E.email, passwordAdmin: ADMIN_E2E.password })
@@ -56,6 +56,34 @@ await payload.update({
 })
 
 const dasar = { _status: 'published' as const, penulis: redaksi.id, gambarUtama: slip.id }
+
+// Video vertikal: file MP4 kecil lewat klien palsu (1080x1920, 30 detik). Tanpa poster unggahan,
+// kartu memakai frame video dari Cloudinary.
+async function buatVideo({ pilar: slugPilar, draf = false, ...data }: { judul: string; slug: string; pilar: string; durasiDetik: number; transkrip: string; draf?: boolean }) {
+  const isiMp4 = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.from([0, 0, 2, 0]), Buffer.from('isommp41'), Buffer.from([0, 0, 0, 8]), Buffer.from('free')])
+  const file = await payload.create({ collection: 'media', data: {}, file: { data: isiMp4, mimetype: 'video/mp4', name: `${data.slug}.mp4`, size: isiMp4.length } })
+  return payload.create({
+    collection: 'video',
+    draft: draf,
+    data: { ...data, _status: draf ? 'draft' : 'published', pilar: pilar[slugPilar], file: file.id },
+  })
+}
+
+const videoPph21 = await buatVideo({
+  judul: 'PPh 21 dijelaskan dengan satu slip gaji',
+  slug: SLUG_VIDEO.pph21,
+  pilar: 'uang-karier',
+  durasiDetik: 45,
+  transkrip: 'Ambil slip gaji bulan lalu.\n\nCari baris PPh 21 di slip gajimu. Angka itu dipotong setiap bulan memakai tarif efektif.',
+})
+await buatVideo({
+  judul: 'Kenapa kode OTP tidak boleh dibagikan',
+  slug: SLUG_VIDEO.otp,
+  pilar: 'tekno',
+  durasiDetik: 38,
+  transkrip: 'Kode OTP adalah kunci terakhir akunmu.\n\nPetugas resmi tidak pernah memintanya.',
+})
+await buatVideo({ judul: 'Video yang belum terbit', slug: SLUG_VIDEO.draf, pilar: 'sehat', durasiDetik: 30, transkrip: 'Draf.', draf: true })
 
 const explainer = await payload.create({
   collection: 'artikel',
@@ -114,6 +142,7 @@ const panduan = await payload.create({
       { judul: 'BPJS Ketenagakerjaan', url: 'https://www.bpjsketenagakerjaan.go.id/', penerbit: 'BPJS Ketenagakerjaan' },
     ],
     artikelTerkait: [explainer.id],
+    videoTerkait: videoPph21.id,
   },
 })
 

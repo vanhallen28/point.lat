@@ -11,7 +11,19 @@ import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
 import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
-import type { DataArtikel, DataFooter, DataHalaman, DataHeader, DataPenulis, DataRubrik, KartuArtikel, KelompokIstilah } from './tipe'
+import { kartuVideo, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
+import type {
+  DataArtikel,
+  DataFooter,
+  DataHalaman,
+  DataHeader,
+  DataPenulis,
+  DataRubrik,
+  DataVideo,
+  KartuArtikel,
+  KartuVideo,
+  KelompokIstilah,
+} from './tipe'
 
 /**
  * Query Payload untuk halaman publik. Fungsi di sini menerima `payload` supaya bisa diuji integrasi;
@@ -212,4 +224,44 @@ export async function ambilPenulis(payload: Payload, slug: string): Promise<Data
   const penulis = docs[0]
   if (!penulis) return null
   return susunPenulis(penulis, await kartuTerbit(payload, [{ penulis: { equals: penulis.id } }], MAKS_ARTIKEL_PENULIS))
+}
+
+/** Media video ikut membawa durasi file (cadangan bila editor tidak mengisi durasi). */
+const POPULATE_VIDEO = { pilar: POPULATE_ARTIKEL.pilar, media: { ...POPULATE_ARTIKEL.media, durasi: true } } as const
+
+/** Kartu video terbit yang memenuhi `syarat`, terbaru dulu (video tidak punya tanggal terbit sendiri). */
+async function kartuVideoTerbit(payload: Payload, syarat: Where[], jumlah: number): Promise<KartuVideo[]> {
+  const { docs } = await payload.find({
+    collection: 'video',
+    where: { and: [terbit, ...syarat] },
+    sort: '-createdAt',
+    limit: jumlah,
+    depth: 1,
+    pagination: false,
+    select: { judul: true, slug: true, durasiDetik: true, pilar: true, file: true, poster: true },
+    populate: POPULATE_VIDEO,
+  })
+  return docs.map(kartuVideo).filter((k): k is KartuVideo => k !== null)
+}
+
+/** Semua video terbit untuk `/video`. */
+export async function ambilDaftarVideo(payload: Payload): Promise<KartuVideo[]> {
+  return kartuVideoTerbit(payload, [], MAKS_VIDEO_INDEKS)
+}
+
+/** Video terbit dengan slug ini, artikel induknya (yang `videoTerkait`-nya video ini), dan video lain. */
+export async function ambilVideo(payload: Payload, slug: string): Promise<DataVideo | null> {
+  if (validasiFormatSlug(slug) !== true) return null
+  const { docs } = await payload.find({
+    collection: 'video',
+    where: { and: [{ slug: { equals: slug } }, terbit] },
+    depth: 1,
+    limit: 1,
+    pagination: false,
+    populate: POPULATE_VIDEO,
+  })
+  const doc = docs[0]
+  if (!doc) return null
+  const [induk] = await kartuTerbit(payload, [{ videoTerkait: { equals: doc.id } }], 1)
+  return susunVideo(doc, induk ?? null, await kartuVideoTerbit(payload, [{ id: { not_equals: doc.id } }], MAKS_VIDEO_LAIN))
 }

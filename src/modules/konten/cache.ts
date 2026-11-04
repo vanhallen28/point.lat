@@ -7,6 +7,7 @@ import { ambilSitus } from '@/modules/seo/situs'
 
 import {
   ambilArtikel,
+  ambilDaftarVideo,
   ambilFooter,
   ambilGlosarium,
   ambilHalaman,
@@ -14,6 +15,7 @@ import {
   ambilPenulis,
   ambilRubrik,
   ambilTerbaru,
+  ambilVideo,
   cariRedirect,
 } from './data'
 
@@ -105,5 +107,17 @@ export const muatHalaman = unstable_cache(async (slug: string) => ambilHalaman(a
 /** Profil penulis: foto (media), kartu tulisan (artikel dan pilar), dan data penulis sendiri. */
 export const muatPenulis = unstable_cache(async (slug: string) => ambilPenulis(await payload(), slug), ['konten', 'penulis'], {
   tags: [TAG.koleksi('penulis'), TAG.koleksi('artikel'), TAG.koleksi('pilar'), TAG.media],
+  revalidate: SEJAM,
+})
+
+/** Indeks `/video`: kartu memakai pilar (warna) dan media (poster). */
+export const muatDaftarVideo = unstable_cache(async () => ambilDaftarVideo(await payload()), ['konten', 'daftar-video'], {
+  tags: [TAG.koleksi('video'), TAG.koleksi('pilar'), TAG.media],
+  revalidate: SEJAM,
+})
+
+/** Halaman video memuat artikel induknya, jadi ikut dibuang saat artikel berubah. */
+export const muatVideo = unstable_cache(async (slug: string) => ambilVideo(await payload(), slug), ['konten', 'video'], {
+  tags: [TAG.koleksi('video'), TAG.koleksi('artikel'), TAG.koleksi('pilar'), TAG.media],
   revalidate: SEJAM,
 })

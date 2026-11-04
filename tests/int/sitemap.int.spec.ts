@@ -5,7 +5,7 @@ import { ambilSitus } from '@/modules/seo/situs'
 import type { PengaturanSitus } from '@/modules/seo/tipe'
 import { saringNews, terbaru } from '@/modules/seo/xml'
 
-import { dataArtikelTerbit, siapkanRelasiArtikel } from './fixtures'
+import { dataArtikelTerbit, siapkanRelasiArtikel, videoMp4 } from './fixtures'
 import { getTestPayload, unik } from './helpers'
 
 let situs: PengaturanSitus
@@ -82,6 +82,18 @@ describe('data rute teknis dari Payload', () => {
     const istilah = await payload.create({ collection: 'artikel', data: { ...dataArtikelTerbit(relasi), tipe: 'glosarium', judul: unik('TER') } })
     const entri = (await ambilEntriSitemap(payload, 'halaman', situs)).find((e) => e.loc === url('/glosarium'))
     expect(entri?.lastmod).toBe(terbaru([istilah.terbitPada]))
+  })
+
+  it('sitemap halaman memuat indeks /video dengan lastmod video terbaru', async () => {
+    const payload = await getTestPayload()
+    const relasi = await siapkanRelasiArtikel(payload)
+    const file = await payload.create({ collection: 'media', data: {}, file: videoMp4() })
+    const video = await payload.create({
+      collection: 'video',
+      data: { _status: 'published', judul: unik('Video'), file: file.id, pilar: relasi.pilar.id, transkrip: 'Transkrip.' },
+    })
+    const entri = (await ambilEntriSitemap(payload, 'halaman', situs)).find((e) => e.loc === url('/video'))
+    expect(entri?.lastmod).toBe(terbaru([video.updatedAt]))
   })
 
   it('sitemap pilar memuat halaman subkategori di bawah pilarnya', async () => {

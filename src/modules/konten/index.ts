@@ -10,6 +10,7 @@
  */
 export {
   muatArtikel,
+  muatDaftarVideo,
   muatFooter,
   muatGlosarium,
   muatHalaman,
@@ -19,10 +20,12 @@ export {
   muatRubrik,
   muatSitus,
   muatTerbaru,
+  muatVideo,
   TAG_ARTIKEL,
 } from './cache'
 export {
   ambilArtikel,
+  ambilDaftarVideo,
   ambilFooter,
   ambilGlosarium,
   ambilHalaman,
@@ -30,8 +33,10 @@ export {
   ambilPenulis,
   ambilRubrik,
   ambilTerbaru,
+  ambilVideo,
   cariRedirect,
 } from './data'
+export { kartuVideo, labelDurasi, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 export { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'
 export { JUDUL_FAQ, susunHalaman } from './halaman'
 export { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
