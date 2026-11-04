@@ -84,6 +84,15 @@ describe('data rute teknis dari Payload', () => {
     expect(entri?.lastmod).toBe(terbaru([istilah.terbitPada]))
   })
 
+  it('sitemap pilar memuat halaman subkategori di bawah pilarnya', async () => {
+    const payload = await getTestPayload()
+    const relasi = await siapkanRelasiArtikel(payload)
+    const sub = await payload.create({ collection: 'subkategori', data: { nama: unik('Pajak'), pilar: relasi.pilar.id } })
+    const loc = (await ambilEntriSitemap(payload, 'pilar', situs)).map((e) => e.loc)
+    expect(loc).toContain(url(`/${relasi.pilar.slug}`))
+    expect(loc).toContain(url(`/${relasi.pilar.slug}/${sub.slug}`))
+  })
+
   it('halaman draf dari seed tidak masuk sitemap halaman', async () => {
     const payload = await getTestPayload()
     const halaman = await payload.create({ collection: 'halaman', draft: true, data: { judul: unik('Draf halaman') } })

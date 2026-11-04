@@ -7,8 +7,9 @@ import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artik
 import { kelompokkanIstilah } from './glosarium'
 import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
+import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
-import type { DataArtikel, DataFooter, DataHeader, KartuArtikel, KelompokIstilah } from './tipe'
+import type { DataArtikel, DataFooter, DataHeader, DataRubrik, KartuArtikel, KelompokIstilah } from './tipe'
 
 /**
  * Query Payload untuk halaman publik. Fungsi di sini menerima `payload` supaya bisa diuji integrasi;
@@ -125,11 +126,14 @@ export async function cariRedirect(payload: Payload, path: string): Promise<Redi
   return docs[0] ? { kode: docs[0].kode, ke: docs[0].ke ?? null } : null
 }
 
-/** Artikel terbit terbaru (bukan glosarium) untuk halaman 404. */
-export async function ambilTerbaru(payload: Payload, jumlah: number): Promise<KartuArtikel[]> {
+/**
+ * Kartu artikel terbit (bukan glosarium) yang memenuhi `syarat`, terbaru dulu. Dipakai semua daftar
+ * kartu: 404, rubrik, dan seterusnya.
+ */
+async function kartuTerbit(payload: Payload, syarat: Where[], jumlah: number): Promise<KartuArtikel[]> {
   const { docs } = await payload.find({
     collection: 'artikel',
-    where: { and: [terbit, { tipe: { not_equals: 'glosarium' } }] },
+    where: { and: [terbit, { tipe: { not_equals: 'glosarium' } }, ...syarat] },
     sort: '-terbitPada',
     limit: jumlah,
     depth: 1,
@@ -138,4 +142,42 @@ export async function ambilTerbaru(payload: Payload, jumlah: number): Promise<Ka
     populate: { pilar: POPULATE_ARTIKEL.pilar },
   })
   return docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null)
+}
+
+/** Artikel terbit terbaru (bukan glosarium) untuk halaman 404. */
+export async function ambilTerbaru(payload: Payload, jumlah: number): Promise<KartuArtikel[]> {
+  return kartuTerbit(payload, [], jumlah)
+}
+
+/**
+ * Halaman rubrik `/{pilar}` (`subSlug` `null`) atau `/{pilar}/{subkategori}`. `null` bila pilar
+ * tidak ada, atau subkategori tidak ada atau milik pilar lain. Intro pilar dimuat seperti isi
+ * artikel (depth 2) supaya tautan dan gambar di dalamnya bisa dirender.
+ */
+export async function ambilRubrik(payload: Payload, pilarSlug: string, subSlug: string | null): Promise<DataRubrik | null> {
+  if (validasiFormatSlug(pilarSlug) !== true || (subSlug !== null && validasiFormatSlug(subSlug) !== true)) return null
+  const { docs } = await payload.find({
+    collection: 'pilar',
+    where: { slug: { equals: pilarSlug } },
+    depth: 2,
+    limit: 1,
+    pagination: false,
+    populate: POPULATE_ARTIKEL,
+  })
+  const pilar = docs[0]
+  if (!pilar) return null
+  // Subkategori sedikit per pilar: semuanya dimuat sekali untuk navigasi dan untuk halaman subkategori.
+  const { docs: daftarSub } = await payload.find({
+    collection: 'subkategori',
+    where: { pilar: { equals: pilar.id } },
+    sort: 'nama',
+    depth: 1,
+    limit: 100,
+    pagination: false,
+    populate: { pilar: POPULATE_ARTIKEL.pilar, media: POPULATE_ARTIKEL.media },
+  })
+  const sub = subSlug === null ? null : daftarSub.find((s) => s.slug === subSlug)
+  if (sub === undefined) return null
+  const syarat: Where[] = [{ pilar: { equals: pilar.id } }, ...(sub ? [{ subkategori: { equals: sub.id } }] : [])]
+  return susunRubrik(pilar, sub, daftarSub, await kartuTerbit(payload, syarat, MAKS_ARTIKEL_RUBRIK))
 }

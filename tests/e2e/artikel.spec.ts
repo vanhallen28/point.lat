@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { cegatCloudinary, periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
-import { JUDUL_PANDUAN, SLUG, UKURAN_LAYAR } from './data'
+import { JUDUL_PANDUAN, SLUG, SLUG_SUB, UKURAN_LAYAR } from './data'
 
 test.beforeEach(async ({ page }) => {
   await cegatCloudinary(page)
@@ -10,7 +10,8 @@ test.beforeEach(async ({ page }) => {
 test('artikel panduan: urutan bagian sesuai spesifikasi §4', async ({ page }) => {
   await page.goto(`/${SLUG.panduan}`)
   const remah = page.getByRole('navigation', { name: 'Remah roti' })
-  await expect(remah.getByRole('link')).toHaveText(['Beranda', 'Uang & Karier'])
+  await expect(remah.getByRole('link')).toHaveText(['Beranda', 'Uang & Karier', 'Pajak'])
+  await expect(remah.getByRole('link', { name: 'Pajak' })).toHaveAttribute('href', `/uang-karier/${SLUG_SUB.pajak}`)
   await expect(remah.locator('[aria-current="page"]')).toHaveText(JUDUL_PANDUAN)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(JUDUL_PANDUAN)
   await expect(page.getByRole('article').locator('header').getByText('Panduan', { exact: true })).toBeVisible()

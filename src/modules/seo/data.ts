@@ -81,7 +81,28 @@ export async function ambilEntriSitemap(payload: Payload, jenis: JenisSitemap, s
   })
   const masukan = docs.map((doc) => ({ jenis: tipePath[jenis], doc }) as MasukanSeo)
   const entri = entriSitemap(masukan, situs)
+  if (jenis === 'pilar') return [...entri, ...(await ambilEntriSubkategori(payload, situs))]
   return jenis === 'halaman' ? [...(await ambilEntriIndeks(payload, situs)), ...entri] : entri
+}
+
+/**
+ * Halaman subkategori `/{pilar}/{subkategori}` adalah halaman rubrik, jadi ikut sitemap pilar
+ * (spesifikasi §8 tidak punya jenis sitemap subkategori). Path butuh slug pilar: depth 1.
+ */
+async function ambilEntriSubkategori(payload: Payload, situs: Pick<PengaturanSitus, 'urlSitus'>): Promise<EntriSitemap[]> {
+  const { docs } = await payload.find({
+    collection: 'subkategori',
+    where: { 'seo.noindex': { not_equals: true } },
+    depth: 1,
+    limit: MAKS_URL_SITEMAP,
+    pagination: false,
+    sort: '-updatedAt',
+    populate: { pilar: { slug: true } },
+  })
+  return entriSitemap(
+    docs.map((doc) => ({ jenis: 'subkategori', doc }) as MasukanSeo),
+    situs,
+  )
 }
 
 /**

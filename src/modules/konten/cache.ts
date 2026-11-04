@@ -5,7 +5,7 @@ import { getPayload } from 'payload'
 import { TAG } from '@/lib/tag'
 import { ambilSitus } from '@/modules/seo/situs'
 
-import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader, ambilTerbaru, cariRedirect } from './data'
+import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader, ambilRubrik, ambilTerbaru, cariRedirect } from './data'
 
 /**
  * Data halaman publik yang di-cache dengan tag (spesifikasi §5 "Rendering"). Halaman dirender statis
@@ -75,3 +75,13 @@ export const muatTerbaru = unstable_cache(async (jumlah: number) => ambilTerbaru
   tags: [TAG.koleksi('artikel'), TAG.koleksi('pilar')],
   revalidate: SEJAM,
 })
+
+/**
+ * Halaman rubrik pilar dan subkategori. Intro pilar bisa menautkan dokumen apa pun, jadi tagnya sama
+ * dengan halaman artikel.
+ */
+export const muatRubrik = unstable_cache(
+  async (pilarSlug: string, subSlug: string | null) => ambilRubrik(await payload(), pilarSlug, subSlug),
+  ['konten', 'rubrik'],
+  { tags: TAG_ARTIKEL, revalidate: SEJAM },
+)

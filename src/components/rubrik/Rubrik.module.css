@@ -1,0 +1,93 @@
+/* Halaman rubrik pilar dan subkategori. */
+.halaman {
+  display: grid;
+  gap: var(--ruang-6);
+  padding-top: var(--ruang-4);
+}
+
+.kepala {
+  display: grid;
+  gap: var(--ruang-3);
+  padding: var(--ruang-8) var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--pilar);
+  color: var(--pilar-teks);
+}
+
+.label {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.judul {
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.deskripsi {
+  max-width: 60ch;
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.navigasi ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-2);
+  padding: 0;
+  list-style: none;
+}
+
+.pil {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  padding: 0 var(--ruang-4);
+  border: var(--garis-tipis) solid var(--garis);
+  border-radius: var(--radius-pil);
+  font-size: var(--teks-kecil);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.pil:hover {
+  text-decoration: underline;
+}
+
+.pil:active {
+  transform: scale(0.97);
+}
+
+.pil[aria-current='page'] {
+  background: var(--tombol);
+  color: var(--tombol-teks);
+}
+
+.tulisan {
+  display: grid;
+  gap: var(--ruang-6);
+  margin-top: var(--ruang-4);
+}
+
+.subjudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.kosong {
+  max-width: 60ch;
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}
+
+@media (min-width: 48rem) {
+  .kepala {
+    padding: var(--ruang-10);
+  }
+}

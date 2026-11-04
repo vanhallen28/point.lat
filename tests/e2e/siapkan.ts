@@ -6,7 +6,7 @@ import { pakaiKlien } from '@/modules/media'
 import { klienPalsu } from '@/modules/media/palsu'
 import { seed } from '@/seed/seed'
 
-import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, tautanKe } from './data'
+import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_SUB, tautanKe } from './data'
 
 /**
  * Mengisi database E2E sebelum server dibangun dan dinyalakan (`webServer` di playwright.config.ts).
@@ -16,13 +16,23 @@ import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, tautanKe } fr
 pakaiKlien(klienPalsu('e2e'))
 const payload = await getPayload({ config })
 
-for (const koleksi of ['artikel', 'redirect', 'log-404', 'media'] as const) {
+for (const koleksi of ['artikel', 'subkategori', 'redirect', 'log-404', 'media'] as const) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
 }
 await seed(payload, { emailAdmin: ADMIN_E2E.email, passwordAdmin: ADMIN_E2E.password })
 
 const pilar = Object.fromEntries((await payload.find({ collection: 'pilar', limit: 10 })).docs.map((d) => [d.slug, d.id]))
 const redaksi = (await payload.find({ collection: 'penulis', where: { slug: { equals: 'redaksi' } }, limit: 1 })).docs[0]
+
+await payload.update({
+  collection: 'pilar',
+  id: pilar['uang-karier'],
+  data: { intro: isi(p('Mulai dari gaji bersih, lalu atur tabungan dan utang. Setiap panduan punya contoh hitung.')) },
+})
+const pajak = await payload.create({
+  collection: 'subkategori',
+  data: { nama: 'Pajak', slug: SLUG_SUB.pajak, pilar: pilar['uang-karier'], deskripsi: 'PPh 21, PTKP, dan lapor SPT tahunan.' },
+})
 
 async function buatGambar(alt: string, warna: string) {
   const data = await sharp({ create: { width: 1600, height: 900, channels: 3, background: warna } }).png().toBuffer()
@@ -46,6 +56,7 @@ const explainer = await payload.create({
     slug: SLUG.explainer,
     tipe: 'explainer',
     pilar: pilar['uang-karier'],
+    subkategori: pajak.id,
     deck: 'Sejak 2024 pemotongan PPh 21 bulanan memakai tarif efektif rata-rata. Ini yang berubah di slip gajimu.',
     intinya: [
       { poin: 'TER adalah tarif efektif rata-rata untuk memotong PPh 21 setiap bulan.' },
@@ -63,6 +74,7 @@ const panduan = await payload.create({
     slug: SLUG.panduan,
     tipe: 'panduan',
     pilar: pilar['uang-karier'],
+    subkategori: pajak.id,
     deck: 'Gaji bersih adalah gaji kotor dikurangi PPh 21 dan iuran BPJS. Begini cara menghitungnya langkah demi langkah.',
     intinya: [
       { poin: 'Gaji bersih adalah gaji kotor dikurangi PPh 21 dan iuran BPJS yang ditanggung karyawan.' },

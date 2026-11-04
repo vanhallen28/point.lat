@@ -1,6 +1,6 @@
 import type { TipeArtikel, WarnaPilar } from '@/lib/konstanta'
 import type { IsiDokumen } from '@/modules/seo/lexical'
-import type { ArtikelSeo } from '@/modules/seo/tipe'
+import type { ArtikelSeo, PilarSeo, SubkategoriSeo } from '@/modules/seo/tipe'
 
 /**
  * Data tampilan yang sudah siap dirender komponen publik. Komponen tidak membaca dokumen Payload
@@ -77,3 +77,18 @@ export type Istilah = { judul: string; href: string; definisi: string }
 
 /** Istilah glosarium per huruf awal; `id` dipakai jangkar navigasi huruf. */
 export type KelompokIstilah = { huruf: string; id: string; istilah: Istilah[] }
+
+/** Tautan navigasi subkategori di halaman rubrik; `aktif` untuk halaman yang sedang dibuka. */
+export type TautanRubrik = Tautan & { aktif: boolean }
+
+/** Halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`. `seo` dipakai `metadata()`, `jsonLd()`, `remahRoti()`. */
+export type DataRubrik = {
+  judul: string
+  href: string
+  deskripsi: string | null
+  intro: IsiDokumen
+  pilar: PilarRingkas
+  subkategori: TautanRubrik[]
+  artikel: KartuArtikel[]
+  seo: { jenis: 'pilar'; doc: PilarSeo } | { jenis: 'subkategori'; doc: SubkategoriSeo }
+}
