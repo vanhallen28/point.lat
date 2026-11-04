@@ -12,6 +12,7 @@ import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { LABEL_TIPE_ARTIKEL, TIPE_ARTIKEL, type TipeArtikel } from '@/lib/konstanta'
 import { validasiLebarGambar } from '@/lib/media'
 import type { TargetPath } from '@/lib/paths'
+import { endpointPanelSeo } from '@/modules/seo/endpoint'
 
 async function validasiGambarUtama(value: unknown, { req }: { req: PayloadRequest }) {
   if (!value) return 'Gambar utama wajib diisi.'
@@ -35,6 +36,7 @@ export const Artikel: CollectionConfig = {
     group: 'Konten',
   },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
+  endpoints: [endpointPanelSeo],
   versions: {
     drafts: { autosave: { interval: 1500 }, schedulePublish: true },
     maxPerDoc: 50,
@@ -102,7 +104,17 @@ export const Artikel: CollectionConfig = {
             },
           ],
         },
-        { label: 'SEO', fields: [seoField] },
+        {
+          label: 'SEO',
+          fields: [
+            {
+              name: 'panelSeo',
+              type: 'ui',
+              admin: { components: { Field: '@/modules/seo/PanelSeo#PanelSeo' } },
+            },
+            seoField,
+          ],
+        },
       ],
     },
     slugField('judul', {
