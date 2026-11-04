@@ -36,6 +36,11 @@ export const Pilar: CollectionConfig = {
     },
     { name: 'deskripsi', type: 'textarea', required: true },
     { name: 'intro', type: 'richText', label: 'Intro halaman rubrik' },
+    {
+      name: 'disclaimer',
+      type: 'textarea',
+      admin: { description: 'Tampil di akhir setiap artikel pilar ini (wajib untuk Uang & Karier dan Sehat). Kosongkan bila tidak perlu.' },
+    },
     { name: 'urutan', type: 'number', defaultValue: 0, admin: { position: 'sidebar' } },
     seoField,
   ],

@@ -3,9 +3,24 @@
  *
  * - `muat*()` dipanggil halaman dan layout: query Payload yang di-cache dengan tag `TAG`.
  * - `ambil*(payload)` versi tanpa cache untuk tes integrasi dan skrip.
- * - Fungsi murni (`susunHeader`, `susunFooter`, ...) menerjemahkan dokumen Payload ke tipe di `tipe.ts`.
+ * - Fungsi murni (`susunHeader`, `susunArtikel`, `tanggalIndonesia`, ...) menerjemahkan dokumen
+ *   Payload ke tipe di `tipe.ts`, supaya komponen tidak membaca relasi Payload mentah.
  */
-export { muatFooter, muatHeader } from './cache'
-export { ambilFooter, ambilHeader } from './data'
+export { muatArtikel, muatFooter, muatHeader, muatSitus, TAG_ARTIKEL } from './cache'
+export { ambilArtikel, ambilFooter, ambilHeader } from './data'
 export { HAK_CIPTA_BAWAAN, LABEL_SOSIAL, susunFooter, susunHeader, tautanInternal, TOOLS_BAWAAN } from './tampilan'
+export {
+  gabungTerkait,
+  kartuArtikel,
+  KATA_PER_MENIT,
+  MAKS_TERKAIT,
+  mediaTampil,
+  MIN_DAFTAR_ISI,
+  penulisRingkas,
+  pilarRingkas,
+  susunArtikel,
+  tandaiSubjudul,
+  tanggalIndonesia,
+  waktuBaca,
+} from './artikel'
 export type * from './tipe'

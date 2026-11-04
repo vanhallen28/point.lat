@@ -1,11 +1,16 @@
 import type { CollectionConfig, FieldAccess } from 'payload'
 
 import { anyone, isLoggedIn } from '@/access'
+import { revalidasiKoleksi } from '@/hooks/revalidasiPublik'
 import { validasiAlt } from '@/lib/media'
+import { TAG } from '@/lib/tag'
 import { JENIS_FILE } from '@/modules/media/unggah'
 
 /** Field yang hanya boleh diisi sistem (adapter Cloudinary), tidak lewat API atau form admin. */
 const hanyaSistem: FieldAccess = () => false
+
+/** Alt, caption, dan kredit tampil di halaman publik: perubahan media membuang cache halaman. */
+const revalidasi = revalidasiKoleksi([TAG.media])
 
 /**
  * File disimpan di Cloudinary lewat adapter `src/modules/media/adapter.ts` yang dipasang di
@@ -20,6 +25,7 @@ export const Media: CollectionConfig = {
     group: 'Konten',
   },
   access: { read: anyone, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
+  hooks: { afterChange: [revalidasi.afterChange], afterDelete: [revalidasi.afterDelete] },
   upload: {
     mimeTypes: [...JENIS_FILE],
     // Potongan dibuat Cloudinary (g_auto), bukan sharp. Focal point dibiarkan aktif supaya kolom

@@ -3,8 +3,9 @@ import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 
 import { TAG } from '@/lib/tag'
+import { ambilSitus } from '@/modules/seo/situs'
 
-import { ambilFooter, ambilHeader } from './data'
+import { ambilArtikel, ambilFooter, ambilHeader } from './data'
 
 /**
  * Data halaman publik yang di-cache dengan tag (spesifikasi §5 "Rendering"). Halaman dirender statis
@@ -26,3 +27,33 @@ export const muatFooter = unstable_cache(async () => ambilFooter(await payload()
   tags: [TAG.footer],
   revalidate: SEJAM,
 })
+
+/** Pengaturan SEO + cloud name untuk `metadata()`, `jsonLd()`, dan URL gambar. */
+export const muatSitus = unstable_cache(async () => ambilSitus(await payload()), ['konten', 'situs'], {
+  tags: [TAG.pengaturanSeo, TAG.media],
+  revalidate: SEJAM,
+})
+
+/**
+ * Halaman artikel bergantung pada banyak dokumen: pilar, subkategori, penulis, media, artikel
+ * terkait, tools dan video yang disematkan, serta dokumen yang ditautkan di isi. Karena itu dipakai
+ * tag koleksi, bukan tag per dokumen: perubahan di koleksi itu membuang cache semua halaman artikel
+ * (dirender ulang saat diminta berikutnya), sehingga tidak ada halaman yang basi. Tag `artikel` juga
+ * membuang halaman 404 yang tersimpan saat artikel dengan slug itu terbit.
+ */
+export const TAG_ARTIKEL = [
+  TAG.koleksi('artikel'),
+  TAG.koleksi('pilar'),
+  TAG.koleksi('subkategori'),
+  TAG.koleksi('penulis'),
+  TAG.koleksi('tools'),
+  TAG.koleksi('video'),
+  TAG.koleksi('halaman'),
+  TAG.media,
+]
+
+export const muatArtikel = unstable_cache(
+  async (slug: string, glosarium: boolean) => ambilArtikel(await payload(), slug, { glosarium }),
+  ['konten', 'artikel'],
+  { tags: TAG_ARTIKEL, revalidate: SEJAM },
+)

@@ -9,11 +9,28 @@ export const PILAR_AWAL: {
   warna: WarnaPilar
   deskripsi: string
   urutan: number
+  disclaimer?: string
 }[] = [
-  { nama: 'Uang & Karier', slug: 'uang-karier', warna: 'hijau', deskripsi: 'Gaji, pajak, tabungan, utang, dan karier.', urutan: 1 },
+  {
+    nama: 'Uang & Karier',
+    slug: 'uang-karier',
+    warna: 'hijau',
+    deskripsi: 'Gaji, pajak, tabungan, utang, dan karier.',
+    urutan: 1,
+    disclaimer:
+      'Tulisan ini untuk edukasi, bukan saran keuangan, pajak, atau hukum untuk kondisimu. Aturan dan angka bisa berubah, jadi cek sumber resmi atau tanya ahli sebelum mengambil keputusan.',
+  },
   { nama: 'Tekno', slug: 'tekno', warna: 'oranye', deskripsi: 'AI, aplikasi, gadget, dan keamanan digital.', urutan: 2 },
   { nama: 'Belajar', slug: 'belajar', warna: 'kuning', deskripsi: 'Sekolah, kuliah, ujian masuk, dan beasiswa.', urutan: 3 },
-  { nama: 'Sehat', slug: 'sehat', warna: 'koral', deskripsi: 'Gizi, olahraga, tidur, dan kebiasaan sehat.', urutan: 4 },
+  {
+    nama: 'Sehat',
+    slug: 'sehat',
+    warna: 'koral',
+    deskripsi: 'Gizi, olahraga, tidur, dan kebiasaan sehat.',
+    urutan: 4,
+    disclaimer:
+      'Tulisan ini untuk edukasi, bukan pengganti diagnosis atau saran tenaga kesehatan. Bila kamu punya keluhan, periksakan diri ke dokter atau fasilitas kesehatan terdekat.',
+  },
 ]
 
 /** Halaman wajib. Dibuat sebagai draf: isinya harus ditulis pemilik sebelum terbit. */
@@ -37,7 +54,12 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
   const idPilar: number[] = []
   for (const pilar of PILAR_AWAL) {
     const ada = await payload.find({ collection: 'pilar', where: { slug: { equals: pilar.slug } }, limit: 1 })
-    const doc = ada.docs[0] ?? (await payload.create({ collection: 'pilar', data: pilar }))
+    const lama = ada.docs[0]
+    const doc = lama ?? (await payload.create({ collection: 'pilar', data: pilar }))
+    // Database yang dibuat sebelum field disclaimer ada ikut mendapat teks bawaan, tanpa menimpa isian editor.
+    if (lama && pilar.disclaimer && !lama.disclaimer) {
+      await payload.update({ collection: 'pilar', id: lama.id, data: { disclaimer: pilar.disclaimer } })
+    }
     idPilar.push(doc.id)
   }
 

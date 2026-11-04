@@ -19,6 +19,9 @@ describe('seed', () => {
       expect(totalDocs).toBe(1)
     }
 
+    const pilar = await payload.find({ collection: 'pilar', where: { slug: { in: ['uang-karier', 'tekno', 'sehat'] } }, sort: 'urutan' })
+    expect(pilar.docs.map((p) => Boolean(p.disclaimer))).toEqual([true, false, true])
+
     const redaksi = await payload.count({ collection: 'penulis', where: { slug: { equals: 'redaksi' } } })
     expect(redaksi.totalDocs).toBe(1)
 

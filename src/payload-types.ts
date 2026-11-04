@@ -244,6 +244,10 @@ export interface Pilar {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Tampil di akhir setiap artikel pilar ini (wajib untuk Uang & Karier dan Sehat). Kosongkan bila tidak perlu.
+   */
+  disclaimer?: string | null;
   urutan?: number | null;
   seo?: {
     keyphrase?: string | null;
@@ -1021,6 +1025,7 @@ export interface PilarSelect<T extends boolean = true> {
   warna?: T;
   deskripsi?: T;
   intro?: T;
+  disclaimer?: T;
   urutan?: T;
   seo?:
     | T

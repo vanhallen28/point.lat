@@ -7,6 +7,7 @@
  * - `pilar:{slug}`: halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`.
  * - `beranda`, `sitemap` (sitemap, news sitemap, RSS), `pengaturan-seo` (robots.txt, metadata situs).
  * - `header`, `footer`: global tampilan yang dirender layout di setiap halaman publik.
+ * - `media`: dokumen media (alt, caption, kredit, ukuran) yang ditampilkan halaman.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const
@@ -18,6 +19,7 @@ export const TAG = {
   pengaturanSeo: 'pengaturan-seo',
   header: 'header',
   footer: 'footer',
+  media: 'media',
   koleksi: (koleksi: KoleksiPublik) => koleksi,
   dokumen: (koleksi: KoleksiPublik, id: number | string) => `${koleksi}:${id}`,
   pilar: (slug: string) => `pilar:${slug}`,
