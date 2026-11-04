@@ -4,6 +4,7 @@ import React from 'react'
 import '@/styles/tokens.css'
 import '@/styles/dasar.css'
 
+import { PemicuMasuk } from '@/components/motion/PemicuMasuk'
 import { Footer } from '@/components/tata-letak/Footer'
 import { Header } from '@/components/tata-letak/Header'
 import { muatFooter, muatHeader } from '@/modules/konten'
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Header data={header} />
         <main id="isi">{children}</main>
         <Footer data={footer} />
+        <PemicuMasuk />
       </body>
     </html>
   )

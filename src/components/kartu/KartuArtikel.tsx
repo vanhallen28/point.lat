@@ -1,4 +1,5 @@
 import { Tautan } from '@/components/dasar/Tautan'
+import { JudulBersama } from '@/components/motion/JudulBersama'
 import { LABEL_TIPE_ARTIKEL } from '@/lib/konstanta'
 import type { KartuArtikel as DataKartu } from '@/modules/konten/tipe'
 
@@ -13,7 +14,9 @@ export function KartuArtikel({ kartu, tingkat = 'h3' }: { kartu: DataKartu; ting
   return (
     <Tautan href={kartu.href} className={gaya.kartu} data-warna={kartu.pilar?.warna}>
       {kartu.pilar && <span className={gaya.label}>{kartu.pilar.nama}</span>}
-      <Judul className={gaya.judul}>{kartu.judul}</Judul>
+      <JudulBersama id={kartu.id}>
+        <Judul className={gaya.judul}>{kartu.judul}</Judul>
+      </JudulBersama>
       {kartu.intinya && (
         <p className={gaya.intinya}>
           <strong>Intinya:</strong> {kartu.intinya}
@@ -28,7 +31,7 @@ export function DaftarKartu({ kartu }: { kartu: DataKartu[] }) {
   return (
     <ul className={gaya.daftar}>
       {kartu.map((k) => (
-        <li key={k.id}>
+        <li key={k.id} data-masuk="">
           <KartuArtikel kartu={k} />
         </li>
       ))}

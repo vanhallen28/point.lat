@@ -91,6 +91,8 @@ describe('token tipografi, bentuk, dan motion', () => {
     expect(token['kurva']).toBe('cubic-bezier(0.2, 0, 0, 1)')
     expect(token['kurva-keluar']).toBe('cubic-bezier(0.3, 0, 1, 1)')
     expect([token['durasi-cepat'], token['durasi-sedang'], token['durasi-halaman']]).toEqual(['150ms', '250ms', '400ms'])
+    // Kartu masuk berurutan: 200 ms + 2 jeda 40 ms = 280 ms, di bawah total 300 ms.
+    expect(token['durasi-masuk']).toBe('200ms')
     expect([token['jeda-urut'], token['geser-masuk']]).toEqual(['40ms', '12px'])
   })
 })

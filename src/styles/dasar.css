@@ -128,6 +128,32 @@ textarea {
   padding-inline: var(--gutter);
 }
 
+/* Perpindahan halaman: judul kartu berpindah menjadi H1 artikel (`JudulBersama`), halaman lain
+   memudar. Durasi 400 ms dengan kurva khas (spesifikasi §13). */
+::view-transition-group(.morph) {
+  animation-duration: var(--durasi-halaman);
+  animation-timing-function: var(--kurva);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--durasi-halaman);
+  animation-timing-function: var(--kurva);
+}
+
+/* Kartu masuk sekali saat pertama terlihat (`PemicuMasuk`). */
+[data-masuk='tunggu'] {
+  opacity: 0;
+  transform: translateY(var(--geser-masuk));
+}
+
+[data-masuk='terlihat'] {
+  transition:
+    opacity var(--durasi-masuk) var(--kurva),
+    transform var(--durasi-masuk) var(--kurva);
+  transition-delay: calc(var(--urutan, 0) * var(--jeda-urut));
+}
+
 /* Reduced motion mematikan semua animasi dan View Transitions; konten tetap utuh (spesifikasi §13). */
 @media (prefers-reduced-motion: reduce) {
   *,

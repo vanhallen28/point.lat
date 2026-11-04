@@ -8,6 +8,7 @@ import { Tautan } from '@/components/dasar/Tautan'
 import { Keterangan, UKURAN_KOLOM_ISI } from '@/components/isi/GambarIsi'
 import { IsiArtikel } from '@/components/isi/IsiArtikel'
 import { DaftarKartu } from '@/components/kartu/KartuArtikel'
+import { JudulBersama } from '@/components/motion/JudulBersama'
 import { LABEL_TIPE_ARTIKEL } from '@/lib/konstanta'
 import { tanggalIndonesia } from '@/modules/konten/artikel'
 import type { DataArtikel } from '@/modules/konten/tipe'
@@ -40,7 +41,9 @@ export function HalamanArtikel({ artikel, situs }: { artikel: DataArtikel; situs
           {artikel.pilar && <ChipPilar pilar={artikel.pilar} />}
           <span>{LABEL_TIPE_ARTIKEL[artikel.tipe]}</span>
         </p>
-        <h1 className={gaya.judul}>{artikel.judul}</h1>
+        <JudulBersama id={artikel.id}>
+          <h1 className={gaya.judul}>{artikel.judul}</h1>
+        </JudulBersama>
         <p className={gaya.deck}>{artikel.deck}</p>
         <p className={gaya.byline}>
           {artikel.penulis && (

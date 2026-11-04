@@ -89,6 +89,7 @@
   --durasi-cepat: 150ms;
   --durasi-sedang: 250ms;
   --durasi-halaman: 400ms;
+  --durasi-masuk: 200ms;
   --jeda-urut: 40ms;
   --geser-masuk: 12px;
 }
