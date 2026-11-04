@@ -1,6 +1,6 @@
 import type { TipeArtikel, WarnaPilar } from '@/lib/konstanta'
 import type { IsiDokumen } from '@/modules/seo/lexical'
-import type { ArtikelSeo, HalamanSeo, PilarSeo, SubkategoriSeo } from '@/modules/seo/tipe'
+import type { ArtikelSeo, HalamanSeo, PenulisSeo, PilarSeo, SubkategoriSeo } from '@/modules/seo/tipe'
 
 /**
  * Data tampilan yang sudah siap dirender komponen publik. Komponen tidak membaca dokumen Payload
@@ -106,3 +106,6 @@ export type BlokTampil =
 
 /** Halaman statis dari koleksi `halaman`. `heroUtama`: blok pertama hero, jadi judul tidak ditulis ulang. */
 export type DataHalaman = { judul: string; href: string; heroUtama: boolean; blok: BlokTampil[]; seo: HalamanSeo }
+
+/** Profil penulis `/penulis/{slug}` (rambu kredibilitas, spesifikasi §3) dengan tulisan terbitnya. */
+export type DataPenulis = PenulisRingkas & { tautan: Tautan[]; artikel: KartuArtikel[]; seo: PenulisSeo }

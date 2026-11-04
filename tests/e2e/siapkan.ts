@@ -46,6 +46,14 @@ async function buatGambar(alt: string, warna: string) {
 
 const slip = await buatGambar('Slip gaji karyawan', '#1F7A4D')
 const kasur = await buatGambar('Kamar tidur yang gelap', '#FF8A80')
+const logo = await buatGambar('Logo redaksi point.', '#111111')
+
+// Profil penulis lengkap untuk halaman /penulis/redaksi.
+await payload.update({
+  collection: 'penulis',
+  id: redaksi.id,
+  data: { foto: logo.id, keahlian: ['Pajak penghasilan', 'Gizi'], tautan: [{ label: 'Instagram', url: 'https://www.instagram.com/point.lat' }] },
+})
 
 const dasar = { _status: 'published' as const, penulis: redaksi.id, gambarUtama: slip.id }
 

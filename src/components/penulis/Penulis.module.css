@@ -1,0 +1,101 @@
+/* Profil penulis: identitas di kiri foto (desktop), tulisan di bawah. */
+.halaman {
+  display: grid;
+  gap: var(--ruang-6);
+  padding-top: var(--ruang-4);
+}
+
+.kepala {
+  display: grid;
+  gap: var(--ruang-6);
+  align-items: start;
+  padding: var(--ruang-8) var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}
+
+.foto {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+}
+
+.identitas {
+  display: grid;
+  gap: var(--ruang-3);
+  max-width: 68ch;
+}
+
+.label {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.judul {
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.bio {
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.keahlian,
+.tautan {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-2);
+  padding: 0;
+  list-style: none;
+}
+
+.keahlian li {
+  padding: var(--ruang-1) var(--ruang-3);
+  border-radius: var(--radius-pil);
+  background: var(--latar);
+  font-size: var(--teks-kecil);
+  font-weight: 600;
+}
+
+.tautan a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-1);
+  min-height: var(--sentuh-min);
+  font-weight: 700;
+}
+
+.tulisan {
+  display: grid;
+  gap: var(--ruang-6);
+  margin-top: var(--ruang-4);
+}
+
+.subjudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.kosong {
+  max-width: 60ch;
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}
+
+@media (min-width: 48rem) {
+  .kepala {
+    grid-template-columns: 160px 1fr;
+    padding: var(--ruang-10);
+  }
+
+  .foto {
+    width: 160px;
+    height: 160px;
+  }
+}

@@ -6,11 +6,12 @@ import { validasiFormatSlug } from '@/lib/slug'
 import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
 import { kelompokkanIstilah } from './glosarium'
 import { susunHalaman } from './halaman'
+import { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'
 import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
 import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
-import type { DataArtikel, DataFooter, DataHalaman, DataHeader, DataRubrik, KartuArtikel, KelompokIstilah } from './tipe'
+import type { DataArtikel, DataFooter, DataHalaman, DataHeader, DataPenulis, DataRubrik, KartuArtikel, KelompokIstilah } from './tipe'
 
 /**
  * Query Payload untuk halaman publik. Fungsi di sini menerima `payload` supaya bisa diuji integrasi;
@@ -195,4 +196,20 @@ export async function ambilHalaman(payload: Payload, slug: string): Promise<Data
     populate: POPULATE_ARTIKEL,
   })
   return docs[0] ? susunHalaman(docs[0]) : null
+}
+
+/** Profil penulis dengan tulisan terbitnya (bukan glosarium), terbaru dulu. Penulis tidak punya draf. */
+export async function ambilPenulis(payload: Payload, slug: string): Promise<DataPenulis | null> {
+  if (validasiFormatSlug(slug) !== true) return null
+  const { docs } = await payload.find({
+    collection: 'penulis',
+    where: { slug: { equals: slug } },
+    depth: 1,
+    limit: 1,
+    pagination: false,
+    populate: { media: POPULATE_ARTIKEL.media },
+  })
+  const penulis = docs[0]
+  if (!penulis) return null
+  return susunPenulis(penulis, await kartuTerbit(payload, [{ penulis: { equals: penulis.id } }], MAKS_ARTIKEL_PENULIS))
 }

@@ -14,13 +14,25 @@ export {
   muatGlosarium,
   muatHalaman,
   muatHeader,
+  muatPenulis,
   muatRedirect,
   muatRubrik,
   muatSitus,
   muatTerbaru,
   TAG_ARTIKEL,
 } from './cache'
-export { ambilArtikel, ambilFooter, ambilGlosarium, ambilHalaman, ambilHeader, ambilRubrik, ambilTerbaru, cariRedirect } from './data'
+export {
+  ambilArtikel,
+  ambilFooter,
+  ambilGlosarium,
+  ambilHalaman,
+  ambilHeader,
+  ambilPenulis,
+  ambilRubrik,
+  ambilTerbaru,
+  cariRedirect,
+} from './data'
+export { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'
 export { JUDUL_FAQ, susunHalaman } from './halaman'
 export { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 export { muatJalur, type HasilJalur } from './jalur'
