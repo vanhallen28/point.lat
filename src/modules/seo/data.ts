@@ -1,5 +1,6 @@
 import type { Payload, Where } from 'payload'
 
+import { PATH_INDEKS } from '@/lib/paths'
 import { TAG } from '@/lib/tag'
 
 import { entriFeed, entriNews, entriSitemap } from './sitemap'
@@ -79,7 +80,30 @@ export async function ambilEntriSitemap(payload: Payload, jenis: JenisSitemap, s
     sort: '-updatedAt',
   })
   const masukan = docs.map((doc) => ({ jenis: tipePath[jenis], doc }) as MasukanSeo)
-  return entriSitemap(masukan, situs)
+  const entri = entriSitemap(masukan, situs)
+  return jenis === 'halaman' ? [...(await ambilEntriIndeks(payload, situs)), ...entri] : entri
+}
+
+/**
+ * Halaman indeks tanpa dokumen sendiri ikut sitemap halaman bila ada isinya. `/glosarium`:
+ * `lastmod` = istilah terbaru (`diperbaruiBesar ?? terbitPada`), sama dengan aturan artikel.
+ */
+async function ambilEntriIndeks(payload: Payload, situs: Pick<PengaturanSitus, 'urlSitus'>): Promise<EntriSitemap[]> {
+  const { docs } = await payload.find({
+    collection: 'artikel',
+    where: { and: [syaratSitemap('artikel'), { tipe: { equals: 'glosarium' } }] },
+    depth: 0,
+    limit: MAKS_URL_SITEMAP,
+    pagination: false,
+    select: { terbitPada: true, diperbaruiBesar: true },
+  })
+  if (docs.length === 0) return []
+  return [
+    {
+      loc: new URL(PATH_INDEKS.glosarium, situs.urlSitus).toString(),
+      lastmod: terbaru(docs.map((d) => d.diperbaruiBesar ?? d.terbitPada)),
+    },
+  ]
 }
 
 /** Isi sitemap index: semua jenis, `lastmod` = entri terbaru jenis itu. Jenis kosong tetap dicantumkan. */

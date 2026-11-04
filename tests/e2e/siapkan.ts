@@ -55,7 +55,7 @@ const explainer = await payload.create({
   },
 })
 
-await payload.create({
+const panduan = await payload.create({
   collection: 'artikel',
   data: {
     ...dasar,
@@ -110,6 +110,28 @@ await payload.create({
     isi: isi(p('Tidur cukup membantu konsentrasi, suasana hati, dan daya tahan tubuh.')),
   },
 })
+
+const istilah = [
+  { judul: 'PTKP', slug: 'ptkp', pilar: 'uang-karier', definisi: 'PTKP adalah penghasilan tidak kena pajak, bagian penghasilan yang tidak dipotong PPh 21.' },
+  { judul: 'TER', slug: 'ter', pilar: 'uang-karier', definisi: 'TER adalah tarif efektif rata-rata untuk memotong PPh 21 setiap bulan.' },
+  { judul: 'BMI', slug: 'bmi', pilar: 'sehat', definisi: 'BMI adalah indeks massa tubuh, berat badan dibagi kuadrat tinggi badan.' },
+]
+for (const i of istilah) {
+  await payload.create({
+    collection: 'artikel',
+    data: {
+      ...dasar,
+      judul: i.judul,
+      slug: i.slug,
+      tipe: 'glosarium',
+      pilar: pilar[i.pilar],
+      deck: i.definisi,
+      intinya: [{ poin: i.definisi }, { poin: 'Penjelasan lengkap dan contohnya ada di panduan terkait.' }],
+      isi: isi(p(i.definisi)),
+      artikelTerkait: [panduan.id],
+    },
+  })
+}
 
 await payload.create({
   collection: 'artikel',

@@ -6,8 +6,9 @@
  * - Fungsi murni (`susunHeader`, `susunArtikel`, `tanggalIndonesia`, ...) menerjemahkan dokumen
  *   Payload ke tipe di `tipe.ts`, supaya komponen tidak membaca relasi Payload mentah.
  */
-export { muatArtikel, muatFooter, muatHeader, muatSitus, TAG_ARTIKEL } from './cache'
-export { ambilArtikel, ambilFooter, ambilHeader } from './data'
+export { muatArtikel, muatFooter, muatGlosarium, muatHeader, muatSitus, TAG_ARTIKEL } from './cache'
+export { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader } from './data'
+export { kelompokkanIstilah } from './glosarium'
 export { HAK_CIPTA_BAWAAN, LABEL_SOSIAL, susunFooter, susunHeader, tautanInternal, TOOLS_BAWAAN } from './tampilan'
 export {
   gabungTerkait,

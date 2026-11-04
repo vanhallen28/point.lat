@@ -72,3 +72,8 @@ export type DataArtikel = {
   terkait: KartuArtikel[]
   seo: ArtikelSeo
 }
+
+export type Istilah = { judul: string; href: string; definisi: string }
+
+/** Istilah glosarium per huruf awal; `id` dipakai jangkar navigasi huruf. */
+export type KelompokIstilah = { huruf: string; id: string; istilah: Istilah[] }

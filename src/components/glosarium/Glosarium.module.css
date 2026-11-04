@@ -1,0 +1,97 @@
+.halaman {
+  padding-top: var(--ruang-4);
+}
+
+.kepala {
+  display: grid;
+  gap: var(--ruang-4);
+  max-width: 880px;
+  padding-bottom: var(--ruang-8);
+}
+
+.judul {
+  margin-top: var(--ruang-4);
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.deck {
+  max-width: 60ch;
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.huruf ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-2);
+  padding: 0;
+  list-style: none;
+}
+
+.huruf a {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--sentuh-min);
+  min-height: var(--sentuh-min);
+  border-radius: var(--radius-kontrol);
+  background: var(--permukaan);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.huruf a:hover {
+  text-decoration: underline;
+}
+
+.kelompok {
+  display: grid;
+  gap: var(--ruang-4);
+  max-width: 880px;
+  margin-top: var(--ruang-10);
+  scroll-margin-top: var(--ruang-6);
+}
+
+.kelompokJudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.daftar {
+  display: grid;
+  border-top: var(--garis-tipis) solid var(--garis);
+}
+
+.istilah {
+  display: grid;
+  padding-block: var(--ruang-3) var(--ruang-4);
+  border-bottom: var(--garis-tipis) solid var(--garis);
+}
+
+.istilah dt a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.istilah dt a:hover {
+  text-decoration: underline;
+}
+
+.istilah dd {
+  margin: 0;
+  color: var(--teks-sekunder);
+}
+
+.kosong {
+  max-width: 60ch;
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}

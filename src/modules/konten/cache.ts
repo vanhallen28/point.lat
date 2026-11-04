@@ -5,7 +5,7 @@ import { getPayload } from 'payload'
 import { TAG } from '@/lib/tag'
 import { ambilSitus } from '@/modules/seo/situs'
 
-import { ambilArtikel, ambilFooter, ambilHeader } from './data'
+import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader } from './data'
 
 /**
  * Data halaman publik yang di-cache dengan tag (spesifikasi §5 "Rendering"). Halaman dirender statis
@@ -57,3 +57,9 @@ export const muatArtikel = unstable_cache(
   ['konten', 'artikel'],
   { tags: TAG_ARTIKEL, revalidate: SEJAM },
 )
+
+/** Indeks glosarium hanya berisi artikel bertipe glosarium. */
+export const muatGlosarium = unstable_cache(async () => ambilGlosarium(await payload()), ['konten', 'glosarium'], {
+  tags: [TAG.koleksi('artikel')],
+  revalidate: SEJAM,
+})

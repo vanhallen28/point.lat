@@ -4,8 +4,9 @@ import type { Artikel } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
 
 import { gabungTerkait, MAKS_TERKAIT, susunArtikel } from './artikel'
+import { kelompokkanIstilah } from './glosarium'
 import { susunFooter, susunHeader } from './tampilan'
-import type { DataArtikel, DataFooter, DataHeader, KartuArtikel } from './tipe'
+import type { DataArtikel, DataFooter, DataHeader, KartuArtikel, KelompokIstilah } from './tipe'
 
 /**
  * Query Payload untuk halaman publik. Fungsi di sini menerima `payload` supaya bisa diuji integrasi;
@@ -93,4 +94,17 @@ async function ambilTerkait(payload: Payload, doc: Artikel): Promise<KartuArtike
     populate: { pilar: POPULATE_ARTIKEL.pilar },
   })
   return gabungTerkait(doc.id, manual, docs)
+}
+
+/** Semua istilah glosarium terbit untuk `/glosarium`. */
+export async function ambilGlosarium(payload: Payload): Promise<KelompokIstilah[]> {
+  const { docs } = await payload.find({
+    collection: 'artikel',
+    where: { and: [terbit, { tipe: { equals: 'glosarium' } }] },
+    depth: 0,
+    limit: 2000,
+    pagination: false,
+    select: { judul: true, slug: true, deck: true, intinya: true },
+  })
+  return kelompokkanIstilah(docs)
 }

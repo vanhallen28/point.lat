@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { ambilEntriFeed, ambilEntriNews, ambilEntriSitemap, ambilIndexSitemap, ambilPengaturan } from '@/modules/seo/data'
 import { ambilSitus } from '@/modules/seo/situs'
 import type { PengaturanSitus } from '@/modules/seo/tipe'
-import { saringNews } from '@/modules/seo/xml'
+import { saringNews, terbaru } from '@/modules/seo/xml'
 
 import { dataArtikelTerbit, siapkanRelasiArtikel } from './fixtures'
 import { getTestPayload, unik } from './helpers'
@@ -74,6 +74,14 @@ describe('data rute teknis dari Payload', () => {
       ['artikel', 'pilar', 'tools', 'video', 'penulis', 'halaman'].map((j) => url(`/sitemap/${j}.xml`)),
     )
     expect(index[0].lastmod).toBeTruthy()
+  })
+
+  it('sitemap halaman memuat indeks /glosarium dengan lastmod istilah terbaru', async () => {
+    const payload = await getTestPayload()
+    const relasi = await siapkanRelasiArtikel(payload)
+    const istilah = await payload.create({ collection: 'artikel', data: { ...dataArtikelTerbit(relasi), tipe: 'glosarium', judul: unik('TER') } })
+    const entri = (await ambilEntriSitemap(payload, 'halaman', situs)).find((e) => e.loc === url('/glosarium'))
+    expect(entri?.lastmod).toBe(terbaru([istilah.terbitPada]))
   })
 
   it('halaman draf dari seed tidak masuk sitemap halaman', async () => {

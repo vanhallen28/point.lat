@@ -5,11 +5,14 @@ export type TargetPath =
   | { jenis: 'subkategori'; slug: string; pilarSlug: string }
   | { jenis: 'pilar' | 'tools' | 'video' | 'penulis' | 'halaman'; slug: string }
 
+/** Halaman indeks yang tidak mewakili satu dokumen. */
+export const PATH_INDEKS = { glosarium: '/glosarium' } as const
+
 /** Satu-satunya tempat path publik dirangkai. Dipakai redirect, SEO, sitemap, dan indexer. */
 export function pathFor(target: TargetPath): string {
   switch (target.jenis) {
     case 'artikel':
-      return target.tipe === 'glosarium' ? `/glosarium/${target.slug}` : `/${target.slug}`
+      return target.tipe === 'glosarium' ? `${PATH_INDEKS.glosarium}/${target.slug}` : `/${target.slug}`
     case 'subkategori':
       return `/${target.pilarSlug}/${target.slug}`
     case 'tools':
