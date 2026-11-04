@@ -32,10 +32,13 @@ test('istilah glosarium ikut dicari; tanpa hasil dan tanpa kueri ada petunjuk', 
 
 test('tombol Cari tetap sebaris dengan kolom isian di layar 375 px', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.goto('/cari')
-  const isian = await page.getByRole('searchbox', { name: 'Cari topik' }).boundingBox()
-  const tombol = await page.getByRole('button', { name: 'Cari' }).boundingBox()
-  expect(Math.round(tombol!.y + tombol!.height)).toBe(Math.round(isian!.y + isian!.height))
+  // `/` memakai form besar di hero beranda (padding lebih lebar), `/cari` form biasa.
+  for (const path of ['/cari', '/']) {
+    await page.goto(path)
+    const isian = await page.getByRole('searchbox', { name: 'Cari topik' }).boundingBox()
+    const tombol = await page.getByRole('button', { name: 'Cari' }).boundingBox()
+    expect(Math.round(tombol!.y + tombol!.height), path).toBe(Math.round(isian!.y + isian!.height))
+  }
 })
 
 for (const { lebar, tinggi } of UKURAN_LAYAR) {
