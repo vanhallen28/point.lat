@@ -5,11 +5,12 @@ import { validasiFormatSlug } from '@/lib/slug'
 
 import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
 import { kelompokkanIstilah } from './glosarium'
+import { susunHalaman } from './halaman'
 import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
 import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
-import type { DataArtikel, DataFooter, DataHeader, DataRubrik, KartuArtikel, KelompokIstilah } from './tipe'
+import type { DataArtikel, DataFooter, DataHalaman, DataHeader, DataRubrik, KartuArtikel, KelompokIstilah } from './tipe'
 
 /**
  * Query Payload untuk halaman publik. Fungsi di sini menerima `payload` supaya bisa diuji integrasi;
@@ -180,4 +181,18 @@ export async function ambilRubrik(payload: Payload, pilarSlug: string, subSlug: 
   if (sub === undefined) return null
   const syarat: Where[] = [{ pilar: { equals: pilar.id } }, ...(sub ? [{ subkategori: { equals: sub.id } }] : [])]
   return susunRubrik(pilar, sub, daftarSub, await kartuTerbit(payload, syarat, MAKS_ARTIKEL_RUBRIK))
+}
+
+/** Halaman statis terbit dengan slug ini. Blok dimuat seperti isi artikel (depth 2) untuk tautan, gambar, dan tool. */
+export async function ambilHalaman(payload: Payload, slug: string): Promise<DataHalaman | null> {
+  if (validasiFormatSlug(slug) !== true) return null
+  const { docs } = await payload.find({
+    collection: 'halaman',
+    where: { and: [{ slug: { equals: slug } }, terbit] },
+    depth: 2,
+    limit: 1,
+    pagination: false,
+    populate: POPULATE_ARTIKEL,
+  })
+  return docs[0] ? susunHalaman(docs[0]) : null
 }

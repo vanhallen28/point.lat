@@ -20,6 +20,9 @@ export const SLUG = {
 /** Subkategori contoh di bawah pilar Uang & Karier. */
 export const SLUG_SUB = { pajak: 'pajak' } as const
 
+/** Halaman statis dari seed yang diterbitkan `siapkan.ts`; halaman seed lain tetap draf. */
+export const SLUG_HALAMAN = { tentang: 'tentang', kebijakanRedaksi: 'kebijakan-redaksi', draf: 'pasang-iklan' } as const
+
 export const JUDUL_PANDUAN = 'Cara hitung gaji bersih setelah PPh 21 dan BPJS'
 
 // Pembuat JSON Lexical minimal (bentuk yang disimpan Payload 3.92).

@@ -33,6 +33,12 @@
   margin-top: var(--ruang-3);
 }
 
+/* Isi yang dibuka subjudul (blok teks halaman statis, intro rubrik) tidak mendapat jarak ekstra di
+   atasnya: jarak ke blok sebelumnya sudah diatur tata letak halaman. */
+.prosa > :first-child {
+  margin-top: 0;
+}
+
 .prosa a {
   text-decoration: underline;
   text-decoration-thickness: var(--garis-tipis);

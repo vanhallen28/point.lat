@@ -1,6 +1,6 @@
 import type { TipeArtikel, WarnaPilar } from '@/lib/konstanta'
 import type { IsiDokumen } from '@/modules/seo/lexical'
-import type { ArtikelSeo, PilarSeo, SubkategoriSeo } from '@/modules/seo/tipe'
+import type { ArtikelSeo, HalamanSeo, PilarSeo, SubkategoriSeo } from '@/modules/seo/tipe'
 
 /**
  * Data tampilan yang sudah siap dirender komponen publik. Komponen tidak membaca dokumen Payload
@@ -92,3 +92,17 @@ export type DataRubrik = {
   artikel: KartuArtikel[]
   seo: { jenis: 'pilar'; doc: PilarSeo } | { jenis: 'subkategori'; doc: SubkategoriSeo }
 }
+
+export type KartuHalaman = { judul: string; teks: string | null; href: string | null }
+
+/** Blok page builder halaman statis yang siap dirender. `utama`: hero yang memegang H1 halaman. */
+export type BlokTampil =
+  | { jenis: 'hero'; id: string; judul: string; subjudul: string | null; gambar: MediaTampil | null; utama: boolean }
+  | { jenis: 'teks'; id: string; isi: IsiDokumen }
+  | { jenis: 'kartu'; id: string; judul: string | null; kartu: KartuHalaman[] }
+  | { jenis: 'cta'; id: string; judul: string; teks: string | null; label: string; href: string }
+  | { jenis: 'faq'; id: string; judul: string; faq: Faq[] }
+  | { jenis: 'tool'; id: string; nama: string; ringkasan: string; href: string }
+
+/** Halaman statis dari koleksi `halaman`. `heroUtama`: blok pertama hero, jadi judul tidak ditulis ulang. */
+export type DataHalaman = { judul: string; href: string; heroUtama: boolean; blok: BlokTampil[]; seo: HalamanSeo }

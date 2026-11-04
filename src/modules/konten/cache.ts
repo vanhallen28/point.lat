@@ -5,7 +5,7 @@ import { getPayload } from 'payload'
 import { TAG } from '@/lib/tag'
 import { ambilSitus } from '@/modules/seo/situs'
 
-import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHeader, ambilRubrik, ambilTerbaru, cariRedirect } from './data'
+import { ambilArtikel, ambilFooter, ambilGlosarium, ambilHalaman, ambilHeader, ambilRubrik, ambilTerbaru, cariRedirect } from './data'
 
 /**
  * Data halaman publik yang di-cache dengan tag (spesifikasi §5 "Rendering"). Halaman dirender statis
@@ -85,3 +85,9 @@ export const muatRubrik = unstable_cache(
   ['konten', 'rubrik'],
   { tags: TAG_ARTIKEL, revalidate: SEJAM },
 )
+
+/** Halaman statis: blok teks, CTA, dan tool bisa menautkan dokumen apa pun, jadi tagnya sama dengan artikel. */
+export const muatHalaman = unstable_cache(async (slug: string) => ambilHalaman(await payload(), slug), ['konten', 'halaman'], {
+  tags: TAG_ARTIKEL,
+  revalidate: SEJAM,
+})

@@ -1,0 +1,109 @@
+/* Halaman statis dari page builder: blok berurutan dalam satu kolom baca selebar 880px. Jarak
+   antarblok hanya dari `gap`, jadi tidak bergantung jenis atau jumlah blok. */
+.halaman {
+  display: grid;
+  gap: var(--ruang-10);
+  padding-top: var(--ruang-4);
+}
+
+.halaman > * {
+  min-width: 0;
+  max-width: 880px;
+}
+
+.hero {
+  display: grid;
+  gap: var(--ruang-4);
+}
+
+.judul {
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.subjudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.deck {
+  max-width: 60ch;
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.gambar {
+  width: 100%;
+  height: auto;
+  margin-top: var(--ruang-4);
+  border-radius: var(--radius-kartu);
+}
+
+.bagian {
+  display: grid;
+  gap: var(--ruang-6);
+}
+
+.kartu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: var(--ruang-4);
+  padding: 0;
+  list-style: none;
+}
+
+.kartu li {
+  display: grid;
+  align-content: start;
+  gap: var(--ruang-3);
+  padding: var(--ruang-6);
+  border-radius: var(--radius-kartu);
+  background: var(--permukaan);
+}
+
+.kartuJudul {
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  font-weight: 800;
+}
+
+.kartuJudul a {
+  text-decoration-thickness: var(--garis-tebal);
+}
+
+.cta {
+  display: grid;
+  justify-items: start;
+  gap: var(--ruang-4);
+  padding: var(--ruang-8) var(--ruang-6);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kartu);
+}
+
+.cta p {
+  max-width: 60ch;
+}
+
+.tombol {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  min-height: 52px;
+  padding: 0 var(--ruang-6);
+  border-radius: var(--radius-kontrol);
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.tombol:hover {
+  text-decoration: underline;
+}
+
+.tombol:active {
+  transform: scale(0.98);
+}

@@ -3,10 +3,11 @@ import { getPayload } from 'payload'
 import sharp from 'sharp'
 
 import { pakaiKlien } from '@/modules/media'
+import type { Halaman } from '@/payload-types'
 import { klienPalsu } from '@/modules/media/palsu'
 import { seed } from '@/seed/seed'
 
-import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_SUB, tautanKe } from './data'
+import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, p, SLUG, SLUG_HALAMAN, SLUG_SUB, tautanKe } from './data'
 
 /**
  * Mengisi database E2E sebelum server dibangun dan dinyalakan (`webServer` di playwright.config.ts).
@@ -166,6 +167,35 @@ const danaDarurat = await payload.create({
   },
 })
 await payload.update({ collection: 'artikel', id: danaDarurat.id, data: { _status: 'published', slug: SLUG.danaDarurat } })
+
+// Halaman statis dari seed (draf) diterbitkan dengan blok page builder.
+async function terbitkanHalaman(slug: string, tataLetak: NonNullable<Halaman['tataLetak']>) {
+  const { docs } = await payload.find({ collection: 'halaman', where: { slug: { equals: slug } }, draft: true, limit: 1 })
+  await payload.update({ collection: 'halaman', id: docs[0].id, data: { _status: 'published', tataLetak } })
+}
+
+await terbitkanHalaman(SLUG_HALAMAN.tentang, [
+  {
+    blockType: 'hero',
+    judul: 'Intinya dulu, lalu bisa kamu hitung sendiri',
+    subjudul: 'point. menjelaskan uang, karier, teknologi, pendidikan, dan kesehatan untuk pembaca Indonesia.',
+  },
+  { blockType: 'teks', isi: isi(h2('Siapa kami'), p('Redaksi kecil yang menulis dari intinya, dengan sumber yang bisa kamu periksa.')) },
+  {
+    blockType: 'kartu',
+    judul: 'Prinsip kami',
+    kartu: [
+      { judul: 'Lugas', teks: 'Jawaban ada di kalimat pertama.' },
+      { judul: 'Cermat', teks: 'Angka bersumber dan bertanggal.' },
+      { judul: 'Akrab', teks: 'Bahasa sehari-hari, tanpa istilah yang tidak perlu.' },
+    ],
+  },
+  { blockType: 'cta', judul: 'Ada yang keliru?', teks: 'Kabari redaksi, kami periksa dan perbaiki.', labelTombol: 'Baca kebijakan redaksi', tautan: '/kebijakan-redaksi' },
+  { blockType: 'faqBlok', judul: 'Tanya jawab', faq: [{ pertanyaan: 'Apakah point. menerima tulisan tamu?', jawaban: 'Belum. Semua tulisan ditulis dan diperiksa redaksi.' }] },
+])
+await terbitkanHalaman(SLUG_HALAMAN.kebijakanRedaksi, [
+  { blockType: 'teks', isi: isi(h2('Sumber dan koreksi'), p('Setiap angka di point. punya sumber. Koreksi dicatat di akhir tulisan.')) },
+])
 
 await payload.create({ collection: 'redirect', data: { dari: '/promo-lama', ke: '/glosarium', kode: '301' } })
 await payload.create({ collection: 'redirect', data: { dari: '/glosarium/ptkp-lama', ke: '/glosarium/ptkp', kode: '301' } })
