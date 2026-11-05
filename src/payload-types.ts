@@ -79,6 +79,9 @@ export interface Config {
     halaman: Halaman;
     redirect: Redirect;
     'log-404': Log404;
+    'antrean-indexing': AntreanIndexing;
+    'log-indexing': LogIndexing;
+    'status-indeks': StatusIndek;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -99,6 +102,9 @@ export interface Config {
     halaman: HalamanSelect<false> | HalamanSelect<true>;
     redirect: RedirectSelect<false> | RedirectSelect<true>;
     'log-404': Log404Select<false> | Log404Select<true>;
+    'antrean-indexing': AntreanIndexingSelect<false> | AntreanIndexingSelect<true>;
+    'log-indexing': LogIndexingSelect<false> | LogIndexingSelect<true>;
+    'status-indeks': StatusIndeksSelect<false> | StatusIndeksSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -781,6 +787,76 @@ export interface Log404 {
   createdAt: string;
 }
 /**
+ * Kabar yang menunggu dikirim ke mesin pencari. Baris hilang setelah selesai; hasilnya ada di Log indexing.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "antrean-indexing".
+ */
+export interface AntreanIndexing {
+  id: number;
+  kunci: string;
+  langkah: 'sitemap' | 'indexnow' | 'indexing-api' | 'cek-status';
+  path: string;
+  jenis: 'terbit' | 'ubah-besar' | 'pindah' | 'hapus';
+  jadwal: string;
+  /**
+   * Jumlah percobaan yang gagal.
+   */
+  percobaan?: number | null;
+  /**
+   * Cek status: 0 = +6 jam, 1 = +24 jam, 2 = +3 hari, 3 = +7 hari.
+   */
+  tahap?: number | null;
+  /**
+   * Cek status: waktu kabar, dasar jadwal.
+   */
+  dasar?: string | null;
+  versi?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Setiap kabar ke mesin pencari dan hasilnya. Status Gagal berarti langkah itu sudah dicoba empat kali.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "log-indexing".
+ */
+export interface LogIndexing {
+  id: number;
+  waktu: string;
+  url: string;
+  jenis?: ('terbit' | 'ubah-besar' | 'pindah' | 'hapus') | null;
+  langkah: 'revalidasi' | 'sitemap' | 'indexnow' | 'indexing-api' | 'cek-status';
+  adapter: 'next' | 'searchConsole' | 'indexNow' | 'googleIndexing' | 'palsu';
+  status: 'berhasil' | 'diulang' | 'gagal' | 'dilewati' | 'ditunda';
+  kodeHttp?: number | null;
+  pesan?: string | null;
+  percobaan?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Status di Google untuk setiap halaman yang terbit, dicek otomatis sampai 7 hari setelah terbit atau perubahan besar.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "status-indeks".
+ */
+export interface StatusIndek {
+  id: number;
+  path: string;
+  status: 'belum-dicek' | 'tidak-dikenal' | 'ditemukan' | 'dirayapi' | 'terindeks' | 'dikecualikan' | 'galat';
+  /**
+   * Keterangan dari Google (coverageState), atau pesan galat.
+   */
+  detail?: string | null;
+  tautanInspeksi?: string | null;
+  dirayapiPada?: string | null;
+  cekTerakhir?: string | null;
+  cekBerikutnya?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -943,6 +1019,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'log-404';
         value: number | Log404;
+      } | null)
+    | ({
+        relationTo: 'antrean-indexing';
+        value: number | AntreanIndexing;
+      } | null)
+    | ({
+        relationTo: 'log-indexing';
+        value: number | LogIndexing;
+      } | null)
+    | ({
+        relationTo: 'status-indeks';
+        value: number | StatusIndek;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1413,6 +1501,55 @@ export interface Log404Select<T extends boolean = true> {
   jumlah?: T;
   terakhir?: T;
   referer?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "antrean-indexing_select".
+ */
+export interface AntreanIndexingSelect<T extends boolean = true> {
+  kunci?: T;
+  langkah?: T;
+  path?: T;
+  jenis?: T;
+  jadwal?: T;
+  percobaan?: T;
+  tahap?: T;
+  dasar?: T;
+  versi?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "log-indexing_select".
+ */
+export interface LogIndexingSelect<T extends boolean = true> {
+  waktu?: T;
+  url?: T;
+  jenis?: T;
+  langkah?: T;
+  adapter?: T;
+  status?: T;
+  kodeHttp?: T;
+  pesan?: T;
+  percobaan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "status-indeks_select".
+ */
+export interface StatusIndeksSelect<T extends boolean = true> {
+  path?: T;
+  status?: T;
+  detail?: T;
+  tautanInspeksi?: T;
+  dirayapiPada?: T;
+  cekTerakhir?: T;
+  cekBerikutnya?: T;
   updatedAt?: T;
   createdAt?: T;
 }

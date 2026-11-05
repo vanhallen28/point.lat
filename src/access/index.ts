@@ -7,6 +7,9 @@ const pengguna = (user: unknown): PenggunaMasuk | undefined =>
 
 export const anyone: Access = () => true
 
+/** Tidak lewat admin atau REST: koleksi ini hanya ditulis sistem lewat Local API (Mesin Indexing). */
+export const nobody: Access = () => false
+
 export const isLoggedIn: Access = ({ req }) => Boolean(req.user)
 
 export const isAdmin: Access = ({ req }) => pengguna(req.user)?.peran === 'admin'
