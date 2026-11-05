@@ -175,7 +175,7 @@ point-lat/
 | `pilar` | nama, slug, warna, deskripsi, intro halaman rubrik, SEO, urutan |
 | `subkategori` | nama, slug, pilar induk, deskripsi |
 | `tools` | nama, slug, pilar, kalkulator (`toolId` yang dipetakan ke modul `hitung`), label & bantuan input, artikel penjelasan (blok), FAQ, sumber aturan, SEO |
-| `parameterTools` | `toolId`, kunci (mis. PTKP TK/0), nilai, berlaku mulai, berlaku sampai, sumber |
+| `parameterTools` | `toolId`, kunci (mis. `ptkp-dasar`, `ter-a`), nilai (satu angka) atau tabel (baris: label, batas, nilai; untuk tarif berlapis dan daftar pilihan), berlaku mulai, berlaku sampai, sumber, catatan. Kunci dan bentuknya divalidasi modul `hitung` |
 | `video` | judul, slug, media Cloudinary (9:16), poster, transkrip, takarir WebVTT (opsional, dilayani `/video/{slug}/takarir.vtt`), durasi, artikel induk, pilar, SEO |
 | `penulis` | nama, slug, foto, bio, keahlian, tautan (LinkedIn dsb.), artikel |
 | `halaman` | judul, slug, page builder (blok: hero, teks, kartu, CTA, FAQ, embed tool), SEO |
@@ -320,7 +320,7 @@ Lighthouse CI menolak build bila skor Performance HP < 90 di halaman contoh (ber
 - Masuk kartu: naik 12px + opacity, berurutan 40 ms, total < 300 ms, hanya sekali saat pertama terlihat.
 - Perpindahan halaman: View Transitions API (CSS), elemen bersama untuk kartu → judul artikel.
 - Reveal judul raksasa beranda: animasi CSS per kata (naik 0,3em + opacity, 400 ms, berurutan 80 ms), tanpa JavaScript, judul tampil di paint pertama. Diubah pemilik 2026-11-05 dari GSAP, karena GSAP membuat JS beranda 168,6 KiB (di atas anggaran §12) dan membuat judul menunggu skrip atau berkedip.
-- Angka hasil kalkulator: GSAP atau CSS diputuskan di Rencana 5 dengan anggaran §12 yang sama.
+- Angka hasil kalkulator: animasi CSS saat hasil baru muncul (naik 0,3em + opacity, 250 ms), tanpa JavaScript animasi; hasil contoh dari server tidak dianimasikan. Diputuskan Rencana 5, karena GSAP (27,5 KB gzip) saja sudah melewati anggaran JS milik point. 25 KB, sedangkan kalkulator dan modul `hitung` sudah sekitar 13 KB.
 - Tidak ada animasi berjalan terus (ambient). Hanya `transform` dan `opacity`.
 - `prefers-reduced-motion: reduce` mematikan semua animasi dan View Transitions; konten tetap utuh.
 
