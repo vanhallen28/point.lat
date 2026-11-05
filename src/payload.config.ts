@@ -25,6 +25,7 @@ import { Footer } from './globals/Footer'
 import { Header } from './globals/Header'
 import { Newsletter } from './globals/Newsletter'
 import { PengaturanSEO } from './globals/PengaturanSEO'
+import { endpointJalankanJob } from './modules/indexer/endpoint'
 import { klienMedia } from './modules/media'
 import { mediaCloudinary } from './modules/media/plugin'
 
@@ -54,6 +55,8 @@ export default buildConfig({
     StatusIndeks,
   ],
   globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter],
+  // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit dan Mesin Indexing.
+  endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
