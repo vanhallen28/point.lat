@@ -5,7 +5,7 @@ import { LABEL_STATUS_INDEKS, STATUS_INDEKS } from '@/modules/indexer/tipe'
 
 /**
  * Status indeks Google per path publik (spesifikasi §6 `statusIndeks`), diisi cek status URL
- * Inspection +6 jam sampai +7 hari setelah terbit. Path yang dihapus atau pindah keluar dari sini.
+ * Inspection +6 jam sampai +30 hari setelah terbit. Path yang dihapus atau pindah keluar dari sini.
  */
 export const StatusIndeks: CollectionConfig = {
   slug: 'status-indeks',
@@ -15,7 +15,7 @@ export const StatusIndeks: CollectionConfig = {
     useAsTitle: 'path',
     defaultColumns: ['path', 'status', 'cekTerakhir', 'cekBerikutnya', 'detail'],
     group: 'SEO',
-    description: 'Status di Google untuk setiap halaman yang terbit, dicek otomatis sampai 7 hari setelah terbit atau perubahan besar.',
+    description: 'Status di Google untuk setiap halaman yang terbit, dicek otomatis sampai 30 hari setelah terbit atau perubahan besar.',
   },
   access: { read: isAdmin, create: nobody, update: nobody, delete: isAdmin },
   fields: [

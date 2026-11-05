@@ -28,7 +28,7 @@ export const AntreanIndexing: CollectionConfig = {
     { name: 'jenis', type: 'select', required: true, options: JENIS_KABAR.map((value) => ({ value, label: LABEL_JENIS[value] })) },
     { name: 'jadwal', type: 'date', required: true, index: true, admin: { date: { pickerAppearance: 'dayAndTime' } } },
     { name: 'percobaan', type: 'number', defaultValue: 0, admin: { description: 'Jumlah percobaan yang gagal.' } },
-    { name: 'tahap', type: 'number', defaultValue: 0, admin: { description: 'Cek status: 0 = +6 jam, 1 = +24 jam, 2 = +3 hari, 3 = +7 hari.' } },
+    { name: 'tahap', type: 'number', defaultValue: 0, admin: { description: 'Cek status: 0 = +6 jam, 1 = +24 jam, 2 = +3 hari, 3 = +7 hari, 4 = +14 hari, 5 = +30 hari.' } },
     { name: 'dasar', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' }, description: 'Cek status: waktu kabar, dasar jadwal.' } },
     { name: 'versi', type: 'number', defaultValue: 0, admin: { hidden: true } },
   ],

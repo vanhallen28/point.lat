@@ -804,7 +804,7 @@ export interface AntreanIndexing {
    */
   percobaan?: number | null;
   /**
-   * Cek status: 0 = +6 jam, 1 = +24 jam, 2 = +3 hari, 3 = +7 hari.
+   * Cek status: 0 = +6 jam, 1 = +24 jam, 2 = +3 hari, 3 = +7 hari, 4 = +14 hari, 5 = +30 hari.
    */
   tahap?: number | null;
   /**
@@ -836,7 +836,7 @@ export interface LogIndexing {
   createdAt: string;
 }
 /**
- * Status di Google untuk setiap halaman yang terbit, dicek otomatis sampai 7 hari setelah terbit atau perubahan besar.
+ * Status di Google untuk setiap halaman yang terbit, dicek otomatis sampai 30 hari setelah terbit atau perubahan besar.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "status-indeks".

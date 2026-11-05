@@ -76,7 +76,7 @@ export type BarisAntrean = {
   percobaan: number
   /** Cek status: urutan jadwal berikutnya (0 = +6 jam). */
   tahap: number
-  /** Cek status: waktu kabar, dasar jadwal +6 jam sampai +7 hari. */
+  /** Cek status: waktu kabar, dasar jadwal +6 jam sampai +30 hari. */
   dasar: Date | null
 }
 

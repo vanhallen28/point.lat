@@ -24,8 +24,12 @@ export const HARI = 24 * JAM
 /** Gagal: diulang 3 kali dengan jeda 1, 5, lalu 30 menit; setelah itu status Gagal. */
 export const JEDA_ULANG_MS = [MENIT, 5 * MENIT, 30 * MENIT] as const
 
-/** Cek status pada +6 jam, +24 jam, +3 hari, dan +7 hari setelah kabar; berhenti saat Terindeks. */
-export const JADWAL_CEK_MS = [6 * JAM, 24 * JAM, 3 * HARI, 7 * HARI] as const
+/**
+ * Cek status pada +6 jam, +24 jam, +3 hari, +7 hari, +14 hari, dan +30 hari setelah kabar; berhenti saat
+ * Terindeks. Tahap +14 dan +30 hari ditambahkan pemilik karena domain baru sering belum dikenal Google
+ * lebih dari seminggu.
+ */
+export const JADWAL_CEK_MS = [6 * JAM, 24 * JAM, 3 * HARI, 7 * HARI, 14 * HARI, 30 * HARI] as const
 
 /** Jarak minimal antarpengiriman: sitemap paling sering 30 menit sekali, IndexNow 5 menit sekali. */
 export const JENDELA_KIRIM_MS = { sitemap: 30 * MENIT, indexnow: 5 * MENIT } as const
@@ -82,7 +86,7 @@ export function gabungBaris(lama: BarisAntrean, baru: BarisAntrean): BarisAntrea
   return { ...lama, jenis: baru.jenis }
 }
 
-/** Jadwal cek status ke-`tahap` (0 = +6 jam), `null` setelah tahap terakhir (+7 hari). */
+/** Jadwal cek status ke-`tahap` (0 = +6 jam), `null` setelah tahap terakhir (+30 hari). */
 export function jadwalCek(dasar: Date, tahap: number): Date | null {
   const jeda = JADWAL_CEK_MS[tahap]
   return jeda === undefined ? null : new Date(dasar.getTime() + jeda)

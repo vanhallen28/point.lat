@@ -96,12 +96,14 @@ describe('jadwal ulang dan jadwal cek status', () => {
     ])
   })
 
-  it('cek status +6 jam, +24 jam, +3 hari, +7 hari dari waktu kabar', () => {
-    expect([0, 1, 2, 3, 4].map((tahap) => jadwalCek(SEKARANG, tahap)?.toISOString() ?? null)).toEqual([
+  it('cek status +6 jam, +24 jam, +3 hari, +7 hari, +14 hari, +30 hari dari waktu kabar', () => {
+    expect([0, 1, 2, 3, 4, 5, 6].map((tahap) => jadwalCek(SEKARANG, tahap)?.toISOString() ?? null)).toEqual([
       '2026-11-05T09:00:00.000Z',
       '2026-11-06T03:00:00.000Z',
       '2026-11-08T03:00:00.000Z',
       '2026-11-12T03:00:00.000Z',
+      '2026-11-19T03:00:00.000Z',
+      '2026-12-05T03:00:00.000Z',
       null,
     ])
   })
@@ -172,13 +174,15 @@ describe('setelahPanggilan: keadaan antrean setelah adapter menjawab', () => {
     })
   })
 
-  it('cek status: lanjut ke jadwal berikutnya sampai Terindeks atau sampai +7 hari', () => {
+  it('cek status: lanjut ke jadwal berikutnya sampai Terindeks atau sampai +30 hari', () => {
     const cek = (tahap: number) => baris({ langkah: 'cek-status', tahap, dasar: SEKARANG })
     const ditemukan = { ...berhasil, indeks: { verdict: 'NEUTRAL', coverageState: 'Discovered - currently not indexed' } }
     const terindeks = { ...berhasil, indeks: { verdict: 'PASS', coverageState: 'Submitted and indexed' } }
     expect(setelahPanggilan(cek(0), ditemukan, SEKARANG).berikut).toEqual({ jadwal: t('2026-11-06T03:00:00.000Z'), percobaan: 0, tahap: 1 })
     expect(setelahPanggilan(cek(1), terindeks, SEKARANG)).toEqual({ log: 'berhasil', berikut: null })
-    expect(setelahPanggilan(cek(3), ditemukan, SEKARANG)).toEqual({ log: 'berhasil', berikut: null })
+    // Domain baru sering belum dikenal Google lebih dari 7 hari: cek berlanjut ke +14 dan +30 hari.
+    expect(setelahPanggilan(cek(3), ditemukan, SEKARANG).berikut).toEqual({ jadwal: t('2026-11-19T03:00:00.000Z'), percobaan: 0, tahap: 4 })
+    expect(setelahPanggilan(cek(5), ditemukan, SEKARANG)).toEqual({ log: 'berhasil', berikut: null })
     // Cek yang gagal tiga kali tidak menghentikan jadwal berikutnya.
     expect(setelahPanggilan({ ...cek(1), percobaan: 3 }, gagal, SEKARANG)).toEqual({
       log: 'gagal',
