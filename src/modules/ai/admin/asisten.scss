@@ -22,6 +22,16 @@
     font-size: 15px;
   }
 
+  h5 {
+    margin: 0 0 calc(var(--base) * 0.25);
+    font-size: 14px;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
   p,
   ul,
   ol,
@@ -30,6 +40,8 @@
     margin: 0;
   }
 
+  a:focus-visible,
+  input:focus-visible,
   button:focus-visible,
   summary:focus-visible {
     outline: 2px solid var(--theme-text);
@@ -93,6 +105,21 @@ ul.asisten__catatan {
   border-top: 1px solid var(--theme-elevation-150);
 }
 
+.asisten__label {
+  font-weight: 600;
+}
+
+// Garis batas memakai elevation-600 supaya kontras batas isian minimal 3:1 (WCAG 1.4.11).
+.asisten__input {
+  min-height: 44px;
+  padding: 0 calc(var(--base) * 0.5);
+  border: 1px solid var(--theme-elevation-600);
+  border-radius: 10px;
+  background: var(--theme-input-bg, var(--theme-elevation-0));
+  color: var(--theme-text);
+  font: inherit;
+}
+
 .asisten__tombol {
   justify-self: start;
   min-height: 44px;
@@ -135,7 +162,8 @@ ul.asisten__catatan {
   border-radius: 10px;
   background: var(--theme-elevation-50);
 
-  ul {
+  ul,
+  ol {
     padding-left: calc(var(--base) * 1.1);
   }
 
@@ -145,6 +173,13 @@ ul.asisten__catatan {
 
   dd {
     margin: 0 0 calc(var(--base) * 0.25);
+  }
+
+  // Tautan di daftar (sumber resmi, saran link) berdempetan per baris: target sentuh 44 px (axe target-size).
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }
 

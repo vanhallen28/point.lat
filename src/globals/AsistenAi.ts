@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { isAdmin, isLoggedIn } from '@/access'
+import { validasiUrlOpsional } from '@/lib/validasi'
 import { ANGGARAN_BAWAAN, HARGA_BAWAAN } from '@/modules/ai/aturan'
 
 /**
@@ -51,6 +52,21 @@ export const AsistenAi: GlobalConfig = {
         { name: 'model', type: 'text', required: true, admin: { description: 'ID model API, misalnya claude-sonnet-5-5.' } },
         { name: 'masuk', type: 'number', required: true, min: 0, label: 'Token masuk' },
         { name: 'keluar', type: 'number', required: true, min: 0, label: 'Token keluar' },
+      ],
+    },
+    {
+      name: 'sumberResmi',
+      type: 'array',
+      label: 'Sumber resmi per pilar',
+      labels: { singular: 'Sumber', plural: 'Sumber' },
+      admin: {
+        description:
+          'Tampil di brief dari keyword sebagai sumber yang wajib dicek, sesuai pilar artikel. Brief tidak pernah memuat URL buatan AI.',
+      },
+      fields: [
+        { name: 'pilar', type: 'relationship', relationTo: 'pilar', required: true },
+        { name: 'nama', type: 'text', required: true },
+        { name: 'url', type: 'text', required: true, label: 'URL', validate: (value: unknown) => validasiUrlOpsional(value) },
       ],
     },
     {

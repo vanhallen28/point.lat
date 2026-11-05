@@ -3,6 +3,7 @@ import type { Payload } from 'payload'
 import type { WarnaPilar } from '@/lib/konstanta'
 import { paragrafLexical } from '@/lib/lexical'
 
+import { SUMBER_RESMI_AWAL } from './sumber-resmi'
 import { seedTools } from './tools'
 
 export const PILAR_AWAL: {
@@ -63,6 +64,17 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
       await payload.update({ collection: 'pilar', id: lama.id, data: { disclaimer: pilar.disclaimer } })
     }
     idPilar.push(doc.id)
+  }
+
+  // Sumber resmi per pilar untuk brief Asisten AI; daftar yang sudah diisi pemilik tidak ditimpa.
+  const asisten = await payload.findGlobal({ slug: 'asisten-ai', depth: 0 })
+  if (!asisten.sumberResmi?.length) {
+    await payload.updateGlobal({
+      slug: 'asisten-ai',
+      data: {
+        sumberResmi: PILAR_AWAL.flatMap((pilar, i) => (SUMBER_RESMI_AWAL[pilar.slug] ?? []).map((s) => ({ pilar: idPilar[i], ...s }))),
+      },
+    })
   }
 
   // Kalkulator (draf) dan parameternya; tools butuh pilar yang sudah ada.

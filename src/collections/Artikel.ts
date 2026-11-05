@@ -4,7 +4,7 @@ import type { CollectionConfig, PayloadRequest } from 'payload'
 import { isLoggedIn, publishedOrLoggedIn } from '@/access'
 import { blokArtikel } from '@/blocks/artikel'
 import { faqField, sumberField } from '@/fields/konten'
-import { pakaiDrafAiField, reviewAiField } from '@/fields/reviewAi'
+import { briefAiField, pakaiDrafAiField, reviewAiField } from '@/fields/reviewAi'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { catatTanggalArtikel } from '@/hooks/catatTanggalArtikel'
@@ -156,6 +156,7 @@ export const Artikel: CollectionConfig = {
     },
     pakaiDrafAiField,
     reviewAiField,
+    briefAiField,
     { name: 'terbitPada', type: 'date', admin: { position: 'sidebar', readOnly: true } },
     { name: 'diperbaruiBesar', type: 'date', label: 'Diperbarui', admin: { position: 'sidebar', readOnly: true } },
     {

@@ -473,6 +473,15 @@ export interface Artikel {
     angkaDicek?: boolean | null;
     pengalamanDitambah?: boolean | null;
   };
+  briefAi?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   terbitPada?: string | null;
   diperbaruiBesar?: string | null;
   updatedAt: string;
@@ -1463,6 +1472,7 @@ export interface ArtikelSelect<T extends boolean = true> {
         angkaDicek?: T;
         pengalamanDitambah?: T;
       };
+  briefAi?: T;
   terbitPada?: T;
   diperbaruiBesar?: T;
   updatedAt?: T;
@@ -2175,6 +2185,17 @@ export interface AsistenAi {
       }[]
     | null;
   /**
+   * Tampil di brief dari keyword sebagai sumber yang wajib dicek, sesuai pilar artikel. Brief tidak pernah memuat URL buatan AI.
+   */
+  sumberResmi?:
+    | {
+        pilar: number | Pilar;
+        nama: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Ditandai bersama frasa bawaan, misalnya frasa yang sering muncul di draf.
    */
   frasaKlise?: string[] | null;
@@ -2376,6 +2397,14 @@ export interface AsistenAiSelect<T extends boolean = true> {
         model?: T;
         masuk?: T;
         keluar?: T;
+        id?: T;
+      };
+  sumberResmi?:
+    | T
+    | {
+        pilar?: T;
+        nama?: T;
+        url?: T;
         id?: T;
       };
   frasaKlise?: T;

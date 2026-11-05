@@ -8,6 +8,7 @@ import { teksBiaya } from '../aturan'
 import type { StatusAsisten } from '../status'
 import type { TugasAi } from '../tipe'
 
+import { BagianBrief } from './BagianBrief'
 import { BagianKlaim } from './BagianKlaim'
 import { BagianMeta } from './BagianMeta'
 import { BagianPola } from './BagianPola'
@@ -70,6 +71,7 @@ export function AsistenAi() {
       {siap && status.mode === 'palsu' ? <p className="asisten__catatan">Mode palsu: hasil AI berupa contoh, bukan dari Claude.</p> : null}
       {status === null ? <p className="asisten__keterangan">Memuat status asisten...</p> : null}
       {status?.pesan ? <p className="asisten__pesan asisten__pesan--peringatan">{status.pesan}</p> : null}
+      <BagianBrief minta={minta} nonaktif={!siap || Boolean(status.pesan)} />
       <BagianMeta minta={minta} nonaktif={!siap || Boolean(status.pesan)} />
       <BagianPola frasaTambahan={siap ? status.frasaKlise : []} />
       <BagianKlaim />

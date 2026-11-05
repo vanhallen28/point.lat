@@ -31,3 +31,13 @@ export const reviewAiField: Field = {
     ...BUTIR_REVIEW.map((b): Field => ({ name: b.name, type: 'checkbox', label: b.label, defaultValue: false, validate: validasiButirReview })),
   ],
 }
+
+/**
+ * Brief terakhir dari Asisten AI (JSON hasil tugas brief). Disimpan bersama draf supaya draf per bagian bisa
+ * memakai outline-nya di sesi berikutnya. Tidak tampil di form dan tidak pernah dirender di halaman publik.
+ */
+export const briefAiField: Field = {
+  name: 'briefAi',
+  type: 'json',
+  admin: { hidden: true },
+}

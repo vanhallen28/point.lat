@@ -3,13 +3,16 @@ import type { Payload } from 'payload'
 import { adapterAi, type KeadaanAdapter } from './adapter'
 import { cadangkanAnggaran, selesaikanAnggaran } from './anggaran'
 import { BATAS_PER_MENIT, BATAS_TUGAS, biaya, bulanJakarta, bytePrompt, cadanganBiaya, hargaModel, modelTugas, teksBiaya } from './aturan'
+import { lengkapiBrief } from './brief-data'
 import type { DefinisiTugas } from './prompt/bantu'
+import { definisiBrief } from './prompt/brief'
 import { definisiMeta } from './prompt/meta'
 import { ambilPengaturanAi } from './status'
 import type { ModeAi, Token, TugasAi } from './tipe'
 
 /** Tugas yang sudah punya prompt. Tugas lain ditolak sebagai belum tersedia. */
 const DEFINISI: Partial<Record<TugasAi, DefinisiTugas<unknown, unknown>>> = {
+  brief: { ...definisiBrief, lengkapi: lengkapiBrief } as DefinisiTugas<unknown, unknown>,
   meta: definisiMeta as DefinisiTugas<unknown, unknown>,
 }
 

@@ -32,6 +32,8 @@ const KOLEKSI_DIBERSIHKAN = [
   'analitik-halaman',
   'analitik-situs',
   'tugas-seo',
+  'log-ai',
+  'pemakaian-ai',
 ] as const
 for (const koleksi of KOLEKSI_DIBERSIHKAN) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
@@ -297,6 +299,8 @@ const tekno = await payload.create({
   },
 })
 await payload.updateGlobal({ slug: 'pengaturan-seo', data: { indexing: { kunciIndexNow: KUNCI_INDEXNOW } } })
+// Asisten AI menyala dengan anggaran bawaan, apa pun yang diubah tes sebelumnya (E2E kedua memakai database yang sama).
+await payload.updateGlobal({ slug: 'asisten-ai', data: { aktif: true, anggaranBulanan: 10 } })
 await payload.updateGlobal({
   slug: 'newsletter',
   data: { aktif: true, penyedia: 'kit', urlForm: 'https://point.kit.com/intinya', judul: 'Intinya, tiap Senin.', deskripsi: 'Lima tulisan terbaik pekan ini, langsung ke email.' },

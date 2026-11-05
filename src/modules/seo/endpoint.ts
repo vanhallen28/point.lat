@@ -1,4 +1,4 @@
-import { APIError, type Endpoint, type PayloadRequest, type Where } from 'payload'
+import { APIError, type Endpoint, type Payload, type PayloadRequest, type Where } from 'payload'
 
 import { pathFor } from '@/lib/paths'
 import { klienMedia } from '@/modules/media'
@@ -38,9 +38,13 @@ export function bacaMasukan(body: unknown): MasukanPanel {
   }
 }
 
-async function artikelLain(req: PayloadRequest, id: MasukanPanel['id']): Promise<ArtikelLain[]> {
+/**
+ * Artikel lain (termasuk draf) sebagai kandidat kanibalisasi dan saran link internal. Dipakai panel SEO dan
+ * brief Asisten AI (Rencana 7), jadi aturan pemilihannya satu.
+ */
+export async function artikelLain(payload: Payload, id: MasukanPanel['id'], req?: PayloadRequest): Promise<ArtikelLain[]> {
   const where: Where = id ? { id: { not_equals: id } } : {}
-  const { docs } = await req.payload.find({
+  const { docs } = await payload.find({
     collection: 'artikel',
     where,
     depth: 0,
@@ -76,7 +80,7 @@ export const endpointPanelSeo: Endpoint = {
 
     const [pengaturan, lain, pilarDoc, mediaDocs] = await Promise.all([
       req.payload.findGlobal({ slug: 'pengaturan-seo', depth: 0, req }) as Promise<PengaturanSitus>,
-      artikelLain(req, masukan.id),
+      artikelLain(req.payload, masukan.id, req),
       masukan.pilar
         ? req.payload.findByID({ collection: 'pilar', id: masukan.pilar, depth: 0, req, disableErrors: true })
         : Promise.resolve(null),

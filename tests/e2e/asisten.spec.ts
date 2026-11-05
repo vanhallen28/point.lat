@@ -15,14 +15,32 @@ test.afterEach(async ({ page }) => {
   for (const id of drafTes.splice(0)) expect((await page.request.delete(`/api/artikel/${id}?overrideLock=true`)).status()).toBe(200)
 })
 
-/** Draf artikel baru lewat REST (draf tidak divalidasi, jadi cukup isian yang diuji). */
-async function drafBaru(page: Page, data: Record<string, unknown> = {}): Promise<number> {
+/**
+ * Masuk sebagai editor baru. Asisten membatasi 6 permintaan AI per menit per pengguna, jadi setiap tes yang
+ * memanggil AI memakai penggunanya sendiri (sekaligus menguji bahwa editor, bukan hanya admin, boleh memakai).
+ */
+async function masukEditor(page: Page) {
   await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+  const email = `editor-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@point.lat`
+  const password = 'e2e-editor-hanya-untuk-tes'
+  expect((await page.request.post('/api/pengguna', { data: { email, password, nama: 'Editor E2E', peran: 'editor' } })).status()).toBe(201)
+  await page.request.post('/api/pengguna/login', { data: { email, password } })
+}
+
+/** Draf artikel baru lewat REST oleh pengguna yang sedang masuk (draf tidak divalidasi, jadi cukup isian yang diuji). */
+async function drafBaru(page: Page, data: Record<string, unknown> = {}, sebagai: 'admin' | 'editor' = 'editor'): Promise<number> {
+  if (sebagai === 'admin') await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+  else await masukEditor(page)
   const jawaban = await page.request.post('/api/artikel?draft=true', { data: { judul: `Draf asisten ${Date.now()}`, _status: 'draft', ...data } })
   expect(jawaban.status()).toBe(201)
   const id = ((await jawaban.json()) as { doc: { id: number } }).doc.id
   drafTes.push(id)
   return id
+}
+
+async function idPilar(page: Page, slug: string): Promise<number> {
+  const jawaban = await page.request.get(`/api/pilar?where[slug][equals]=${slug}&depth=0`)
+  return ((await jawaban.json()) as { docs: { id: number }[] }).docs[0].id
 }
 
 const ISI_ARTIKEL = {
@@ -44,7 +62,7 @@ const nilaiInput = (page: Page, awalan: string) =>
 
 test('artikel yang memakai draf AI: tombol terbit nonaktif sampai ketiga butir review dicentang', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  const id = await drafBaru(page, { pakaiDrafAi: true })
+  const id = await drafBaru(page, { pakaiDrafAi: true }, 'admin')
   await page.goto(`/admin/collections/artikel/${id}`)
   const terbit = page.locator('#action-save')
   await expect(terbit).toBeDisabled()
@@ -67,7 +85,7 @@ test('artikel yang memakai draf AI: tombol terbit nonaktif sampai ketiga butir r
 })
 
 test('artikel tanpa draf AI: checklist review tidak tampil dan tombol terbit aktif', async ({ page }) => {
-  const id = await drafBaru(page)
+  const id = await drafBaru(page, {}, 'admin')
   await page.goto(`/admin/collections/artikel/${id}`)
   await expect(page.locator('#action-save')).toBeEnabled()
   await expect(page.getByRole('checkbox', { name: 'Sumber sudah dicek', exact: true })).toHaveCount(0)
@@ -100,6 +118,31 @@ test('saran meta dari adapter palsu: judul SEO dan Intinya diterapkan hanya lewa
   await expect(page.getByLabel('Judul SEO', { exact: true })).toHaveValue('Contoh judul SEO dari adapter palsu untuk uji asisten')
 })
 
+test('brief dari keyword: perkiraan Claude terpisah dari data point., sumber resmi pilar, dan brief tersimpan bersama draf', async ({ page }) => {
+  await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+  const pilar = await idPilar(page, 'uang-karier')
+  const id = await drafBaru(page, { ...ISI_ARTIKEL, pilar, tipe: 'explainer', seo: { keyphrase: 'cara hitung gaji bersih' } })
+  const panel = await bukaAsisten(page, id)
+  await expect(panel.getByLabel('Keyword')).toHaveValue('cara hitung gaji bersih')
+  await panel.getByRole('button', { name: 'Buat brief' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'Brief siap' })).toHaveText('Brief siap dan tersimpan bersama draf artikel.')
+  const brief = panel.locator('details', { hasText: 'Brief untuk "cara hitung gaji bersih"' })
+  await expect(brief.getByRole('heading', { name: 'Perkiraan Claude, perlu kamu nilai' })).toBeVisible()
+  await expect(brief).toContainText('Contoh bagian pertama dari adapter palsu')
+  await expect(brief).toContainText('Brief menyarankan format Panduan, sedangkan tipe artikel sekarang Explainer.')
+  await expect(brief.getByRole('heading', { name: 'Dari database point.' })).toBeVisible()
+  await expect(brief.getByRole('link', { name: 'Direktorat Jenderal Pajak (DJP)' })).toHaveAttribute('href', 'https://www.pajak.go.id')
+  // Saran link internal sepilar menautkan dokumen di admin (artikel contoh E2E di Uang & Karier).
+  await expect(brief.locator('a[href^="/admin/collections/artikel/"]').first()).toBeVisible()
+  await periksaAxe(page, '.asisten')
+
+  // Brief ikut autosave draf: setelah halaman dibuka lagi, brief masih ada.
+  await expect.poll(async () => ((await (await page.request.get(`/api/artikel/${id}?draft=true&depth=0`)).json()) as { briefAi?: unknown }).briefAi ?? null).not.toBeNull()
+  const lagi = await bukaAsisten(page, id)
+  await expect(lagi.getByText('Brief untuk "cara hitung gaji bersih"')).toBeVisible()
+  await expect(lagi.getByRole('button', { name: 'Buat ulang brief' })).toBeEnabled()
+})
+
 test('galat API Claude: pesan jelas di sidebar, editor tetap bisa menulis', async ({ page }) => {
   const id = await drafBaru(page, { ...ISI_ARTIKEL, isi: isi(p('Teks uji [uji galat] untuk adapter palsu.')) })
   const panel = await bukaAsisten(page, id)
@@ -111,9 +154,10 @@ test('galat API Claude: pesan jelas di sidebar, editor tetap bisa menulis', asyn
 })
 
 test('anggaran habis: tombol AI nonaktif dengan alasannya, cek pola dan cek klaim tetap bisa dipakai', async ({ page }) => {
-  const id = await drafBaru(page, ISI_ARTIKEL)
+  await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
   expect((await page.request.post('/api/globals/asisten-ai', { data: { anggaranBulanan: 0 } })).status()).toBe(200)
   try {
+    const id = await drafBaru(page, ISI_ARTIKEL)
     const panel = await bukaAsisten(page, id)
     await expect(panel).toContainText('Anggaran AI bulan ini sudah habis. Tombol AI aktif lagi awal bulan depan, atau setelah admin menaikkan anggaran.')
     await expect(panel.getByRole('button', { name: 'Buat saran meta' })).toBeDisabled()
@@ -121,6 +165,7 @@ test('anggaran habis: tombol AI nonaktif dengan alasannya, cek pola dan cek klai
     await expect(panel.getByRole('status').filter({ hasText: 'kalimat' })).toHaveText('Tidak ada tanda di 5 kalimat.')
     await periksaAxe(page, '.asisten')
   } finally {
+    await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
     await page.request.post('/api/globals/asisten-ai', { data: { anggaranBulanan: 10 } })
   }
 })
