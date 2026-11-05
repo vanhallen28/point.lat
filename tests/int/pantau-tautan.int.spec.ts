@@ -61,7 +61,7 @@ describe('pindai tautan dan pemeriksa tautan luar', () => {
     expect(hasil.tautan?.status).toBe('berhasil')
     expect(hasil.tautan?.pesan).toMatch(/^[\d.]+ tautan dipindai: [\d.]+ tautan internal rusak, [\d.]+ ke alamat lama, [\d.]+ halaman yatim, [\d.]+ URL situs lain\.$/)
 
-    const { docs: dariSumber } = await payload.find({ collection: 'temuan-tautan', where: { sumberId: { equals: String(sumber.id) } }, sort: 'id', depth: 0 })
+    const { docs: dariSumber } = await payload.find({ collection: 'temuan-tautan', where: { sumberId: { equals: String(sumber.id) }, sumberKoleksi: { equals: 'artikel' } }, sort: 'id', depth: 0 })
     expect(dariSumber.map((t) => [t.jenis, t.tujuan, t.pesan, t.sumberKoleksi, t.sumberJudul, t.sumberPath])).toEqual([
       ['rusak', `artikel #${draf.id}`, PESAN_TEMUAN.dokumen, 'artikel', sumber.judul, `/${sumber.slug}`],
       ['rusak', hilang, PESAN_TEMUAN.tidakAda, 'artikel', sumber.judul, `/${sumber.slug}`],

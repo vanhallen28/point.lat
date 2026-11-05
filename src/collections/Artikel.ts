@@ -13,6 +13,7 @@ import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { LABEL_TIPE_ARTIKEL, TIPE_ARTIKEL, type TipeArtikel } from '@/lib/konstanta'
 import { validasiLebarGambar } from '@/lib/media'
 import type { TargetPath } from '@/lib/paths'
+import { endpointAsisten, endpointStatusAsisten } from '@/modules/ai/endpoint'
 import { endpointPanelSeo } from '@/modules/seo/endpoint'
 
 async function validasiGambarUtama(value: unknown, { req }: { req: PayloadRequest }) {
@@ -39,7 +40,7 @@ export const Artikel: CollectionConfig = {
     group: 'Konten',
   },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
-  endpoints: [endpointPanelSeo],
+  endpoints: [endpointPanelSeo, endpointAsisten, endpointStatusAsisten],
   versions: {
     drafts: { autosave: { interval: 1500 }, schedulePublish: true },
     maxPerDoc: 50,
