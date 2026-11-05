@@ -44,6 +44,8 @@ export default buildConfig({
     components: {
       // Dashboard SEO (spesifikasi §8) di /admin/seo, dengan tautan di atas menu admin.
       beforeNavLinks: ['@/modules/pantau/admin/TautanDashboard#TautanDashboard'],
+      // Kartu di halaman awal admin, karena di layar laptop menu admin tertutup (keputusan pemilik 6B).
+      beforeDashboard: ['@/modules/pantau/admin/KartuDashboard#KartuDashboard'],
       views: {
         dashboardSeo: {
           Component: '@/modules/pantau/admin/DashboardSeo#DashboardSeo',

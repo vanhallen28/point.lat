@@ -63,6 +63,36 @@ test('dashboard SEO dari menu admin: performa Google, halaman teratas, status in
   await periksaAxe(page, '.pantau')
 })
 
+test('halaman awal admin punya kartu Dashboard SEO yang membuka /admin/seo', async ({ page }) => {
+  await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+  await page.goto('/admin')
+  const kartu = page.getByRole('region', { name: 'Dashboard SEO' })
+  await expect(kartu).toContainText('Klik dari Google, status indeks, tautan rusak, dan 404 teratas')
+  await periksaAxe(page, '.pantau-kartu')
+  await kartu.getByRole('link', { name: 'Buka dashboard' }).click()
+  await expect(page).toHaveURL(/\/admin\/seo$/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Dashboard SEO')
+})
+
+// Paling banyak dua kolom: baris dua kartu (Status indeks + Log, Halaman yatim + 404) selalu terisi penuh,
+// tanpa kolom ketiga kosong di layar lebar (temuan review Rencana 6B).
+for (const lebar of [1440, 1920]) {
+  test(`dashboard SEO ${lebar}px: kartu berpasangan mengisi lebar penuh`, async ({ page }) => {
+    await page.setViewportSize({ width: lebar, height: 900 })
+    await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+    await page.goto('/admin/seo')
+    const kotak = async (nama: string) => (await page.getByRole('region', { name: nama }).boundingBox())!
+    const google = await kotak('Performa di Google')
+    for (const [kiri, kanan] of [['Status indeks', 'Log indexing terbaru'], ['Halaman yatim', '404 teratas']]) {
+      const a = await kotak(kiri)
+      const b = await kotak(kanan)
+      expect(Math.round(a.x)).toBe(Math.round(google.x))
+      expect(Math.round(b.x + b.width)).toBe(Math.round(google.x + google.width))
+      expect(Math.round(a.y)).toBe(Math.round(b.y))
+    }
+  })
+}
+
 for (const { lebar, tinggi } of UKURAN_LAYAR) {
   test(`dashboard SEO ${lebar}px tanpa geser horizontal`, async ({ page }) => {
     await page.setViewportSize({ width: lebar, height: tinggi })

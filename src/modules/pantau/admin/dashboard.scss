@@ -36,10 +36,14 @@ html[data-theme='dark'] .pantau {
   }
 }
 
+// Paling banyak dua kolom: lebar kolom minimal setengah wadah (dikurangi celah), jadi bagian berpasangan
+// (Status indeks + Log, Halaman yatim + 404) selalu mengisi lebar penuh di layar lebar, dan menjadi satu
+// kolom bila wadah lebih sempit dari dua kali 30rem.
 .pantau-kisi {
+  --pantau-celah: calc(var(--base) * 1.5);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
-  gap: calc(var(--base) * 1.5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(30rem, calc((100% - var(--pantau-celah)) / 2))), 1fr));
+  gap: var(--pantau-celah);
   align-items: start;
 }
 

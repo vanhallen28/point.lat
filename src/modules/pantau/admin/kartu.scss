@@ -1,0 +1,39 @@
+// Kartu "Dashboard SEO" di halaman awal admin. Memakai variabel tema Payload seperti dashboard, jadi ikut
+// mode terang dan gelap. CSS admin Payload menghapus outline tautan, jadi cincin fokus ditulis sendiri.
+.pantau-kartu {
+  display: grid;
+  gap: calc(var(--base) * 0.5);
+  // 6px kiri dan kanan: sama dengan padding inline widget dashboard Payload 3.92 (`.widget`), supaya tepi
+  // kartu sejajar dengan kartu koleksi di bawahnya.
+  margin: 0 6px calc(var(--base) * 1.5);
+  padding: var(--base);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 14px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+    max-width: 70ch;
+    color: var(--theme-elevation-650);
+  }
+
+  a {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--theme-text);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--theme-text);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
