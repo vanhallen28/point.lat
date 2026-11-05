@@ -3,6 +3,8 @@ import type { Payload } from 'payload'
 import type { WarnaPilar } from '@/lib/konstanta'
 import { paragrafLexical } from '@/lib/lexical'
 
+import { seedTools } from './tools'
+
 export const PILAR_AWAL: {
   nama: string
   slug: string
@@ -45,7 +47,7 @@ export const HALAMAN_AWAL = [
 
 export type OpsiSeed = { emailAdmin?: string; passwordAdmin?: string }
 
-export type HasilSeed = { admin: 'dibuat' | 'sudah-ada' | 'dilewati'; pilar: number; halaman: number }
+export type HasilSeed = { admin: 'dibuat' | 'sudah-ada' | 'dilewati'; pilar: number; halaman: number; tools: number; parameter: number }
 
 /** Mengisi data awal. Aman dijalankan berkali-kali: dokumen dicari lewat slug dulu. */
 export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<HasilSeed> {
@@ -62,6 +64,9 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
     }
     idPilar.push(doc.id)
   }
+
+  // Kalkulator (draf) dan parameternya; tools butuh pilar yang sudah ada.
+  const kalkulator = await seedTools(payload)
 
   const redaksi = await payload.find({ collection: 'penulis', where: { slug: { equals: 'redaksi' } }, limit: 1 })
   if (redaksi.totalDocs === 0) {
@@ -128,7 +133,7 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
     },
   })
 
-  return { admin, pilar: PILAR_AWAL.length, halaman: HALAMAN_AWAL.length }
+  return { admin, pilar: PILAR_AWAL.length, halaman: HALAMAN_AWAL.length, ...kalkulator }
 }
 
 async function siapkanAdmin(payload: Payload, opsi: OpsiSeed): Promise<HasilSeed['admin']> {

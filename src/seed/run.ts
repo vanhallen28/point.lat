@@ -10,6 +10,6 @@ const hasil = await seed(payload, {
 })
 
 payload.logger.info(
-  `Seed selesai. Admin: ${hasil.admin}. Pilar: ${hasil.pilar}. Halaman draf: ${hasil.halaman}.`,
+  `Seed selesai. Admin: ${hasil.admin}. Pilar: ${hasil.pilar}. Halaman draf: ${hasil.halaman}. Tools baru: ${hasil.tools}. Parameter baru: ${hasil.parameter}.`,
 )
 process.exit(0)

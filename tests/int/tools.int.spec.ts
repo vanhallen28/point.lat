@@ -5,6 +5,8 @@ import { getTestPayload, pesanGalat, unik } from './helpers'
 describe('tools dan parameter', () => {
   it('menyimpan tools sebagai draf lalu menerbitkannya', async () => {
     const payload = await getTestPayload()
+    // `toolId` unik: tools Gaji Bersih dari seed atau sisa tes sebelumnya dibersihkan dulu.
+    await payload.delete({ collection: 'tools', where: { toolId: { equals: 'gaji-bersih' } } })
     const pilar = await payload.create({
       collection: 'pilar',
       data: { nama: unik('Uang'), warna: 'hijau', deskripsi: 'Uang.' },
