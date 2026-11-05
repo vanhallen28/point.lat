@@ -65,6 +65,10 @@ describe('HalamanTool', () => {
     expect(html).toContain('<h3>PPh 21 Desember: dihitung ulang setahun</h3>')
   })
 
+  it('kalkulator di browser: wilayah status untuk mengumumkan hasil, kosong sebelum pembaca menghitung', () => {
+    expect(html).toMatch(/<\/section><p class="sr" role="status"><\/p><\/div>/)
+  })
+
   it('artikel: penjelasan rumus, angka aturan dengan tabel TER, catatan pilar, sumber, FAQ', () => {
     expect(html).toContain('<h2 id="rumus-gaji-bersih">Rumus gaji bersih</h2>')
     expect(html).toMatch(/<h2 id="angka-aturan" class="[^"]*">Angka aturan yang dipakai<\/h2>/)
@@ -82,7 +86,7 @@ describe('HalamanTool', () => {
     expect(ipk).toMatch(/<input id="kalkulator-sks-0" type="text" inputMode="numeric" autoComplete="off" required="" aria-labelledby="kalkulator-matkul-0-judul kalkulator-sks-0-label" aria-describedby="kalkulator-matkul-0-galat" name="sks" value="3"\/>/)
     expect(ipk.match(/name="nilai"/g)).toHaveLength(5)
     expect(ipk).toMatch(/aria-label="Hapus mata kuliah 5"/)
-    expect(ipk).toMatch(/<button type="button" class="[^"]*"><svg[^>]*>.*?<\/svg>Tambah mata kuliah<\/button>/)
+    expect(ipk).toMatch(/<button type="button" id="kalkulator-matkul-tambah" class="[^"]*"><svg[^>]*>.*?<\/svg>Tambah mata kuliah<\/button>/)
     expect(ipk).toMatch(/<p class="[^"]*" style="--panjang:4">3,56<\/p>/)
     expect(ipk).toContain('data-warna="kuning"')
   })

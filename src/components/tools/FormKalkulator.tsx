@@ -251,7 +251,13 @@ function IsianDaftarBaris({ i, idForm, nilai, galat, baris, onTambah, onHapus }:
           )
         })}
       </ol>
-      <button type="button" className={gaya.tambah} disabled={daftar.length >= i.maks} onClick={onTambah ? () => onTambah(i.kunci) : undefined}>
+      <button
+        type="button"
+        id={`${id}-tambah`}
+        className={gaya.tambah}
+        disabled={daftar.length >= i.maks}
+        onClick={onTambah ? () => onTambah(i.kunci) : undefined}
+      >
         <Ikon nama="plus" />
         Tambah {nama}
       </button>

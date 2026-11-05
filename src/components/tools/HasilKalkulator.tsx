@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, Ref } from 'react'
 
 import { Ikon } from '@/components/dasar/Ikon'
 import type { HasilBerhasil } from '@/modules/hitung'
@@ -11,10 +11,24 @@ import gaya from './Kalkulator.module.css'
  * dan lebar kotak, jadi Rp10 miliar tetap satu baris di layar 375 px. Angka baru muncul dengan
  * animasi CSS (naik + opacity); hasil contoh dari server tidak dianimasikan.
  */
-export function HasilKalkulator({ id, hasil, baru, tombol, urutan = 0 }: { id: string; hasil: HasilBerhasil; baru: boolean; tombol: string; urutan?: number }) {
+export function HasilKalkulator({
+  id,
+  hasil,
+  baru,
+  tombol,
+  urutan = 0,
+  ref,
+}: {
+  id: string
+  hasil: HasilBerhasil
+  baru: boolean
+  tombol: string
+  urutan?: number
+  ref?: Ref<HTMLElement>
+}) {
   const { utama } = hasil
   return (
-    <section className={gaya.hasil} aria-labelledby={`${id}-hasil`}>
+    <section ref={ref} className={gaya.hasil} aria-labelledby={`${id}-hasil`}>
       <h2 id={`${id}-hasil`} className={gaya.kicker}>
         <span className={gaya.titik} aria-hidden="true" />
         {baru ? 'Hasil hitunganmu' : 'Contoh hasil'}

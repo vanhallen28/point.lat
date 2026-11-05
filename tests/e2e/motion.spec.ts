@@ -10,7 +10,7 @@ import { SLUG, SLUG_SUB, SLUG_VIDEO } from './data'
  */
 const ANGGARAN_JS = 160 * 1024
 
-/** Setiap jenis halaman publik: beranda, artikel, rubrik, halaman statis, penulis, video, tools, cari. */
+/** Setiap jenis halaman publik: beranda, artikel, rubrik, halaman statis, penulis, video, tools, kalkulator, cari. */
 const HALAMAN_ANGGARAN = [
   '/',
   `/${SLUG.panduan}`,
@@ -20,8 +20,13 @@ const HALAMAN_ANGGARAN = [
   '/video',
   `/video/${SLUG_VIDEO.pph21}`,
   '/tools',
+  '/tools/gaji-bersih',
+  '/tools/ipk',
   '/cari?q=gaji',
 ]
+
+/** JS milik point. di luar kerangka Next/React (spesifikasi §12): kalkulator dan modul hitung. */
+const ANGGARAN_KALKULATOR = 25 * 1024
 
 /** Byte JS halaman di konteks baru (tanpa cache browser dari halaman sebelumnya). */
 async function byteJs(browser: Browser, path: string): Promise<number> {
@@ -90,6 +95,15 @@ test('JavaScript setiap jenis halaman di bawah anggaran', async ({ browser }) =>
     test.info().annotations.push({ type: `JS ${path}`, description: `${(byte / 1024).toFixed(1)} KiB` })
     expect(byte, path).toBeGreaterThan(0)
     expect(byte, path).toBeLessThan(ANGGARAN_JS)
+  }
+})
+
+test('JavaScript kalkulator (komponen dan modul hitung) di bawah 25 KB di atas JavaScript artikel', async ({ browser }) => {
+  const artikel = await byteJs(browser, `/${SLUG.panduan}`)
+  for (const path of ['/tools/gaji-bersih', '/tools/ipk']) {
+    const tambahan = (await byteJs(browser, path)) - artikel
+    test.info().annotations.push({ type: `JS kalkulator ${path}`, description: `${(tambahan / 1024).toFixed(1)} KiB` })
+    expect(tambahan, path).toBeLessThan(ANGGARAN_KALKULATOR)
   }
 })
 
