@@ -54,6 +54,13 @@ export const KLIK_CONTOH: [path: string, klik7: number][] = [
 ]
 export const POPULER = [SLUG.danaDarurat, SLUG.explainer, SLUG.tekno, SLUG.panduan] as const
 
+/** Total harian properti 28 hari sampai 2 November 2026 (data final terakhir) untuk dashboard SEO. */
+export const HARI_CONTOH = Array.from({ length: 28 }, (_, i) => {
+  const tanggal = new Date(Date.UTC(2026, 9, 6 + i)).toISOString().slice(0, 10)
+  const klik = 40 + ((i * 37) % 60)
+  return { tanggal, klik, impresi: klik * 150, ctr: 1 / 150, posisi: 8 - i / 10 }
+})
+
 /** Kunci IndexNow di pengaturan SEO database E2E, dilayani di `/{kunci}.txt`. */
 export const KUNCI_INDEXNOW = 'e2e-kunci-indexnow-2026'
 

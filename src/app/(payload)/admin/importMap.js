@@ -27,7 +27,9 @@ import { SelStatusIndeks as SelStatusIndeks_4aa4889310bcd7c06181f91b15b42b75 } f
 import { SelBuatRedirect as SelBuatRedirect_9f3e78885105faed9af81223ca0b8add } from '@/modules/pantau/admin/SelBuatRedirect'
 import { StatusPemasangan as StatusPemasangan_7ab8988ab3c4bd2002e46c3028045fe1 } from '@/modules/indexer/admin/StatusPemasangan'
 import { PeringatanIndexingApi as PeringatanIndexingApi_cd1d217625ae1ec1a579e2d338353373 } from '@/modules/indexer/admin/PeringatanIndexingApi'
+import { TautanDashboard as TautanDashboard_602fdd66638e420951e3882f7a73a410 } from '@/modules/pantau/admin/TautanDashboard'
 import { UnggahLangsung as UnggahLangsung_8ba60c89e617a83169d52d9ef286cf69 } from '@/modules/media/UnggahLangsung'
+import { DashboardSeo as DashboardSeo_c2abc6d5429025abd12a142c1b0dfc1f } from '@/modules/pantau/admin/DashboardSeo'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -61,6 +63,8 @@ export const importMap = {
   "@/modules/pantau/admin/SelBuatRedirect#SelBuatRedirect": SelBuatRedirect_9f3e78885105faed9af81223ca0b8add,
   "@/modules/indexer/admin/StatusPemasangan#StatusPemasangan": StatusPemasangan_7ab8988ab3c4bd2002e46c3028045fe1,
   "@/modules/indexer/admin/PeringatanIndexingApi#PeringatanIndexingApi": PeringatanIndexingApi_cd1d217625ae1ec1a579e2d338353373,
+  "@/modules/pantau/admin/TautanDashboard#TautanDashboard": TautanDashboard_602fdd66638e420951e3882f7a73a410,
   "@/modules/media/UnggahLangsung#UnggahLangsung": UnggahLangsung_8ba60c89e617a83169d52d9ef286cf69,
+  "@/modules/pantau/admin/DashboardSeo#DashboardSeo": DashboardSeo_c2abc6d5429025abd12a142c1b0dfc1f,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

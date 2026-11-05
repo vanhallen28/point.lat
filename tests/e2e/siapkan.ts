@@ -7,7 +7,7 @@ import type { Halaman } from '@/payload-types'
 import { klienPalsu } from '@/modules/media/palsu'
 import { seed } from '@/seed/seed'
 
-import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, KLIK_CONTOH, KUNCI_INDEXNOW, p, SLUG, SLUG_HALAMAN, SLUG_SUB, SLUG_VIDEO, tautanKe } from './data'
+import { ADMIN_E2E, blok, gambar, h2, HARI_CONTOH, isi, JUDUL_PANDUAN, KLIK_CONTOH, KUNCI_INDEXNOW, p, SLUG, SLUG_HALAMAN, SLUG_SUB, SLUG_VIDEO, tautanKe } from './data'
 
 /**
  * Mengisi database E2E sebelum server dibangun dan dinyalakan (`webServer` di playwright.config.ts).
@@ -326,6 +326,18 @@ for (const [path, klik7] of KLIK_CONTOH) {
     data: { path, klik7, impresi7: klik7 * 10, klik28: klik7 * 4, impresi28: klik7 * 40, ctr28: 0.1, posisi28: 6.4, sampai: '2026-11-02' },
   })
 }
+for (const hari of HARI_CONTOH) await payload.create({ collection: 'analitik-situs', data: hari })
+// Seolah sinkron hari ini sudah berhasil: cron selama E2E tidak menjalankannya lagi (adapter palsu melewatinya).
+await payload.create({
+  collection: 'tugas-seo',
+  data: {
+    jenis: 'analitik',
+    status: 'berhasil',
+    pesan: 'Data sampai 2026-11-02: 7 halaman.',
+    selesai: new Date().toISOString(),
+    berikutnya: new Date(Date.now() + 86_400_000).toISOString(),
+  },
+})
 
 await payload.create({ collection: 'redirect', data: { dari: '/promo-lama', ke: '/glosarium', kode: '301' } })
 await payload.create({ collection: 'redirect', data: { dari: '/glosarium/ptkp-lama', ke: '/glosarium/ptkp', kode: '301' } })

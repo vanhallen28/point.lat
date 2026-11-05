@@ -41,6 +41,18 @@ export default buildConfig({
   admin: {
     user: Pengguna.slug,
     importMap: { baseDir: path.resolve(dirname) },
+    components: {
+      // Dashboard SEO (spesifikasi §8) di /admin/seo, dengan tautan di atas menu admin.
+      beforeNavLinks: ['@/modules/pantau/admin/TautanDashboard#TautanDashboard'],
+      views: {
+        dashboardSeo: {
+          Component: '@/modules/pantau/admin/DashboardSeo#DashboardSeo',
+          path: '/seo',
+          exact: true,
+          meta: { title: 'Dashboard SEO' },
+        },
+      },
+    },
   },
   collections: [
     Pengguna,

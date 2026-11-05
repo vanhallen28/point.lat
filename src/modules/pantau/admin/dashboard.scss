@@ -1,0 +1,344 @@
+// Dashboard SEO di admin. Memakai variabel tema Payload supaya ikut mode terang dan gelap admin. Warna
+// grafik satu hue (biru Payload), dicek dengan validator dataviz: blue-500 di permukaan putih dan blue-450
+// di permukaan gelap lolos rentang terang dan kontras 3:1. Status selalu bertanda teks, tidak hanya warna.
+
+.pantau {
+  --pantau-grafik: var(--color-blue-500);
+  padding-bottom: calc(var(--base) * 3);
+  font-variant-numeric: tabular-nums;
+  // Pesan Google dan path bisa berisi URL panjang tanpa spasi.
+  overflow-wrap: anywhere;
+
+  a:focus-visible,
+  summary:focus-visible,
+  [tabindex='0']:focus-visible {
+    outline: 2px solid var(--theme-text);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+html[data-theme='dark'] .pantau {
+  --pantau-grafik: var(--color-blue-450);
+}
+
+.pantau-kepala {
+  margin: calc(var(--base) * 1.5) 0;
+
+  h1 {
+    margin: 0 0 calc(var(--base) * 0.5);
+  }
+
+  p {
+    margin: 0;
+    max-width: 70ch;
+    color: var(--theme-elevation-650);
+  }
+}
+
+.pantau-kisi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+  gap: calc(var(--base) * 1.5);
+  align-items: start;
+}
+
+.pantau-bagian {
+  min-width: 0;
+  padding: var(--base);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 14px;
+
+  h2 {
+    margin: 0 0 calc(var(--base) * 0.5);
+    font-size: 20px;
+  }
+
+  h3 {
+    margin: calc(var(--base) * 1.5) 0 calc(var(--base) * 0.5);
+    font-size: 16px;
+  }
+}
+
+.pantau-bagian--lebar {
+  grid-column: 1 / -1;
+}
+
+.pantau-tugas,
+.pantau-keterangan,
+.pantau-kosong,
+.pantau-lanjut {
+  margin: 0 0 calc(var(--base) * 0.5);
+  color: var(--theme-elevation-650);
+}
+
+.pantau-kosong {
+  padding: calc(var(--base) * 0.75);
+  border-radius: 10px;
+  background: var(--theme-elevation-50);
+  color: var(--theme-text);
+}
+
+.pantau-lanjut {
+  margin-top: calc(var(--base) * 0.75);
+}
+
+.pantau a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.pantau-pesan {
+  margin: 0 0 calc(var(--base) * 0.75);
+  padding: calc(var(--base) * 0.75);
+  border-left: 4px solid;
+  border-radius: 10px;
+  color: var(--theme-text);
+
+  p {
+    margin: 0;
+  }
+}
+
+.pantau-pesan--galat {
+  border-color: var(--theme-error-500);
+  background: var(--theme-error-100);
+}
+
+.pantau-pesan--peringatan {
+  border-color: var(--theme-warning-650);
+  background: var(--theme-warning-100);
+}
+
+// Kartu angka: label kecil, nilai besar.
+.pantau-angka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: calc(var(--base) * 0.75);
+  margin: var(--base) 0;
+
+  div {
+    padding: calc(var(--base) * 0.75);
+    border-radius: 10px;
+    background: var(--theme-elevation-50);
+  }
+
+  dt {
+    font-size: 13px;
+    color: var(--theme-elevation-650);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+}
+
+// Grafik kolom: garis dasar dan garis bantu tipis, kolom paling lebar 24 px dengan ujung atas membulat.
+.pantau-grafik {
+  margin: 0 0 var(--base);
+}
+
+.pantau-grafik__judul {
+  margin-bottom: calc(var(--base) * 0.5);
+  font-weight: 700;
+}
+
+.pantau-grafik__plot {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  grid-template-rows: 160px auto;
+  column-gap: 8px;
+  font-size: 12px;
+  color: var(--theme-elevation-650);
+}
+
+.pantau-grafik__sumbu-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: -0.6em 0;
+}
+
+.pantau-grafik__area {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  align-items: end;
+  border-top: 1px solid var(--theme-elevation-150);
+  border-bottom: 1px solid var(--theme-elevation-500);
+}
+
+.pantau-grafik__kolom {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 100%;
+
+  span {
+    width: 100%;
+    max-width: 24px;
+    min-height: 2px;
+    border-radius: 4px 4px 0 0;
+    background: var(--pantau-grafik);
+  }
+
+  &:hover span {
+    opacity: 0.75;
+  }
+}
+
+.pantau-grafik__sumbu-x {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 4px;
+}
+
+.pantau-grafik__tabel {
+  margin-top: calc(var(--base) * 0.75);
+
+  summary {
+    cursor: pointer;
+  }
+}
+
+// Tabel panjang bergulir di dalam kotaknya sendiri, halaman tidak bergeser horizontal.
+.pantau-gulir {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.pantau-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th,
+  td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--theme-elevation-100);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  thead th {
+    font-size: 13px;
+    color: var(--theme-elevation-650);
+  }
+
+  th:first-child {
+    text-align: left;
+    font-weight: 400;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 12rem;
+  }
+}
+
+// Batang status indeks: satu warna, label dan angka selalu tertulis.
+.pantau-batang {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr max-content;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+}
+
+.pantau-batang__jalur {
+  height: 12px;
+
+  span {
+    display: block;
+    height: 100%;
+    min-width: 2px;
+    border-radius: 0 4px 4px 0;
+    background: var(--pantau-grafik);
+  }
+}
+
+.pantau-daftar {
+  display: grid;
+  gap: calc(var(--base) * 0.5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    gap: 2px;
+    padding-bottom: calc(var(--base) * 0.5);
+    border-bottom: 1px solid var(--theme-elevation-100);
+    font-size: 14px;
+  }
+}
+
+.pantau-alamat {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+}
+
+.pantau-waktu,
+.pantau-sumber {
+  color: var(--theme-elevation-650);
+  font-size: 13px;
+}
+
+.pantau-tanda {
+  justify-self: start;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--theme-elevation-100);
+  color: var(--theme-text);
+}
+
+.pantau-tanda--berhasil {
+  background: var(--theme-success-150);
+  color: var(--theme-success-800);
+}
+
+.pantau-tanda--gagal,
+.pantau-tanda--rusak,
+.pantau-tanda--luar-rusak {
+  background: var(--theme-error-150);
+  color: var(--theme-error-800);
+}
+
+.pantau-tanda--diulang,
+.pantau-tanda--ditunda,
+.pantau-tanda--dialihkan,
+.pantau-tanda--luar-cek {
+  background: var(--theme-warning-150);
+  color: var(--theme-warning-800);
+}
+
+@media (max-width: 600px) {
+  .pantau-batang li {
+    grid-template-columns: 1fr max-content;
+  }
+
+  .pantau-batang__jalur {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .pantau-angka dd {
+    font-size: 24px;
+  }
+}
