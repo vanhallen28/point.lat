@@ -140,7 +140,7 @@ Vercel Cron ──► /api/jobs/run setiap 10 menit (header rahasia)
 
 | Modul | Antarmuka | Di dalamnya | Adapter |
 |---|---|---|---|
-| `indexer` | `kabari(url, jenis)` dengan jenis `terbit` / `ubah-besar` / `hapus`; `cekStatus(url)` | antrean job, dedup per URL, debounce submit sitemap, retry backoff, log, kuota | `searchConsole`, `indexNow`, `googleIndexing` (opsional), `palsu` untuk tes |
+| `indexer` | `kabari(payload, kabar[])` dengan jenis `terbit` / `ubah-besar` / `pindah` / `hapus` (dipanggil hook koleksi); `jalankanIndexer(payload)` (cron dan `after()`) | antrean job di Postgres, dedup per URL dan langkah, jendela kirim sitemap dan IndexNow, retry 1/5/30 menit, kuota harian Google, cek status bertahap, klaim atomik, log | `searchConsole`, `indexNow`, `googleIndexing` (opsional), `palsu` untuk tes dan pratinjau (dipilih `INDEXER_ADAPTER`) |
 | `seo` | `metadata(doc)`, `jsonLd(doc)`, `analisis(doc) → daftar cek` | aturan judul/meta, canonical, robots, schema per tipe, skor checklist | (tidak ada seam, fungsi murni) |
 | `hitung` | `hitung(toolId, input, tanggal) → hasil + rincian` | rumus per tool, pemilihan parameter sesuai tanggal berlaku | (fungsi murni, parameter dari CMS) |
 | `media` | `unggah(file) → {publicId, meta}`, `url(publicId, preset)` | tanda tangan upload, preset transformasi, OG image | `cloudinary` (adapter `@payloadcms/plugin-cloud-storage`), `palsu` untuk tes |
@@ -182,8 +182,9 @@ point-lat/
 | `media` | publicId Cloudinary, jenis, lebar, tinggi, durasi, alt (wajib untuk gambar), caption, kredit |
 | `redirect` | dari, ke, kode (301/410), dibuat otomatis/manual, jumlah hit |
 | `log404` | path, jumlah, terakhir, referer |
-| `logIndexing` | URL, jenis, langkah, adapter, status HTTP, pesan, percobaan ke, waktu |
-| `statusIndeks` | URL, status (Terindeks / Ditemukan / Dirayapi belum diindeks / Error / Belum dicek), cek berikutnya, cek terakhir, detail |
+| `antreanIndexing` | langkah, path, jenis, jadwal, percobaan, tahap cek status (satu baris per langkah dan path, dihapus setelah selesai; hanya ditulis modul `indexer`) |
+| `logIndexing` | URL, jenis, langkah, adapter, status (Berhasil / Gagal, dicoba lagi / Gagal / Dilewati / Ditunda), status HTTP, pesan, percobaan ke, waktu; hanya admin yang membaca |
+| `statusIndeks` | path, status (Terindeks / Ditemukan, belum dirayapi / Dirayapi, belum diindeks / Belum dikenal Google / Dikecualikan Google / Error / Belum dicek), cek berikutnya, cek terakhir, dirayapi Google, tautan laporan Search Console, detail; tampil juga sebagai kolom di daftar artikel |
 | `logAI` | pengguna, tugas, dokumen, token, biaya perkiraan, waktu |
 | `pengguna` | email, nama, peran (`admin`, `editor`; MVP hanya admin) |
 
@@ -194,7 +195,7 @@ point-lat/
 | `header` | logo, menu (pilar + tautan bebas), tombol Tools |
 | `footer` | tautan, teks hak cipta, tautan sosial, saluran WhatsApp |
 | `beranda` | urutan & isi blok homepage (hero, mozaik pilihan redaksi, strip video, paling dibaca, newsletter, slot iklan) |
-| `pengaturanSEO` | nama situs, judul default, pola judul, meta default, gambar OG default, organisasi (logo, sameAs), kode verifikasi, robots.txt, IndexNow key, kredensial Google (referensi ke env), saklar Indexing API, batas kuota |
+| `pengaturanSEO` | nama situs, judul default, pola judul, meta default, gambar OG default, organisasi (logo, sameAs), kode verifikasi, robots.txt; grup Mesin Indexing: status pemasangan (mode adapter, akun layanan Google, `CRON_SECRET`, kunci IndexNow; rahasia tidak ditampilkan), IndexNow key, properti Search Console, batas cek status per hari (bawaan 1.000), saklar Indexing API (mati) dengan peringatan, batas Indexing API (bawaan 200). Kredensial Google hanya di env server |
 | `iklan` | penyedia, ID penerbit, slot (id, ukuran, posisi, halaman, aktif), `ads.txt` |
 | `asistenAI` | aktif, anggaran bulanan, model (dari env), daftar frasa klise yang dicek |
 | `newsletter` | penyedia, teks form, tautan arsip |
@@ -243,20 +244,22 @@ Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (di
 
 ### Mesin Indexing
 
-Pemicu: `terbit`, `ubah-besar`, `hapus` (artikel, tools, video, halaman, pilar).
+Pemicu: `terbit`, `ubah-besar`, `hapus` (artikel, tools, video, halaman, pilar), ditambah `pindah` untuk path lama saat slug berganti (path itu kini dialihkan, jadi tidak dikabarkan ke Indexing API). Perubahan besar artikel ditandai saklar "perubahan besar"; koleksi lain dikabarkan saat terbit, pindah, dan dihapus. Perubahan parameter kalkulator dikabarkan sebagai perubahan besar halaman tools yang memakainya. Dokumen noindex dianggap tidak publik.
 
 | Langkah | Detail |
 |---|---|
 | 1. Revalidasi | `revalidateTag` halaman, rubrik, beranda, sitemap |
-| 2. Search Console | `sitemaps.submit` untuk sitemap index, debounce maksimal sekali per 30 menit |
-| 3. IndexNow | POST daftar URL ke `api.indexnow.org` dengan key dari CMS, digabung per 5 menit |
+| 2. Search Console | `sitemaps.submit` untuk sitemap index, maksimal sekali per 30 menit sejak kiriman berhasil terakhir (kabar di antaranya menunggu dan tergabung) |
+| 3. IndexNow | POST daftar URL ke `api.indexnow.org` dengan key dari CMS dan file `/{key}.txt`, satu POST untuk semua URL yang antre, maksimal sekali per 5 menit |
 | 4. Google Indexing API (opsional) | hanya jika saklar aktif; `URL_UPDATED`/`URL_DELETED`; berhenti saat kuota harian (dari CMS, default 200) tercapai; banner peringatan bahwa penggunaan untuk artikel di luar ketentuan Google |
-| 5. Cek status | URL Inspection API pada +6 jam, +24 jam, +3 hari, +7 hari; berhenti saat Terindeks; jadwal dibatasi agar tidak melewati kuota harian properti |
+| 5. Cek status | URL Inspection API pada +6 jam, +24 jam, +3 hari, +7 hari; berhenti saat Terindeks; cek di atas batas harian (CMS, bawaan 1.000 dari kuota Google 2.000 per properti) ditunda ke hari berikutnya |
 | 6. Log | setiap langkah ke `logIndexing` |
 
-Kegagalan: retry 3 kali dengan jeda 1, 5, 30 menit; setelah itu status Error dan peringatan di dashboard. Penghapusan: URL keluar dari sitemap, halaman mengembalikan 410 (atau 301 jika ada redirect).
+Kegagalan: retry 3 kali dengan jeda 1, 5, 30 menit; setelah itu status Gagal di log (cek status: status indeks Error) dan peringatan di dashboard. Kuota Google habis (429): ditunda ke awal hari kuota berikutnya (tengah malam waktu Pasifik). Penghapusan dan batal terbit: URL keluar dari sitemap, halaman menjawab 404, atau 308 ke tujuan bila ada redirect (keputusan pemilik di Rencana 4A: redirect lewat `permanentRedirect()`, kode 410 di CMS menjawab 404), IndexNow tetap dikabari, dan `URL_DELETED` bila Indexing API aktif.
 
-Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cloud dengan Search Console API + Indexing API aktif, ditambahkan sebagai **Owner** properti. Kredensial disimpan di env Vercel.
+Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) setiap 10 menit; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `pnpm indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
+
+Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cloud dengan Search Console API aktif (Indexing API hanya bila saklarnya kelak dipakai), ditambahkan sebagai **Owner** properti. Kredensial disimpan di env Vercel (`GOOGLE_SERVICE_ACCOUNT_JSON`), tanpa pustaka Google: token akses dari JWT RS256 akun layanan.
 
 ### Dashboard SEO (di admin)
 
@@ -364,9 +367,10 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 2. Proyek Supabase (region Singapura untuk latensi Indonesia) dan repo GitHub untuk kode + backup mingguan.
 3. Akun Cloudinary: cloud name, API key, API secret.
 4. Google Search Console: properti domain `point.lat` (verifikasi DNS).
-5. Google Cloud: proyek, aktifkan Search Console API (dan Indexing API bila nanti dipakai), akun layanan, tambahkan email akun layanan sebagai Owner di Search Console.
-6. Kunci Claude API.
-7. Akun AdSense (setelah konten cukup) dan penyedia newsletter.
+5. Google Cloud: proyek, aktifkan Search Console API (dan Indexing API bila nanti dipakai), akun layanan dengan kunci JSON, tambahkan email akun layanan (`client_email`) sebagai Owner di Search Console.
+6. Env Vercel untuk Mesin Indexing: `INDEXER_ADAPTER=asli` (Production) dan `palsu` (Preview), `GOOGLE_SERVICE_ACCOUNT_JSON` berisi seluruh file kunci JSON (Production saja), `CRON_SECRET` acak minimal 16 karakter. Kunci IndexNow diisi di Pengaturan SEO; status pemasangan tampil di halaman yang sama.
+7. Kunci Claude API.
+8. Akun AdSense (setelah konten cukup) dan penyedia newsletter.
 
 ## 19. Risiko & mitigasi
 
