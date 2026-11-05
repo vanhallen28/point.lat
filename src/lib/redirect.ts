@@ -43,3 +43,11 @@ export function validasiPathRedirect(nilai: unknown): true | string {
   if (nilai.length > 1 && nilai.endsWith('/')) return 'Hapus garis miring di akhir path.'
   return true
 }
+
+/**
+ * Path redirect dari kueri URL form admin (`/admin/collections/redirect/create?dari=/path`), dipakai tombol
+ * "Buat redirect" di log 404 dan dashboard SEO. Isian yang bukan path redirect yang sah diabaikan.
+ */
+export function pathDariKueri(nilai: unknown): string | undefined {
+  return typeof nilai === 'string' && validasiPathRedirect(nilai) === true ? nilai : undefined
+}

@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { isLoggedIn } from '@/access'
 import { revalidasiKoleksi } from '@/hooks/revalidasiPublik'
-import { validasiPathRedirect } from '@/lib/redirect'
+import { pathDariKueri, validasiPathRedirect } from '@/lib/redirect'
 import { TAG } from '@/lib/tag'
 import { validasiUrlOpsional } from '@/lib/validasi'
 
@@ -22,6 +22,8 @@ export const Redirect: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
+      // Tombol "Buat redirect" (log 404, dashboard SEO) membuka form ini dengan `?dari=/path`.
+      defaultValue: ({ req }) => pathDariKueri(req?.query?.dari),
       validate: (value: unknown) => validasiPathRedirect(value),
     },
     {

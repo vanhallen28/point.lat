@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { rencanaRedirect, validasiPathRedirect } from '@/lib/redirect'
+import { urlAdmin } from '@/lib/admin'
+import { pathDariKueri, rencanaRedirect, validasiPathRedirect } from '@/lib/redirect'
 
 describe('validasiPathRedirect', () => {
   it('menerima path yang diawali garis miring', () => {
@@ -56,5 +57,16 @@ describe('rencanaRedirect', () => {
       ubah: [{ id: 9, ke: '/baru' }],
       hapus: [],
     })
+  })
+})
+
+describe('tombol "Buat redirect"', () => {
+  it('form redirect baru dengan path asal di kueri; path di kueri hanya dipakai bila sah', () => {
+    expect(urlAdmin.buat('redirect', { dari: '/jalan-lama' })).toBe('/admin/collections/redirect/create?dari=%2Fjalan-lama')
+    expect(urlAdmin.buat('redirect')).toBe('/admin/collections/redirect/create')
+    expect(urlAdmin.dokumen('redirect', 7)).toBe('/admin/collections/redirect/7')
+    expect(urlAdmin.global('header')).toBe('/admin/globals/header')
+    expect(pathDariKueri('/jalan-lama')).toBe('/jalan-lama')
+    for (const nilai of ['jalan-lama', '//evil.example', '/jalan-lama/', ['/a'], undefined]) expect(pathDariKueri(nilai)).toBeUndefined()
   })
 })
