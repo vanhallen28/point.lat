@@ -5,6 +5,7 @@ import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { kabariMesinPencari } from '@/hooks/kabariMesinPencari'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
+import { redirectSubkategoriPilar } from '@/hooks/redirectSubkategori'
 import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { WARNA_PILAR } from '@/lib/konstanta'
 
@@ -24,7 +25,7 @@ export const Pilar: CollectionConfig = {
   access: { read: anyone, create: isAdmin, update: isAdmin, delete: isAdmin },
   hooks: {
     beforeChange: [redirect.catatPathPublik, kabar.beforeChange],
-    afterChange: [redirect.buatRedirect, revalidasi.afterChange, kabar.afterChange],
+    afterChange: [redirect.buatRedirect, redirectSubkategoriPilar, revalidasi.afterChange, kabar.afterChange],
     afterDelete: [revalidasi.afterDelete, kabar.afterDelete],
   },
   fields: [

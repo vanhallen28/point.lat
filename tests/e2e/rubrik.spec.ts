@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { cegatCloudinary, periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
-import { SLUG, SLUG_SUB, UKURAN_LAYAR } from './data'
+import { ADMIN_E2E, SLUG, SLUG_SUB, UKURAN_LAYAR } from './data'
 
 test.beforeEach(async ({ page }) => {
   await cegatCloudinary(page)
@@ -46,3 +46,20 @@ for (const { lebar, tinggi } of UKURAN_LAYAR) {
     }
   })
 }
+
+test('ganti slug subkategori: path lama /{pilar}/{subkategori} dialihkan permanen ke path baru', async ({ request }) => {
+  const { token } = await (await request.post('/api/pengguna/login', { data: ADMIN_E2E })).json()
+  const auth = { Authorization: `JWT ${token}` }
+  const pilar = (await (await request.get('/api/pilar?where[slug][equals]=uang-karier', { headers: auth })).json()).docs[0]
+  const slug = `asuransi-${Date.now()}`
+  const { doc } = await (await request.post('/api/subkategori', { headers: auth, data: { nama: 'Asuransi', slug, pilar: pilar.id } })).json()
+  expect((await request.get(`/uang-karier/${slug}`)).status()).toBe(200)
+
+  const baru = `${slug}-kesehatan`
+  expect((await request.patch(`/api/subkategori/${doc.id}`, { headers: auth, data: { slug: baru } })).status()).toBe(200)
+  const lama = await request.get(`/uang-karier/${slug}`, { maxRedirects: 0 })
+  expect(lama.status()).toBe(308)
+  expect(lama.headers().location).toContain(`/uang-karier/${baru}`)
+  expect((await request.get(`/uang-karier/${baru}`)).status()).toBe(200)
+})
+
