@@ -146,7 +146,7 @@ Vercel Cron ──► /api/jobs/run setiap 10 menit (header rahasia)
 | `hitung` | `hitung(toolId, input, tanggal) → hasil + rincian` | rumus per tool, pemilihan parameter sesuai tanggal berlaku | (fungsi murni, parameter dari CMS) |
 | `media` | `unggah(file) → {publicId, meta}`, `url(publicId, preset)` | tanda tangan upload, preset transformasi, OG image | `cloudinary` (adapter `@payloadcms/plugin-cloud-storage`), `palsu` untuk tes |
 | `iklan` | `<SlotIklan id="..."/>` | baca pengaturan slot, cek persetujuan, lazy-load saat terlihat, tinggi dipesan | penyedia iklan (AdSense) |
-| `ai` | `jalankan(tugas, dokumen) → saran` | prompt per tugas, batas anggaran, log, cek pola AI | `claude`, `palsu` untuk tes |
+| `ai` | `jalankan(payload, tugas, masukan, opsi)` untuk brief, draf per bagian, dan generator meta (endpoint `/api/artikel/asisten`); `periksaPola(blok)` dan `periksaKlaim(blok, sumber)` di browser | prompt, skema JSON, dan pemeriksa per tugas, batas 6 permintaan per menit per pengguna, cadangan anggaran bulanan atomik (US$, waktu Jakarta), log, pembersih em dash dan en dash | `asli` (Messages API lewat `fetch` dengan `ANTHROPIC_API_KEY`), `palsu` untuk tes, dev, dan pratinjau (dipilih `AI_ADAPTER`) |
 
 ### Struktur folder (rencana)
 
@@ -172,7 +172,7 @@ point-lat/
 
 | Koleksi | Field utama |
 |---|---|
-| `artikel` | judul, slug, tipe (Panduan/Explainer/Daftar/Glosarium), pilar, subkategori, penulis, deck, **intinya** (2-4 poin, wajib), isi (Lexical + blok), FAQ, sumber (judul, URL, penerbit, tanggal akses), gambar utama (≥1200px), video terkait, tools terkait, artikel terkait (manual + saran), SEO (keyphrase, keyphrase sekunder, judul SEO, meta, canonical, index/noindex, tipe schema), status, jadwal terbit, `diperbaruiBesar` (tanggal, diisi saat saklar "perubahan besar"), riwayat versi |
+| `artikel` | judul, slug, tipe (Panduan/Explainer/Daftar/Glosarium), pilar, subkategori, penulis, deck, **intinya** (2-4 poin, wajib), isi (Lexical + blok), FAQ, sumber (judul, URL, penerbit, tanggal akses), gambar utama (≥1200px), video terkait, tools terkait, artikel terkait (manual + saran), SEO (keyphrase, keyphrase sekunder, judul SEO, meta, canonical, index/noindex, tipe schema), status, jadwal terbit, `diperbaruiBesar` (tanggal, diisi saat saklar "perubahan besar"), `pakaiDrafAi` (hanya-baca, dinyalakan Asisten AI) dan checklist `reviewAi` (sumber dicek, angka dicek, insight penulis ditambahkan; wajib saat terbit bila `pakaiDrafAi`), `briefAi` (brief terakhir, tersembunyi), riwayat versi |
 | `pilar` | nama, slug, warna, deskripsi, intro halaman rubrik, SEO, urutan |
 | `subkategori` | nama, slug, pilar induk, deskripsi |
 | `tools` | nama, slug, pilar, kalkulator (`toolId` yang dipetakan ke modul `hitung`), label & bantuan input, artikel penjelasan (blok), FAQ, sumber aturan, SEO |
@@ -191,7 +191,8 @@ point-lat/
 | `tugasSeo` | jenis tugas harian (`analitik`, `tautan`), status, mulai, selesai, berikutnya, pesan |
 | `temuanTautan` | jenis (tautan internal rusak / alamat lama / halaman yatim), tujuan, pesan, dokumen sumber (diganti setiap pindai) |
 | `tautanLuar` | URL situs lain di konten terbit, status (belum dicek / bisa dibuka / rusak / perlu dicek manual), kode HTTP, pesan, dicek pada, cek berikutnya, dokumen sumber |
-| `logAI` | pengguna, tugas, dokumen, token, biaya perkiraan, waktu |
+| `logAI` | waktu, pengguna, tugas (brief / draf / meta), artikel, ringkasan (keyword atau subjudul; teks masukan dan keluaran tidak disimpan), model, mode adapter, token masuk dan keluar, biaya perkiraan (US$), durasi, status (berjalan / berhasil / gagal / anggaran habis), pesan; disimpan 13 bulan, hanya admin yang membaca |
+| `pemakaianAI` | bulan (waktu Jakarta), terpakai (US$, termasuk cadangan permintaan yang sedang berjalan); hanya ditulis modul `ai`, tampil di global `asistenAI` |
 | `pengguna` | email, nama, peran (`admin`, `editor`; MVP hanya admin) |
 
 ### Global
@@ -203,7 +204,7 @@ point-lat/
 | `beranda` | urutan & isi blok homepage (hero, mozaik pilihan redaksi, strip video, paling dibaca, newsletter, slot iklan) |
 | `pengaturanSEO` | nama situs, judul default, pola judul, meta default, gambar OG default, organisasi (logo, sameAs), kode verifikasi, robots.txt; grup Mesin Indexing: status pemasangan (mode adapter, akun layanan Google, `CRON_SECRET`, kunci IndexNow; rahasia tidak ditampilkan), IndexNow key, properti Search Console, batas cek status per hari (bawaan 1.000), saklar Indexing API (mati) dengan peringatan, batas Indexing API (bawaan 200). Kredensial Google hanya di env server |
 | `iklan` | penyedia, ID penerbit, slot (id, ukuran, posisi, halaman, aktif), `ads.txt` |
-| `asistenAI` | aktif, anggaran bulanan, model (dari env), daftar frasa klise yang dicek |
+| `asistenAI` | status pemasangan (mode adapter, kunci API terpasang atau belum, model per tugas dari env, pemakaian bulan ini), aktif, anggaran bulanan (US$, bawaan 10), harga per model (US$ per juta token), sumber resmi per pilar untuk brief, frasa klise tambahan untuk cek pola |
 | `newsletter` | penyedia, teks form, tautan arsip |
 
 Validasi: kotak Intinya wajib sebelum terbit; alt gambar wajib; gambar utama ≥1200px; panjang judul SEO dan meta di luar rentang hanya peringatan, tidak memblokir.
@@ -285,22 +286,24 @@ View admin `/admin/seo` dengan tautan di atas menu, hanya untuk admin: klik, imp
 
 ## 10. Asisten AI
 
-Tugas (tombol di sidebar editor):
+Tugas (sidebar "Asisten AI" di editor artikel):
 
-1. **Brief dari keyword:** search intent, format yang cocok, outline H2/H3, pertanyaan yang sering dicari, saran link internal dari database point, daftar sumber resmi yang wajib dicek. Mengikuti template brief skill seo-content-brief.
-2. **Draf per bagian:** satu H2 per permintaan, berdasarkan brief dan catatan penulis.
-3. **Generator meta:** judul SEO, meta description, slug, alt gambar, kotak Intinya, FAQ.
-4. **Cek pola tulisan AI:** berdasarkan skill humanizer, disesuaikan bahasa Indonesia. Menandai klise ("Di era digital ini", "Tak hanya itu", "Mari kita bahas", "Kesimpulannya", "sangat penting untuk"), em/en dash, pola "serba tiga", kesimpulan generik, kalimat seragam panjangnya. Daftar frasa bisa ditambah dari global `asistenAI`.
-5. **Cek klaim:** menandai angka dan klaim tanpa sumber di blok sumber.
+1. **Brief dari keyword:** search intent, format yang cocok, outline H2/H3, pertanyaan yang sering dicari, saran link internal dari database point, daftar sumber resmi yang wajib dicek. Mengikuti template brief skill seo-content-brief. Claude tidak bisa membuka Google, jadi brief memisahkan perkiraan Claude (intent, format, outline, pertanyaan, sudut pembeda, hal yang perlu dicek) dari data point. (artikel yang sudah memakai keyword itu, saran link internal panel SEO, sumber resmi per pilar dari global `asistenAI`, panjang acuan per format), ditambah langkah cek manual hasil teratas Google. Brief tersimpan bersama draf artikel.
+2. **Draf per bagian:** satu H2 per permintaan, berdasarkan brief dan catatan penulis. Angka, tarif, dan tanggal hanya dari catatan penulis; selain itu ditandai `[cek angka]`. Draf disalin (HTML dan teks) ke editor isi, tidak disisipkan otomatis.
+3. **Generator meta:** judul SEO, meta description, slug, alt gambar, kotak Intinya, FAQ. Setiap isian diterapkan lewat tombolnya sendiri dan bisa dibatalkan; alt gambar disalin (Claude tidak melihat gambarnya).
+4. **Cek pola tulisan AI:** berdasarkan skill humanizer, disesuaikan bahasa Indonesia. Menandai klise ("Di era digital ini", "Tak hanya itu", "Mari kita bahas", "Kesimpulannya", "sangat penting untuk"), em/en dash, pola "bukan hanya X, tetapi Y", pola "serba tiga", kesimpulan generik, kalimat seragam panjangnya, per kalimat atau paragraf dengan alasannya. Daftar frasa bisa ditambah dari global `asistenAI`. Berjalan di browser tanpa API dan tanpa biaya.
+5. **Cek klaim:** menandai kalimat berangka (persen, rupiah, jumlah, tanggal) atau beratribusi ("menurut", "penelitian") yang tidak bertaut dan tidak menyebut sumber di blok sumber, termasuk atribusi kabur ("para ahli"). Tanpa API: model tidak bisa membuka sumber, jadi kebenaran angka tetap diperiksa editor.
+
+Model bawaan: brief dan draf `claude-sonnet-5-5`, generator meta `claude-haiku-5-5`; diubah lewat env `AI_MODEL` atau `AI_MODEL_{BRIEF,DRAF,META}`.
 
 Fase 2: naskah video 45 detik + daftar shot (bahan untuk huashu-art-motion / remotion).
 
 Pengaman:
 - AI hanya memberi saran ke editor; tidak punya akses menerbitkan.
-- Artikel yang memakai draf AI wajib mencentang checklist review manusia (sumber dicek, angka dicek, insight/pengalaman penulis ditambahkan) sebelum tombol Terbitkan aktif.
-- Anggaran bulanan; saat habis, tombol AI nonaktif dengan pesan jelas.
-- Semua pemanggilan dicatat di `logAI`.
-- Kunci API dan nama model di env server.
+- Artikel yang memakai draf AI (menyalin draf bagian, menerapkan Intinya atau FAQ) wajib mencentang checklist review manusia (sumber dicek, angka dicek, insight/pengalaman penulis ditambahkan) sebelum tombol Terbitkan aktif. Validasinya juga berlaku untuk terbit massal dan terjadwal.
+- Anggaran bulanan (US$, direset awal bulan waktu Jakarta) dihitung dari token setiap panggilan dikali harga per model di global `asistenAI`. Biaya maksimal permintaan dicadangkan sebelum Claude dipanggil, jadi anggaran tidak terlewati walau permintaan berjalan bersamaan. Saat habis, tombol AI nonaktif dengan pesan jelas; cek pola dan cek klaim tetap bisa dipakai.
+- Semua pemanggilan dicatat di `logAI`; paling banyak 6 permintaan per menit per pengguna.
+- Kunci API dan nama model di env server (`ANTHROPIC_API_KEY`, `AI_ADAPTER`, `AI_MODEL*`).
 
 ## 11. Iklan & privasi
 
@@ -376,7 +379,7 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 4. Google Search Console: properti domain `point.lat` (verifikasi DNS).
 5. Google Cloud: proyek, aktifkan Search Console API (dan Indexing API bila nanti dipakai), akun layanan dengan kunci JSON, tambahkan email akun layanan (`client_email`) sebagai Owner di Search Console.
 6. Env Vercel untuk Mesin Indexing: `INDEXER_ADAPTER=asli` (Production) dan `palsu` (Preview), `GOOGLE_SERVICE_ACCOUNT_JSON` berisi seluruh file kunci JSON (Production saja), `CRON_SECRET` acak minimal 16 karakter. Kunci IndexNow diisi di Pengaturan SEO; status pemasangan tampil di halaman yang sama.
-7. Kunci Claude API.
+7. Kunci Claude API: env Vercel `AI_ADAPTER=asli` dan `ANTHROPIC_API_KEY` (Production), `AI_ADAPTER=palsu` (Preview). Anggaran bulanan, harga per model, dan sumber resmi per pilar di Pengaturan, Asisten AI.
 8. Akun AdSense (setelah konten cukup) dan penyedia newsletter.
 
 ## 19. Risiko & mitigasi
