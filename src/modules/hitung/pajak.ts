@@ -72,7 +72,8 @@ export const isianStatus: IsianPilihan = {
   jenis: 'pilihan',
   kunci: 'status',
   label: 'Status PTKP',
-  bantuan: 'Tanggungan adalah keluarga sedarah atau semenda yang kamu biayai, paling banyak 3 orang.',
+  bantuan: 'TK berarti tidak kawin, K berarti kawin. Angka di belakangnya jumlah tanggungan keluarga yang kamu biayai, paling banyak 3.',
+  tampilan: 'kisi',
   opsi: STATUS_PTKP.map((s) => ({ nilai: s, label: LABEL_STATUS[s] })),
   contoh: 'TK/0',
 }

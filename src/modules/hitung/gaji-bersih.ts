@@ -74,6 +74,7 @@ function hitungGajiBersih(nilai: NilaiMasukan, aturan: Aturan) {
 
 export const gajiBersih: Rumus = {
   tombol: 'Hitung gaji bersih',
+  lanjutan: 'Atur tunjangan, BPJS, dan iuran lain',
   sumber: ['gaji-bersih'],
   parameter: PARAMETER_PAJAK,
   isian: () => [

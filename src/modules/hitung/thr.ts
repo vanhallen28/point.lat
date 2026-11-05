@@ -15,6 +15,7 @@ const MASA_PENUH = 12
 
 export const thr: Rumus = {
   tombol: 'Hitung THR',
+  lanjutan: 'Atur kepesertaan BPJS',
   sumber: ['gaji-bersih'],
   parameter: [],
   isian: () => [

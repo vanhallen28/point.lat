@@ -80,7 +80,7 @@ export function hitung(
 
 export function siapkanKalkulator(toolId: ToolId, parameter: ParameterTersimpan[], tanggal: Date | string, teks?: TeksIsian): Kalkulator {
   const rumus = RUMUS[toolId]
-  if (!rumus) return { isian: [], contoh: {}, tombol: '', dasar: [], peringatan: [], pesan: BELUM_TERSEDIA }
+  if (!rumus) return { isian: [], contoh: {}, tombol: '', lanjutan: null, dasar: [], peringatan: [], pesan: BELUM_TERSEDIA }
   const aturan = aturanUntuk(rumus, parameter, tanggal)
   try {
     const isian = isianDengan(rumus, aturan, teks)
@@ -90,10 +90,12 @@ export function siapkanKalkulator(toolId: ToolId, parameter: ParameterTersimpan[
       else aturan.tabel(d.kunci)
     }
     const dasar = aturan.tampil()
-    return { isian, contoh: contohMasukan(isian), tombol: rumus.tombol, dasar, peringatan: [...aturan.peringatan], pesan: null }
+    const lanjutan = rumus.lanjutan ?? null
+    return { isian, contoh: contohMasukan(isian), tombol: rumus.tombol, lanjutan, dasar, peringatan: [...aturan.peringatan], pesan: null }
   } catch (galat) {
     if (!(galat instanceof ParameterKosong)) throw galat
-    return { isian: [], contoh: {}, tombol: rumus.tombol, dasar: aturan.tampil(), peringatan: [...aturan.peringatan], pesan: pesanKosong(galat) }
+    const dasar = aturan.tampil()
+    return { isian: [], contoh: {}, tombol: rumus.tombol, lanjutan: null, dasar, peringatan: [...aturan.peringatan], pesan: pesanKosong(galat) }
   }
 }
 

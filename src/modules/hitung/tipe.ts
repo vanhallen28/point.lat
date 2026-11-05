@@ -48,7 +48,13 @@ export type IsianAngka = IsianDasar & {
   petunjuk?: string
 }
 
-export type IsianPilihan = IsianDasar & { jenis: 'pilihan'; opsi: Opsi[]; contoh: string }
+export type IsianPilihan = IsianDasar & {
+  jenis: 'pilihan'
+  opsi: Opsi[]
+  contoh: string
+  /** `kisi`: nilai pendek (misalnya "TK/0") tampil sebagai kisi tombol; labelnya dibacakan pembaca layar. */
+  tampilan?: 'kisi'
+}
 
 export type IsianCentang = IsianDasar & { jenis: 'centang'; contoh: boolean }
 
@@ -115,6 +121,8 @@ export type Kalkulator = {
   isian: Isian[]
   contoh: Masukan
   tombol: string
+  /** Judul bagian isian tambahan, `null` bila semua isian tampil langsung. */
+  lanjutan: string | null
   dasar: ParameterTampil[]
   peringatan: string[]
   /** Terisi bila parameter wajib belum ada sama sekali di CMS: kalkulator tidak bisa dipakai. */

@@ -10,6 +10,8 @@ export type HasilRumus = Omit<HasilBerhasil, 'ok' | 'peringatan'>
 export type Rumus = {
   /** Teks tombol yang menyebut hasilnya, misalnya "Hitung gaji bersih". */
   tombol: string
+  /** Judul bagian isian tambahan (`lanjutan`), misalnya "Atur tunjangan, BPJS, dan iuran lain". */
+  lanjutan?: string
   /** Kalkulator yang dokumen parameternya dibaca (THR memakai PTKP dan TER milik Gaji Bersih). */
   sumber: ToolId[]
   /** Parameter milik kalkulator ini di koleksi `parameter-tools`. */

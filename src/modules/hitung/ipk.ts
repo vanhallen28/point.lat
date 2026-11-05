@@ -11,6 +11,7 @@ const duaDesimal = (n: number) => Math.round(n * 100) / 100
 
 export const ipk: Rumus = {
   tombol: 'Hitung IPK',
+  lanjutan: 'Gabungkan dengan IPK sebelumnya',
   sumber: ['ipk'],
   parameter: [
     {

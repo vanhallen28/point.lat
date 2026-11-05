@@ -1,0 +1,159 @@
+/* Halaman kalkulator: kepala seperti artikel, kalkulator, lalu artikel penjelasan satu kolom. Jarak
+   antarbagian hanya dari `gap`. */
+.halaman {
+  display: grid;
+  gap: var(--ruang-10);
+  padding-top: var(--ruang-4);
+}
+
+.halaman > * {
+  min-width: 0;
+}
+
+.kepala {
+  display: grid;
+  gap: var(--ruang-4);
+  max-width: 880px;
+}
+
+.kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruang-3);
+  margin-top: var(--ruang-4);
+  font-size: var(--teks-kecil);
+  font-weight: 600;
+}
+
+.judul {
+  font-size: var(--teks-h1);
+  font-stretch: var(--lebar-h1);
+  line-height: var(--tinggi-h1);
+  letter-spacing: -0.02em;
+}
+
+.deck {
+  max-width: 60ch;
+  font-size: var(--teks-deck);
+  line-height: 1.45;
+}
+
+.diperiksa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+}
+
+.pesan {
+  display: flex;
+  gap: var(--ruang-3);
+  max-width: var(--baris-isi);
+  padding: var(--ruang-5);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kartu);
+  font-weight: 600;
+}
+
+.pesan svg {
+  flex: none;
+}
+
+.badan {
+  display: grid;
+  gap: var(--ruang-10);
+  max-width: 720px;
+}
+
+.badan > * {
+  min-width: 0;
+}
+
+.aturan {
+  max-width: var(--baris-isi);
+}
+
+.subjudul {
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+  font-weight: 900;
+}
+
+.pengantar {
+  margin-top: var(--ruang-3);
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+}
+
+.daftarAturan {
+  margin-top: var(--ruang-4);
+  border-top: var(--garis-tipis) solid var(--garis);
+}
+
+.daftarAturan > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ruang-1) var(--ruang-4);
+  padding-block: var(--ruang-3);
+  border-bottom: 1px solid var(--garis);
+}
+
+.daftarAturan dt {
+  flex: 1 1 14rem;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.daftarAturan dd {
+  margin: 0;
+}
+
+.nilaiAturan {
+  margin-left: auto;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaAturan {
+  flex-basis: 100%;
+  min-width: 0;
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+  line-height: 1.45;
+}
+
+.metaAturan a {
+  color: var(--teks);
+  font-weight: 600;
+}
+
+.tabelAturan summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  color: var(--teks);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tabelAturan table {
+  width: 100%;
+  margin-block: var(--ruang-2);
+  border-collapse: collapse;
+  font-size: var(--teks-kecil);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabelAturan th,
+.tabelAturan td {
+  padding: var(--ruang-2) var(--ruang-3) var(--ruang-2) 0;
+  border-bottom: 1px solid var(--garis);
+  text-align: left;
+}
+
+.tabelAturan th {
+  font-weight: 800;
+}

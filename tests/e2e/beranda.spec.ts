@@ -31,7 +31,7 @@ test('mozaik pilihan redaksi: kartu besar dulu, kotak Hitung sendiri dengan tool
   const besar = await mozaik.getByRole('link', { name: /Cara hitung gaji bersih/ }).boundingBox()
   const kecil = await mozaik.getByRole('link', { name: /Jadwal SNBT/ }).boundingBox()
   expect(besar!.height).toBeGreaterThan(kecil!.height)
-  await expect(mozaik.getByRole('list').getByRole('link')).toHaveText(['Gaji Bersih', 'THR', 'BMI & Kalori'])
+  await expect(mozaik.getByRole('list').getByRole('link')).toHaveText(['Cicilan & KPR', 'Dana Darurat', 'Gaji Bersih', 'THR', 'IPK', 'BMI & Kalori'])
   await expect(mozaik.getByRole('link', { name: 'Semua tools' })).toHaveAttribute('href', '/tools')
 })
 

@@ -19,6 +19,16 @@ export const SLUG = {
   danaDaruratLama: 'dana-darurat-lama',
 } as const
 
+/** Enam kalkulator dari seed, diterbitkan `siapkan.ts`, dengan angka utama hasil contoh dari server. */
+export const TOOLS_CONTOH = [
+  { slug: 'gaji-bersih', nama: 'Gaji Bersih', utama: 'Rp\u00a07.554.552' },
+  { slug: 'thr', nama: 'THR', utama: 'Rp\u00a06.500.000' },
+  { slug: 'cicilan-kpr', nama: 'Cicilan & KPR', utama: 'Rp\u00a03.708.049' },
+  { slug: 'dana-darurat', nama: 'Dana Darurat', utama: 'Rp\u00a030.000.000' },
+  { slug: 'bmi-kalori', nama: 'BMI & Kalori', utama: '22,0' },
+  { slug: 'ipk', nama: 'IPK', utama: '3,56' },
+] as const
+
 /** Subkategori contoh di bawah pilar Uang & Karier. */
 export const SLUG_SUB = { pajak: 'pajak' } as const
 

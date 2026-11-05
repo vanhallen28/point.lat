@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /*
  * Ikon stroke dari Lucide 1.68.0 (https://lucide.dev), disalin sebagai path supaya tanpa dependensi
  * dan tanpa JavaScript klien. Lisensi: ISC, Copyright (c) 2026 Lucide Icons and Contributors;
- * arrow-right, arrow-up-right, calendar, chevron-right, clock, dan info berasal dari Feather
+ * arrow-right, arrow-up-right, calendar, chevron-down, chevron-right, clock, info, plus, dan x berasal dari Feather
  * (MIT, Copyright (c) 2013-present Cole Bemis). Teks lisensi lengkap: paket `lucide-static`.
  */
 const PATH = {
@@ -41,6 +41,7 @@ const PATH = {
       <path d="M3 9h18" />
     </>
   ),
+  'chevron-down': <path d="m6 9 6 6 6-6" />,
   'chevron-right': <path d="m9 18 6-6-6-6" />,
   clock: (
     <>
@@ -62,12 +63,24 @@ const PATH = {
       <path d="M10 22h4" />
     </>
   ),
+  plus: (
+    <>
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+    </>
+  ),
   play: <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />,
   'triangle-alert': (
     <>
       <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
       <path d="M12 9v4" />
       <path d="M12 17h.01" />
+    </>
+  ),
+  x: (
+    <>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
     </>
   ),
 } satisfies Record<string, ReactNode>

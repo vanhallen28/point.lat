@@ -218,8 +218,8 @@ const danaDarurat = await payload.create({
 })
 await payload.update({ collection: 'artikel', id: danaDarurat.id, data: { _status: 'published', slug: SLUG.danaDarurat } })
 
-// Kalkulator dari seed (draf, lengkap dengan parameter): tiga diterbitkan di dua pilar, sisanya tetap draf.
-for (const toolId of ['gaji-bersih', 'thr', 'bmi-kalori']) {
+// Kalkulator dari seed (draf, lengkap dengan penjelasan dan parameter): keenamnya diterbitkan.
+for (const toolId of ['gaji-bersih', 'thr', 'cicilan-kpr', 'dana-darurat', 'bmi-kalori', 'ipk']) {
   const { docs } = await payload.find({ collection: 'tools', where: { toolId: { equals: toolId } }, draft: true, limit: 1 })
   await payload.update({ collection: 'tools', id: docs[0].id, data: { _status: 'published' } })
 }
