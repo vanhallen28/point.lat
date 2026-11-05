@@ -1,0 +1,68 @@
+// Status pemasangan di global Asisten AI. Memakai variabel tema Payload supaya ikut mode terang dan gelap
+// admin. Status tidak hanya ditandai warna: setiap butir punya teks "Siap" atau "Perlu dilihat".
+
+.asisten-status {
+  margin-bottom: calc(var(--base) * 1.5);
+  padding: var(--base);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+
+  // Satu kisi untuk semua butir supaya kolom label sejajar; `div` pembungkus dt/dd tidak membuat kotak.
+  dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+    margin: 0;
+  }
+
+  dl > div {
+    display: contents;
+  }
+
+  dt {
+    font-weight: 700;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.asisten-status__judul {
+  margin: 0 0 calc(var(--base) * 0.5);
+  font-weight: 700;
+}
+
+.asisten-status__tanda {
+  display: inline-block;
+  margin-right: calc(var(--base) * 0.25);
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.asisten-status__tanda--siap {
+  background: var(--theme-success-150);
+  color: var(--theme-success-800);
+}
+
+.asisten-status__tanda--belum {
+  background: var(--theme-warning-150);
+  color: var(--theme-warning-800);
+}
+
+@media (max-width: 600px) {
+  .asisten-status dl {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+
+  .asisten-status dd {
+    margin-bottom: calc(var(--base) * 0.5);
+  }
+}

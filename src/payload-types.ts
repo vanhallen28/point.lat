@@ -87,6 +87,8 @@ export interface Config {
     'tugas-seo': TugasSeo;
     'temuan-tautan': TemuanTautan;
     'tautan-luar': TautanLuar;
+    'log-ai': LogAi;
+    'pemakaian-ai': PemakaianAi;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -115,6 +117,8 @@ export interface Config {
     'tugas-seo': TugasSeoSelect<false> | TugasSeoSelect<true>;
     'temuan-tautan': TemuanTautanSelect<false> | TemuanTautanSelect<true>;
     'tautan-luar': TautanLuarSelect<false> | TautanLuarSelect<true>;
+    'log-ai': LogAiSelect<false> | LogAiSelect<true>;
+    'pemakaian-ai': PemakaianAiSelect<false> | PemakaianAiSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -131,6 +135,7 @@ export interface Config {
     beranda: Beranda;
     'pengaturan-seo': PengaturanSeo;
     newsletter: Newsletter;
+    'asisten-ai': AsistenAi;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -138,6 +143,7 @@ export interface Config {
     beranda: BerandaSelect<false> | BerandaSelect<true>;
     'pengaturan-seo': PengaturanSeoSelect<false> | PengaturanSeoSelect<true>;
     newsletter: NewsletterSelect<false> | NewsletterSelect<true>;
+    'asisten-ai': AsistenAiSelect<false> | AsistenAiSelect<true>;
   };
   locale: null;
   widgets: {
@@ -970,6 +976,47 @@ export interface TautanLuar {
   createdAt: string;
 }
 /**
+ * Setiap permintaan ke asisten AI: siapa, tugas apa, model, token, dan perkiraan biaya. Disimpan 13 bulan.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "log-ai".
+ */
+export interface LogAi {
+  id: number;
+  waktu: string;
+  tugas: 'brief' | 'draf' | 'meta';
+  status: 'berjalan' | 'berhasil' | 'gagal' | 'anggaran-habis';
+  pengguna?: (number | null) | Pengguna;
+  dokumen?: (number | null) | Artikel;
+  /**
+   * Keyword brief, subjudul draf, atau judul artikel.
+   */
+  ringkasan?: string | null;
+  model?: string | null;
+  mode?: ('asli' | 'palsu') | null;
+  tokenMasuk?: number | null;
+  tokenKeluar?: number | null;
+  biaya?: number | null;
+  durasiMs?: number | null;
+  pesan?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pemakaian-ai".
+ */
+export interface PemakaianAi {
+  id: number;
+  /**
+   * YYYY-MM, waktu Jakarta.
+   */
+  bulan: string;
+  terpakai: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1164,6 +1211,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tautan-luar';
         value: number | TautanLuar;
+      } | null)
+    | ({
+        relationTo: 'log-ai';
+        value: number | LogAi;
+      } | null)
+    | ({
+        relationTo: 'pemakaian-ai';
+        value: number | PemakaianAi;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1763,6 +1818,37 @@ export interface TautanLuarSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "log-ai_select".
+ */
+export interface LogAiSelect<T extends boolean = true> {
+  waktu?: T;
+  tugas?: T;
+  status?: T;
+  pengguna?: T;
+  dokumen?: T;
+  ringkasan?: T;
+  model?: T;
+  mode?: T;
+  tokenMasuk?: T;
+  tokenKeluar?: T;
+  biaya?: T;
+  durasiMs?: T;
+  pesan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pemakaian-ai_select".
+ */
+export interface PemakaianAiSelect<T extends boolean = true> {
+  bulan?: T;
+  terpakai?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -2045,6 +2131,41 @@ export interface Newsletter {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "asisten-ai".
+ */
+export interface AsistenAi {
+  id: number;
+  /**
+   * Matikan untuk menonaktifkan semua tombol AI di editor. Cek pola tulisan dan cek klaim tetap bisa dipakai.
+   */
+  aktif?: boolean | null;
+  /**
+   * Biaya dihitung dari token setiap permintaan dikali harga di bawah, dan direset setiap awal bulan waktu Jakarta. Saat anggaran habis, tombol AI nonaktif.
+   */
+  anggaranBulanan: number;
+  /**
+   * Sesuaikan bila harga di halaman Pricing Claude berubah. Model yang tidak ada di daftar ini tidak akan dipanggil.
+   */
+  harga?:
+    | {
+        /**
+         * ID model API, misalnya claude-sonnet-5-5.
+         */
+        model: string;
+        masuk: number;
+        keluar: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Ditandai bersama frasa bawaan, misalnya frasa yang sering muncul di draf.
+   */
+  frasaKlise?: string[] | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -2221,6 +2342,26 @@ export interface NewsletterSelect<T extends boolean = true> {
   judul?: T;
   deskripsi?: T;
   tautanArsip?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "asisten-ai_select".
+ */
+export interface AsistenAiSelect<T extends boolean = true> {
+  aktif?: T;
+  anggaranBulanan?: T;
+  harga?:
+    | T
+    | {
+        model?: T;
+        masuk?: T;
+        keluar?: T;
+        id?: T;
+      };
+  frasaKlise?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
