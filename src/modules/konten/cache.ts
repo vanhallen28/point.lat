@@ -17,6 +17,7 @@ import {
   ambilRubrik,
   ambilTakarir,
   ambilTerbaru,
+  ambilTool,
   ambilTools,
   ambilVideo,
   cariArtikel,
@@ -129,6 +130,15 @@ export const muatVideo = unstable_cache(async (slug: string) => ambilVideo(await
 /** Indeks `/tools`: nama, ringkasan, dan pilar (nama, warna, urutan) setiap kalkulator terbit. */
 export const muatTools = unstable_cache(async () => ambilTools(await payload()), ['konten', 'tools'], {
   tags: [TAG.koleksi('tools'), TAG.koleksi('pilar')],
+  revalidate: SEJAM,
+})
+
+/**
+ * Halaman kalkulator: penjelasan bisa menautkan dokumen apa pun (tag sama dengan artikel), dan angka
+ * aturannya dari koleksi `parameter-tools` (hook koleksi itu membuang tag `parameter-tools`).
+ */
+export const muatTool = unstable_cache(async (slug: string) => ambilTool(await payload(), slug), ['konten', 'tool'], {
+  tags: [...TAG_ARTIKEL, TAG.parameterTools],
   revalidate: SEJAM,
 })
 

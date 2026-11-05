@@ -7,10 +7,10 @@ import { gajiBersih } from './gaji-bersih'
 import { ipk } from './ipk'
 import { tengahKalimat } from './format'
 import { bacaMasukan, contohMasukan } from './masukan'
-import { buatAturan, ParameterKosong, periksaDokumen, type GalatParameter } from './parameter'
+import { buatAturan, ParameterKosong, periksaDokumen, type Aturan, type GalatParameter } from './parameter'
 import type { Rumus } from './rumus'
 import { thr } from './thr'
-import type { DefinisiParameter, Hasil, Kalkulator, Masukan, ParameterTersimpan } from './tipe'
+import type { DefinisiParameter, Hasil, Isian, Kalkulator, Masukan, ParameterTersimpan, TeksIsian } from './tipe'
 
 /**
  * Modul hitung (spesifikasi §5): `hitung(toolId, masukan, tanggal, parameter)` adalah satu-satunya
@@ -19,6 +19,8 @@ import type { DefinisiParameter, Hasil, Kalkulator, Masukan, ParameterTersimpan 
  * pemilihan parameter sesuai tanggal dan cadangan "parameter terakhir yang valid" ada di sini.
  *
  * - `siapkanKalkulator` untuk halaman: isian form, contoh masukan, teks tombol, parameter yang berlaku.
+ * - `teks` (opsional, di kedua fungsi): label dan bantuan isian dari CMS. Pesan galat ikut memakai
+ *   label itu, jadi yang dibaca pembaca selalu sama dengan yang tertulis di form.
  * - `periksaParameter` untuk validasi koleksi `parameter-tools`.
  * - `sumberParameter` untuk pemuat data: kalkulator mana saja yang dokumen parameternya dibaca.
  */
@@ -40,15 +42,32 @@ function aturanUntuk(rumus: Rumus, parameter: ParameterTersimpan[], tanggal: Dat
   return buatAturan(definisiDari(rumus), parameter.filter((p) => rumus.sumber.includes(p.toolId)), tanggal)
 }
 
+/** Label dan bantuan dari CMS menimpa teks bawaan, termasuk kolom isian baris. Label kosong diabaikan. */
+function timpaTeks<T extends Isian>(isian: T, teks: TeksIsian | undefined): T {
+  const cms = teks?.[isian.kunci]
+  const hasil = cms ? { ...isian, label: cms.label.trim() || isian.label, bantuan: cms.bantuan?.trim() || null } : isian
+  if (hasil.jenis !== 'baris') return hasil
+  return { ...hasil, kolom: [timpaTeks(hasil.kolom[0], teks), timpaTeks(hasil.kolom[1], teks)] }
+}
+
+const isianDengan = (rumus: Rumus, aturan: Aturan, teks: TeksIsian | undefined) =>
+  rumus.isian(aturan).map((i) => timpaTeks(i, teks))
+
 const pesanKosong = (galat: ParameterKosong) =>
   `Kalkulator ini sedang diperbarui: angka ${tengahKalimat(galat.label)} belum tersedia. Coba lagi nanti.`
 
-export function hitung(toolId: ToolId, masukan: Masukan, tanggal: Date | string, parameter: ParameterTersimpan[]): Hasil {
+export function hitung(
+  toolId: ToolId,
+  masukan: Masukan,
+  tanggal: Date | string,
+  parameter: ParameterTersimpan[],
+  teks?: TeksIsian,
+): Hasil {
   const rumus = RUMUS[toolId]
   if (!rumus) return { ok: false, galat: {}, pesan: BELUM_TERSEDIA }
   const aturan = aturanUntuk(rumus, parameter, tanggal)
   try {
-    const { nilai, galat } = bacaMasukan(rumus.isian(aturan), masukan)
+    const { nilai, galat } = bacaMasukan(isianDengan(rumus, aturan, teks), masukan)
     if (Object.keys(galat).length > 0) return { ok: false, galat, pesan: null }
     const hasil = rumus.hitung(nilai, aturan)
     if ('galat' in hasil) return { ok: false, galat: hasil.galat, pesan: null }
@@ -59,12 +78,17 @@ export function hitung(toolId: ToolId, masukan: Masukan, tanggal: Date | string,
   }
 }
 
-export function siapkanKalkulator(toolId: ToolId, parameter: ParameterTersimpan[], tanggal: Date | string): Kalkulator {
+export function siapkanKalkulator(toolId: ToolId, parameter: ParameterTersimpan[], tanggal: Date | string, teks?: TeksIsian): Kalkulator {
   const rumus = RUMUS[toolId]
   if (!rumus) return { isian: [], contoh: {}, tombol: '', dasar: [], peringatan: [], pesan: BELUM_TERSEDIA }
   const aturan = aturanUntuk(rumus, parameter, tanggal)
   try {
-    const isian = rumus.isian(aturan)
+    const isian = isianDengan(rumus, aturan, teks)
+    // Semua parameter wajib ada; yang pertama kosong melempar `ParameterKosong`.
+    for (const d of definisiDari(rumus)) {
+      if (d.jenis === 'angka') aturan.angka(d.kunci)
+      else aturan.tabel(d.kunci)
+    }
     const dasar = aturan.tampil()
     return { isian, contoh: contohMasukan(isian), tombol: rumus.tombol, dasar, peringatan: [...aturan.peringatan], pesan: null }
   } catch (galat) {

@@ -2,6 +2,7 @@ import type { Payload, Where } from 'payload'
 
 import type { Artikel } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
+import { sumberParameter } from '@/modules/hitung'
 
 import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
 import { MAKS_TERBARU_BERANDA, MAKS_VIDEO_BERANDA, susunBeranda, susunNewsletter } from './beranda'
@@ -13,7 +14,7 @@ import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
 import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
-import { kelompokkanTools } from './tools'
+import { kelompokkanTools, susunTool } from './tools'
 import { kartuVideo, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 import type {
   BagianBeranda,
@@ -23,6 +24,7 @@ import type {
   DataHeader,
   DataPenulis,
   DataRubrik,
+  DataTool,
   DataVideo,
   KartuArtikel,
   KartuVideo,
@@ -283,6 +285,33 @@ export async function ambilTools(payload: Payload): Promise<KelompokTools[]> {
     populate: { pilar: { ...POPULATE_ARTIKEL.pilar, urutan: true } },
   })
   return kelompokkanTools(docs)
+}
+
+/**
+ * Tools terbit dengan slug ini (depth 2 seperti artikel, untuk tautan di penjelasan) dan semua dokumen
+ * parameter yang dibaca kalkulatornya, misalnya THR membaca PTKP dan TER milik Gaji Bersih.
+ */
+export async function ambilTool(payload: Payload, slug: string): Promise<DataTool | null> {
+  if (validasiFormatSlug(slug) !== true) return null
+  const { docs } = await payload.find({
+    collection: 'tools',
+    where: { and: [{ slug: { equals: slug } }, terbit] },
+    depth: 2,
+    limit: 1,
+    pagination: false,
+    populate: POPULATE_ARTIKEL,
+  })
+  const doc = docs[0]
+  if (!doc) return null
+  const { docs: parameter } = await payload.find({
+    collection: 'parameter-tools',
+    where: { toolId: { in: sumberParameter(doc.toolId) } },
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+    select: { toolId: true, kunci: true, nilai: true, tabel: true, berlakuMulai: true, berlakuSampai: true, sumber: true },
+  })
+  return susunTool(doc, parameter)
 }
 
 /** Kolom yang dicari `/cari`: judul, deck, poin Intinya, dan keyphrase SEO. */

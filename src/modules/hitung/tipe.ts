@@ -63,6 +63,9 @@ export type IsianBaris = IsianDasar & {
 
 export type Isian = IsianAngka | IsianPilihan | IsianCentang | IsianBaris
 
+/** Label dan bantuan isian dari CMS (field `bantuanInput` tools), menimpa teks bawaan per kunci isian. */
+export type TeksIsian = Record<string, { label: string; bantuan: string | null }>
+
 /** Angka hasil beserta teks tampilannya (misalnya "Rp 7.554.552", "1,5%", "22,0"). */
 export type Angka = { label: string; nilai: number; satuan: Satuan; teks: string }
 

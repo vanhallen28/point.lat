@@ -23,6 +23,7 @@ export {
   muatSitus,
   muatTakarir,
   muatTerbaru,
+  muatTool,
   muatTools,
   muatVideo,
   TAG_ARTIKEL,
@@ -39,6 +40,7 @@ export {
   ambilRubrik,
   ambilTakarir,
   ambilTerbaru,
+  ambilTool,
   ambilTools,
   ambilVideo,
   cariArtikel,
@@ -56,7 +58,7 @@ export {
   susunNewsletter,
   type SumberBeranda,
 } from './beranda'
-export { itemTools, kelompokkanTools } from './tools'
+export { itemTools, kelompokkanTools, parameterTersimpan, susunKalkulator, susunTool } from './tools'
 export { kartuVideo, labelDurasi, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, pathTakarir, susunVideo } from './video'
 export { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'
 export { JUDUL_FAQ, susunHalaman } from './halaman'

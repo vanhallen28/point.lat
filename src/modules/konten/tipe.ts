@@ -1,6 +1,7 @@
-import type { TipeArtikel, WarnaPilar } from '@/lib/konstanta'
+import type { TipeArtikel, ToolId, WarnaPilar } from '@/lib/konstanta'
+import type { ParameterTersimpan, TeksIsian } from '@/modules/hitung'
 import type { IsiDokumen } from '@/modules/seo/lexical'
-import type { ArtikelSeo, HalamanSeo, PenulisSeo, PilarSeo, SubkategoriSeo, VideoSeo } from '@/modules/seo/tipe'
+import type { ArtikelSeo, HalamanSeo, PenulisSeo, PilarSeo, SubkategoriSeo, ToolsSeo, VideoSeo } from '@/modules/seo/tipe'
 import type { Video } from '@/payload-types'
 
 /**
@@ -125,6 +126,28 @@ export type ItemTools = { id: number; nama: string; href: string; ringkasan: str
 
 /** Kalkulator per pilar di `/tools`, urut sesuai urutan pilar di CMS. */
 export type KelompokTools = { pilar: PilarRingkas; tools: ItemTools[] }
+
+/**
+ * Halaman `/tools/{slug}`: dokumen tools terbit dan semua dokumen parameter yang dibaca kalkulatornya.
+ * Parameter dikirim utuh (semua tanggal berlaku) karena modul hitung memilihnya sesuai tanggal hitung.
+ */
+export type DataTool = {
+  id: number
+  nama: string
+  toolId: ToolId
+  href: string
+  ringkasan: string
+  pilar: PilarRingkas | null
+  /** Label dan bantuan isian dari `bantuanInput`, per kunci isian. */
+  bantuan: TeksIsian
+  penjelasan: IsiDokumen
+  faq: Faq[]
+  sumber: Sumber[]
+  /** Tanggal akses sumber aturan yang paling baru: kapan aturannya terakhir diperiksa. */
+  diperiksa: string | null
+  parameter: ParameterTersimpan[]
+  seo: ToolsSeo
+}
 
 /** Ajakan newsletter: pendaftaran di form penyedia (global `newsletter`), bukan di point. */
 export type DataNewsletter = { judul: string; teks: string | null; href: string }
