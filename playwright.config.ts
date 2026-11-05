@@ -43,6 +43,8 @@ export default defineConfig({
       CLOUDINARY_CLOUD_NAME: 'e2e',
       CLOUDINARY_API_KEY: 'e2e',
       CLOUDINARY_API_SECRET: 'e2e',
+      // Mesin Indexing tanpa jaringan: kabar dikirim ke adapter palsu dan tercatat di log dengan adapter `palsu`.
+      INDEXER_ADAPTER: 'palsu',
     },
   },
 })
