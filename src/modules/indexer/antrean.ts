@@ -67,8 +67,8 @@ async function koneksi(payload: Payload, req?: PayloadRequest): Promise<Pick<Pay
 export async function simpanBaris(payload: Payload, baris: BarisAntrean, req?: PayloadRequest): Promise<void> {
   const kunci = kunciAntrean(baris.langkah, baris.path)
   // Diulang bila baris dengan kunci ini muncul di antara mencari dan menambah (dibuat transaksi lain),
-  // supaya kabar ini tergabung ke baris itu.
-  for (;;) {
+  // supaya kabar ini tergabung ke baris itu. Dibatasi supaya simpan dokumen tidak pernah menggantung.
+  for (let coba = 0; coba < 5; coba++) {
     const { docs } = await payload.find({ collection: ANTREAN, where: { kunci: { equals: kunci } }, limit: 1, depth: 0, req })
     const ada = docs[0]
     if (ada) {
@@ -85,6 +85,7 @@ export async function simpanBaris(payload: Payload, baris: BarisAntrean, req?: P
     }
     if (await tambahBaris(payload, kunci, baris, req)) return
   }
+  throw new Error(`Antrean indexing untuk "${kunci}" terus berubah saat disimpan. Coba simpan lagi.`)
 }
 
 /**
