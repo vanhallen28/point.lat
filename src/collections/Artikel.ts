@@ -4,6 +4,7 @@ import type { CollectionConfig, PayloadRequest } from 'payload'
 import { isLoggedIn, publishedOrLoggedIn } from '@/access'
 import { blokArtikel } from '@/blocks/artikel'
 import { faqField, sumberField } from '@/fields/konten'
+import { pakaiDrafAiField, reviewAiField } from '@/fields/reviewAi'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
 import { catatTanggalArtikel } from '@/hooks/catatTanggalArtikel'
@@ -38,6 +39,8 @@ export const Artikel: CollectionConfig = {
     useAsTitle: 'judul',
     defaultColumns: ['judul', 'tipe', 'pilar', '_status', 'statusIndeks', 'updatedAt'],
     group: 'Konten',
+    // Tombol terbit nonaktif selama checklist review draf AI belum lengkap (spesifikasi §10).
+    components: { edit: { PublishButton: '@/modules/ai/admin/TombolTerbit#TombolTerbit' } },
   },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
   endpoints: [endpointPanelSeo, endpointAsisten, endpointStatusAsisten],
@@ -151,6 +154,8 @@ export const Artikel: CollectionConfig = {
         description: 'Centang bila isi berubah signifikan. Tanggal "Diperbarui" dan lastmod sitemap ikut berubah saat terbit.',
       },
     },
+    pakaiDrafAiField,
+    reviewAiField,
     { name: 'terbitPada', type: 'date', admin: { position: 'sidebar', readOnly: true } },
     { name: 'diperbaruiBesar', type: 'date', label: 'Diperbarui', admin: { position: 'sidebar', readOnly: true } },
     {

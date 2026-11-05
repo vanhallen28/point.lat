@@ -1,0 +1,26 @@
+// Petunjuk checklist review draf AI di sidebar artikel. Variabel tema Payload supaya ikut mode terang dan
+// gelap; teks memakai warna teks utama (kontras penuh), garis kiri kuning hanya penanda tambahan.
+.asisten-review {
+  margin: 0 0 calc(var(--base) * 0.75);
+  padding: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+  border-left: 4px solid var(--theme-warning-650);
+  border-radius: 10px;
+  background: var(--theme-warning-100);
+  color: var(--theme-text);
+  font-size: 14px;
+  line-height: 1.5;
+
+  p {
+    margin: 0 0 calc(var(--base) * 0.25);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: calc(var(--base) * 1.1);
+  }
+}
+
+// Deskripsi field `pakaiDrafAi` di sidebar artikel: warna deskripsi bawaan Payload (`--theme-elevation-400`) gagal kontras.
+.field-description-pakaiDrafAi {
+  color: var(--theme-elevation-650);
+}

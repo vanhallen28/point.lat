@@ -464,6 +464,15 @@ export interface Artikel {
    * Centang bila isi berubah signifikan. Tanggal "Diperbarui" dan lastmod sitemap ikut berubah saat terbit.
    */
   perubahanBesar?: boolean | null;
+  /**
+   * Ditandai otomatis saat kamu menyalin draf bagian atau menerapkan Intinya atau FAQ dari Asisten AI.
+   */
+  pakaiDrafAi?: boolean | null;
+  reviewAi?: {
+    sumberDicek?: boolean | null;
+    angkaDicek?: boolean | null;
+    pengalamanDitambah?: boolean | null;
+  };
   terbitPada?: string | null;
   diperbaruiBesar?: string | null;
   updatedAt: string;
@@ -1446,6 +1455,14 @@ export interface ArtikelSelect<T extends boolean = true> {
   subkategori?: T;
   penulis?: T;
   perubahanBesar?: T;
+  pakaiDrafAi?: T;
+  reviewAi?:
+    | T
+    | {
+        sumberDicek?: T;
+        angkaDicek?: T;
+        pengalamanDitambah?: T;
+      };
   terbitPada?: T;
   diperbaruiBesar?: T;
   updatedAt?: T;
