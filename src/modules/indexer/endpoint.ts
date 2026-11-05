@@ -1,6 +1,8 @@
 import { timingSafeEqual } from 'crypto'
 import type { Endpoint, Payload } from 'payload'
 
+import { jalankanPantau, type AdapterPantau, type RingkasanPantau } from '@/modules/pantau'
+
 import { jalankanIndexer, type RingkasanJalan } from './jalan'
 
 /**
@@ -15,17 +17,21 @@ export function izinCron(header: string | null | undefined, rahasia: string | un
   return diterima.length === diharapkan.length && timingSafeEqual(diterima, diharapkan)
 }
 
-export type HasilJadwal = { jadwalTerbit: number; indexer: RingkasanJalan }
+export type HasilJadwal = { jadwalTerbit: number; indexer: RingkasanJalan; pantau: RingkasanPantau }
+
+export type OpsiJadwal = NonNullable<Parameters<typeof jalankanIndexer>[1]> & { adapterPantau?: AdapterPantau }
 
 /**
  * Pekerjaan berkala (spesifikasi §5 "Penjadwal"): job Payload yang jatuh tempo (jadwal terbit artikel,
- * `schedulePublish`), lalu antrean Mesin Indexing. Urutan ini membuat artikel yang terbit terjadwal
- * langsung dikabarkan pada jalan yang sama.
+ * `schedulePublish`), lalu antrean Mesin Indexing, lalu tugas Pantau SEO yang jatuh tempo (sinkron
+ * Search Analytics harian). Urutan ini membuat artikel yang terbit terjadwal langsung dikabarkan pada
+ * jalan yang sama.
  */
-export async function jalankanJadwal(payload: Payload, opsi: Parameters<typeof jalankanIndexer>[1] = {}): Promise<HasilJadwal> {
+export async function jalankanJadwal(payload: Payload, opsi: OpsiJadwal = {}): Promise<HasilJadwal> {
   const job = await payload.jobs.run({ allQueues: true, overrideAccess: true, silent: true })
-  const indexer = await jalankanIndexer(payload, opsi)
-  return { jadwalTerbit: Object.keys(job.jobStatus ?? {}).length, indexer }
+  const indexer = await jalankanIndexer(payload, { sekarang: opsi.sekarang, adapter: opsi.adapter })
+  const pantau = await jalankanPantau(payload, { sekarang: opsi.sekarang, adapter: opsi.adapterPantau })
+  return { jadwalTerbit: Object.keys(job.jobStatus ?? {}).length, indexer, pantau }
 }
 
 /**

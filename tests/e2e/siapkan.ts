@@ -17,7 +17,23 @@ import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, KUNCI_INDEXNOW, p, SLU
 pakaiKlien(klienPalsu('e2e'))
 const payload = await getPayload({ config })
 
-for (const koleksi of ['artikel', 'tools', 'parameter-tools', 'video', 'subkategori', 'redirect', 'log-404', 'media', 'antrean-indexing', 'log-indexing', 'status-indeks'] as const) {
+const KOLEKSI_DIBERSIHKAN = [
+  'artikel',
+  'tools',
+  'parameter-tools',
+  'video',
+  'subkategori',
+  'redirect',
+  'log-404',
+  'media',
+  'antrean-indexing',
+  'log-indexing',
+  'status-indeks',
+  'analitik-halaman',
+  'analitik-situs',
+  'tugas-seo',
+] as const
+for (const koleksi of KOLEKSI_DIBERSIHKAN) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
 }
 await seed(payload, { emailAdmin: ADMIN_E2E.email, passwordAdmin: ADMIN_E2E.password })

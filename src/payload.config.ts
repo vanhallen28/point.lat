@@ -5,6 +5,8 @@ import { buildConfig } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
+import { AnalitikHalaman } from './collections/AnalitikHalaman'
+import { AnalitikSitus } from './collections/AnalitikSitus'
 import { AntreanIndexing } from './collections/AntreanIndexing'
 import { Artikel } from './collections/Artikel'
 import { Halaman } from './collections/Halaman'
@@ -19,6 +21,7 @@ import { Redirect } from './collections/Redirect'
 import { StatusIndeks } from './collections/StatusIndeks'
 import { Subkategori } from './collections/Subkategori'
 import { Tools } from './collections/Tools'
+import { TugasSeo } from './collections/TugasSeo'
 import { Video } from './collections/Video'
 import { Beranda } from './globals/Beranda'
 import { Footer } from './globals/Footer'
@@ -53,9 +56,12 @@ export default buildConfig({
     AntreanIndexing,
     LogIndexing,
     StatusIndeks,
+    AnalitikHalaman,
+    AnalitikSitus,
+    TugasSeo,
   ],
   globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter],
-  // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit dan Mesin Indexing.
+  // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
   endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

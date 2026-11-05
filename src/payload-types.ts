@@ -82,6 +82,9 @@ export interface Config {
     'antrean-indexing': AntreanIndexing;
     'log-indexing': LogIndexing;
     'status-indeks': StatusIndek;
+    'analitik-halaman': AnalitikHalaman;
+    'analitik-situs': AnalitikSitus;
+    'tugas-seo': TugasSeo;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -105,6 +108,9 @@ export interface Config {
     'antrean-indexing': AntreanIndexingSelect<false> | AntreanIndexingSelect<true>;
     'log-indexing': LogIndexingSelect<false> | LogIndexingSelect<true>;
     'status-indeks': StatusIndeksSelect<false> | StatusIndeksSelect<true>;
+    'analitik-halaman': AnalitikHalamanSelect<false> | AnalitikHalamanSelect<true>;
+    'analitik-situs': AnalitikSitusSelect<false> | AnalitikSitusSelect<true>;
+    'tugas-seo': TugasSeoSelect<false> | TugasSeoSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -858,6 +864,62 @@ export interface StatusIndek {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analitik-halaman".
+ */
+export interface AnalitikHalaman {
+  id: number;
+  path: string;
+  klik28: number;
+  impresi28: number;
+  /**
+   * Rasio klik per impresi, 0 sampai 1.
+   */
+  ctr28: number;
+  posisi28: number;
+  klik7: number;
+  impresi7: number;
+  /**
+   * Tanggal terakhir data (YYYY-MM-DD, waktu Pasifik).
+   */
+  sampai: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analitik-situs".
+ */
+export interface AnalitikSitus {
+  id: number;
+  /**
+   * YYYY-MM-DD, waktu Pasifik.
+   */
+  tanggal: string;
+  klik: number;
+  impresi: number;
+  ctr: number;
+  posisi: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tugas-seo".
+ */
+export interface TugasSeo {
+  id: number;
+  jenis: 'analitik' | 'tautan';
+  status?: ('berjalan' | 'berhasil' | 'gagal' | 'dilewati') | null;
+  mulai?: string | null;
+  selesai?: string | null;
+  berikutnya: string;
+  pesan?: string | null;
+  versi?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1031,6 +1093,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'status-indeks';
         value: number | StatusIndek;
+      } | null)
+    | ({
+        relationTo: 'analitik-halaman';
+        value: number | AnalitikHalaman;
+      } | null)
+    | ({
+        relationTo: 'analitik-situs';
+        value: number | AnalitikSitus;
+      } | null)
+    | ({
+        relationTo: 'tugas-seo';
+        value: number | TugasSeo;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1550,6 +1624,50 @@ export interface StatusIndeksSelect<T extends boolean = true> {
   dirayapiPada?: T;
   cekTerakhir?: T;
   cekBerikutnya?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analitik-halaman_select".
+ */
+export interface AnalitikHalamanSelect<T extends boolean = true> {
+  path?: T;
+  klik28?: T;
+  impresi28?: T;
+  ctr28?: T;
+  posisi28?: T;
+  klik7?: T;
+  impresi7?: T;
+  sampai?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analitik-situs_select".
+ */
+export interface AnalitikSitusSelect<T extends boolean = true> {
+  tanggal?: T;
+  klik?: T;
+  impresi?: T;
+  ctr?: T;
+  posisi?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tugas-seo_select".
+ */
+export interface TugasSeoSelect<T extends boolean = true> {
+  jenis?: T;
+  status?: T;
+  mulai?: T;
+  selesai?: T;
+  berikutnya?: T;
+  pesan?: T;
+  versi?: T;
   updatedAt?: T;
   createdAt?: T;
 }
