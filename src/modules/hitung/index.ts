@@ -1,5 +1,7 @@
 import type { ToolId } from '@/lib/konstanta'
 
+import { cicilanKpr } from './cicilan-kpr'
+import { danaDarurat } from './dana-darurat'
 import { gajiBersih } from './gaji-bersih'
 import { tengahKalimat } from './format'
 import { bacaMasukan, contohMasukan } from './masukan'
@@ -22,6 +24,8 @@ import type { DefinisiParameter, Hasil, Kalkulator, Masukan, ParameterTersimpan 
 const RUMUS: Partial<Record<ToolId, Rumus>> = {
   'gaji-bersih': gajiBersih,
   thr,
+  'cicilan-kpr': cicilanKpr,
+  'dana-darurat': danaDarurat,
 }
 
 const BELUM_TERSEDIA = 'Kalkulator ini belum tersedia.'

@@ -139,4 +139,22 @@ export const PARAMETER_GAJI: ParameterAwal[] = [
   { toolId: 'gaji-bersih', kunci: 'jkm', nilai: 0.3, berlakuMulai: '2015-07-01', sumber: SUMBER.bpjsTk },
 ]
 
-export const PARAMETER_AWAL: ParameterAwal[] = [...PARAMETER_GAJI]
+export const PARAMETER_DANA_DARURAT: ParameterAwal[] = [
+  {
+    toolId: 'dana-darurat',
+    kunci: 'kelipatan',
+    berlakuMulai: '2026-01-01',
+    sumber: {
+      judul: 'Tidak Ada Kata Terlambat untuk Dana Darurat (OJK, Sikapi Uangmu)',
+      url: 'https://sikapiuangmu.ojk.go.id/FrontEnd/CMS/Article/20586',
+    },
+    catatan: 'Aturan praktis, bukan peraturan. OJK: lajang 6 kali, berkeluarga atau punya tanggungan 9 sampai 12 kali pengeluaran bulanan.',
+    tabel: [
+      { label: 'Lajang tanpa tanggungan', nilai: 6 },
+      { label: 'Menikah tanpa anak', nilai: 9 },
+      { label: 'Menikah dengan anak atau punya tanggungan', nilai: 12 },
+    ],
+  },
+]
+
+export const PARAMETER_AWAL: ParameterAwal[] = [...PARAMETER_GAJI, ...PARAMETER_DANA_DARURAT]
