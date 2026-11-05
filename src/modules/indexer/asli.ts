@@ -13,13 +13,16 @@ export const URL_INSPEKSI = 'https://searchconsole.googleapis.com/v1/urlInspecti
 export const URL_INDEXING_API = 'https://indexing.googleapis.com/v3/urlNotifications:publish'
 export const URL_INDEXNOW = 'https://api.indexnow.org/indexnow'
 
-type GalatGoogle = { error?: { code?: number; message?: string; status?: string } }
+export type GalatGoogle = { error?: { code?: number; message?: string; status?: string } }
 
 const SARAN_403 =
   ' Pastikan email akun layanan terdaftar sebagai pemilik (Owner) properti di Search Console dan API-nya sudah diaktifkan di Google Cloud.'
 
-/** Galat dari API Google. 429 atau `RESOURCE_EXHAUSTED` berarti kuota habis (ditunda ke hari berikutnya). */
-function galatGoogle(kodeHttp: number, data: GalatGoogle): HasilPanggilan {
+/**
+ * Galat dari API Google. 429 atau `RESOURCE_EXHAUSTED` berarti kuota habis (ditunda ke hari berikutnya).
+ * Dipakai juga adapter Search Analytics modul pantau.
+ */
+export function galatGoogle(kodeHttp: number, data: GalatGoogle): Extract<HasilPanggilan, { status: 'gagal' }> {
   const pesan = data.error?.message?.slice(0, 300).replace(/\.$/, '')
   const kuotaHabis = kodeHttp === 429 || data.error?.status === 'RESOURCE_EXHAUSTED'
   return {

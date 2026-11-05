@@ -41,12 +41,20 @@ export type AdapterIndexer = {
  * tidak pernah tertebak.
  */
 export function adapterDariEnv(env: Record<string, string | undefined> = process.env): AdapterIndexer {
-  if (env.INDEXER_ADAPTER === 'asli') return adapterAsli({ akun: bacaAkunLayanan(env.GOOGLE_SERVICE_ACCOUNT_JSON) })
-  if (env.INDEXER_ADAPTER === 'palsu') return adapterPalsu()
+  return modeAdapter(env) === 'asli' ? adapterAsli({ akun: bacaAkunLayanan(env.GOOGLE_SERVICE_ACCOUNT_JSON) }) : adapterPalsu()
+}
+
+/**
+ * Mode semua adapter layanan luar dari env `INDEXER_ADAPTER`: Mesin Indexing dan Pantau SEO (Search
+ * Analytics dan pemeriksa tautan) memakai saklar yang sama, jadi pratinjau dengan `palsu` tidak pernah
+ * menghubungi Google atau situs lain.
+ */
+export function modeAdapter(env: Record<string, string | undefined> = process.env): 'asli' | 'palsu' {
+  if (env.INDEXER_ADAPTER === 'asli' || env.INDEXER_ADAPTER === 'palsu') return env.INDEXER_ADAPTER
   if (env.NODE_ENV === 'production' && env.NEXT_PHASE !== 'phase-production-build') {
     throw new Error('INDEXER_ADAPTER wajib diisi di produksi: asli (situs live) atau palsu (pratinjau dan uji lokal).')
   }
-  return adapterPalsu()
+  return 'palsu'
 }
 
 let adapter: AdapterIndexer | undefined
