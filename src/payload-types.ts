@@ -1655,6 +1655,31 @@ export interface PengaturanSeo {
    * Ditambahkan di bawah aturan bawaan (Rencana 3).
    */
   robotsTambahan?: string | null;
+  /**
+   * Setiap konten terbit, berubah besar, atau dihapus, situs mengabari mesin pencari dan memeriksa status indeksnya di Google.
+   */
+  indexing?: {
+    /**
+     * Kunci ini tampil di point.lat/{kunci}.txt supaya Bing dan mesin pencari lain percaya kabar dari situs ini. Buat sekali (8 sampai 128 huruf, angka, atau tanda hubung) dan jangan diganti. Kosongkan untuk melewati IndexNow.
+     */
+    kunciIndexNow?: string | null;
+    /**
+     * Properti tempat akun layanan Google ditambahkan sebagai pemilik.
+     */
+    propertiSearchConsole?: string | null;
+    /**
+     * Google mengizinkan 2.000 cek status (URL Inspection) per hari per properti. Batas bawaan 1.000 menyisakan separuh untuk alat lain. Cek di atas batas ditunda ke hari berikutnya.
+     */
+    kuotaInspeksi?: number | null;
+    /**
+     * Biarkan mati. Google hanya mengizinkan Indexing API untuk halaman lowongan kerja (JobPosting) dan siaran langsung (BroadcastEvent), bukan artikel. Sitemap dan cek status tetap berjalan tanpa ini.
+     */
+    pakaiIndexingApi?: boolean | null;
+    /**
+     * Kuota bawaan Google 200 permintaan per hari per proyek. Kabar di atas batas ditunda ke hari berikutnya.
+     */
+    kuotaIndexingApi?: number | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1827,6 +1852,15 @@ export interface PengaturanSeoSelect<T extends boolean = true> {
         bing?: T;
       };
   robotsTambahan?: T;
+  indexing?:
+    | T
+    | {
+        kunciIndexNow?: T;
+        propertiSearchConsole?: T;
+        kuotaInspeksi?: T;
+        pakaiIndexingApi?: T;
+        kuotaIndexingApi?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

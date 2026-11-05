@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
     loader: 'custom',
     loaderFile: './src/modules/media/loader.ts',
   },
+  // File kunci IndexNow `/{kunci}.txt` di akar situs (spesifikasi §7). Pola kunci sama dengan
+  // `POLA_KUNCI_INDEXNOW` (8 sampai 128 karakter), jadi `/robots.txt` tidak ikut tertulis ulang.
+  async rewrites() {
+    return [{ source: '/:kunci([A-Za-z0-9-]{8,128})\\.txt', destination: '/kunci-indexnow/:kunci' }]
+  },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
