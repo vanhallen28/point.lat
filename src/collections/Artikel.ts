@@ -35,7 +35,7 @@ export const Artikel: CollectionConfig = {
   labels: { singular: 'Artikel', plural: 'Artikel' },
   admin: {
     useAsTitle: 'judul',
-    defaultColumns: ['judul', 'tipe', 'pilar', '_status', 'updatedAt'],
+    defaultColumns: ['judul', 'tipe', 'pilar', '_status', 'statusIndeks', 'updatedAt'],
     group: 'Konten',
   },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
@@ -152,5 +152,11 @@ export const Artikel: CollectionConfig = {
     },
     { name: 'terbitPada', type: 'date', admin: { position: 'sidebar', readOnly: true } },
     { name: 'diperbaruiBesar', type: 'date', label: 'Diperbarui', admin: { position: 'sidebar', readOnly: true } },
+    {
+      name: 'statusIndeks',
+      type: 'ui',
+      label: 'Status indeks',
+      admin: { components: { Cell: '@/modules/indexer/admin/SelStatusIndeks#SelStatusIndeks' } },
+    },
   ],
 }

@@ -1,0 +1,99 @@
+// Komponen admin Mesin Indexing. Memakai variabel tema Payload supaya ikut mode terang dan gelap admin.
+// Status tidak hanya ditandai warna: setiap butir punya teks "Siap" atau "Perlu diatur".
+
+.indexing-pemasangan,
+.indexing-peringatan {
+  margin-bottom: calc(var(--base) * 1.5);
+  padding: var(--base);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.indexing-pemasangan {
+  border: 1px solid var(--theme-elevation-150);
+
+  // Satu kisi untuk semua butir supaya kolom label sejajar; `div` pembungkus dt/dd tidak membuat kotak.
+  dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+    margin: 0;
+  }
+
+  dl > div {
+    display: contents;
+  }
+
+  dt {
+    font-weight: 700;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.indexing-pemasangan__judul,
+.indexing-peringatan__judul {
+  margin: 0 0 calc(var(--base) * 0.5);
+  font-weight: 700;
+}
+
+.indexing-pemasangan__tanda {
+  display: inline-block;
+  margin-right: calc(var(--base) * 0.25);
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.indexing-pemasangan__tanda--siap {
+  background: var(--theme-success-150);
+  color: var(--theme-success-800);
+}
+
+.indexing-pemasangan__tanda--belum {
+  background: var(--theme-warning-150);
+  color: var(--theme-warning-800);
+}
+
+.indexing-peringatan {
+  border-left: 4px solid var(--theme-warning-650);
+  background: var(--theme-warning-100);
+  color: var(--theme-text);
+
+  p {
+    margin: 0 0 calc(var(--base) * 0.5);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  // CSS admin Payload menghapus outline tautan; cincin fokus dikembalikan (WCAG 2.4.7).
+  a:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@media (max-width: 600px) {
+  .indexing-pemasangan dl {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+
+  .indexing-pemasangan dd {
+    margin-bottom: calc(var(--base) * 0.5);
+  }
+}

@@ -68,6 +68,11 @@ export const PengaturanSEO: GlobalConfig = {
       },
       fields: [
         {
+          name: 'statusPemasangan',
+          type: 'ui',
+          admin: { components: { Field: '@/modules/indexer/admin/StatusPemasangan#StatusPemasangan' } },
+        },
+        {
           name: 'kunciIndexNow',
           type: 'text',
           label: 'Kunci IndexNow',
@@ -96,6 +101,11 @@ export const PengaturanSEO: GlobalConfig = {
             description:
               'Google mengizinkan 2.000 cek status (URL Inspection) per hari per properti. Batas bawaan 1.000 menyisakan separuh untuk alat lain. Cek di atas batas ditunda ke hari berikutnya.',
           },
+        },
+        {
+          name: 'peringatanIndexingApi',
+          type: 'ui',
+          admin: { components: { Field: '@/modules/indexer/admin/PeringatanIndexingApi#PeringatanIndexingApi' } },
         },
         {
           name: 'pakaiIndexingApi',

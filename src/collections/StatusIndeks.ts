@@ -10,7 +10,7 @@ import { LABEL_STATUS_INDEKS, STATUS_INDEKS } from '@/modules/indexer/tipe'
 export const StatusIndeks: CollectionConfig = {
   slug: 'status-indeks',
   labels: { singular: 'Status indeks', plural: 'Status indeks' },
-  defaultSort: '-cekTerakhir',
+  defaultSort: '-updatedAt',
   admin: {
     useAsTitle: 'path',
     defaultColumns: ['path', 'status', 'cekTerakhir', 'cekBerikutnya', 'detail'],

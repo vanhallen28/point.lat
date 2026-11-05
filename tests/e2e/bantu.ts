@@ -18,8 +18,11 @@ export async function cegatCloudinary(page: Page): Promise<void> {
   )
 }
 
-export async function periksaAxe(page: Page): Promise<void> {
-  const hasil = await new AxeBuilder({ page }).withTags(TAG_WCAG).analyze()
+/** `bagian`: selector yang diperiksa saja, misalnya komponen kustom di admin Payload. Tanpa itu: seluruh halaman. */
+export async function periksaAxe(page: Page, ...bagian: string[]): Promise<void> {
+  let axe = new AxeBuilder({ page }).withTags(TAG_WCAG)
+  for (const selector of bagian) axe = axe.include(selector)
+  const hasil = await axe.analyze()
   expect(hasil.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([])
 }
 
