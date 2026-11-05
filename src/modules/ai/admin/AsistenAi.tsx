@@ -9,6 +9,7 @@ import type { StatusAsisten } from '../status'
 import type { TugasAi } from '../tipe'
 
 import { BagianBrief } from './BagianBrief'
+import { BagianDraf } from './BagianDraf'
 import { BagianKlaim } from './BagianKlaim'
 import { BagianMeta } from './BagianMeta'
 import { BagianPola } from './BagianPola'
@@ -72,6 +73,7 @@ export function AsistenAi() {
       {status === null ? <p className="asisten__keterangan">Memuat status asisten...</p> : null}
       {status?.pesan ? <p className="asisten__pesan asisten__pesan--peringatan">{status.pesan}</p> : null}
       <BagianBrief minta={minta} nonaktif={!siap || Boolean(status.pesan)} />
+      <BagianDraf minta={minta} nonaktif={!siap || Boolean(status.pesan)} />
       <BagianMeta minta={minta} nonaktif={!siap || Boolean(status.pesan)} />
       <BagianPola frasaTambahan={siap ? status.frasaKlise : []} />
       <BagianKlaim />

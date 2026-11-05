@@ -42,6 +42,8 @@
 
   a:focus-visible,
   input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
   button:focus-visible,
   summary:focus-visible {
     outline: 2px solid var(--theme-text);
@@ -118,6 +120,35 @@ ul.asisten__catatan {
   background: var(--theme-input-bg, var(--theme-elevation-0));
   color: var(--theme-text);
   font: inherit;
+}
+
+.asisten__input--teks {
+  min-height: 0;
+  padding: calc(var(--base) * 0.4) calc(var(--base) * 0.5);
+  resize: vertical;
+}
+
+// Pratinjau draf per bagian: subjudul ditebalkan, bukan heading sungguhan di halaman admin.
+.asisten-draf {
+  display: grid;
+  gap: calc(var(--base) * 0.5);
+  padding: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+  border-left: 3px solid var(--theme-elevation-250);
+  border-radius: 10px;
+  background: var(--theme-elevation-50);
+
+  ul {
+    padding-left: calc(var(--base) * 1.1);
+  }
+}
+
+.asisten-draf__h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.asisten-draf__h3 {
+  font-weight: 700;
 }
 
 .asisten__tombol {

@@ -6,13 +6,15 @@ import { BATAS_PER_MENIT, BATAS_TUGAS, biaya, bulanJakarta, bytePrompt, cadangan
 import { lengkapiBrief } from './brief-data'
 import type { DefinisiTugas } from './prompt/bantu'
 import { definisiBrief } from './prompt/brief'
+import { definisiDraf } from './prompt/draf'
 import { definisiMeta } from './prompt/meta'
 import { ambilPengaturanAi } from './status'
 import type { ModeAi, Token, TugasAi } from './tipe'
 
-/** Tugas yang sudah punya prompt. Tugas lain ditolak sebagai belum tersedia. */
-const DEFINISI: Partial<Record<TugasAi, DefinisiTugas<unknown, unknown>>> = {
+/** Prompt, skema, dan pemeriksa setiap tugas (`prompt/*.ts`); brief ditambah data dari database. */
+const DEFINISI: Record<TugasAi, DefinisiTugas<unknown, unknown>> = {
   brief: { ...definisiBrief, lengkapi: lengkapiBrief } as DefinisiTugas<unknown, unknown>,
+  draf: definisiDraf as DefinisiTugas<unknown, unknown>,
   meta: definisiMeta as DefinisiTugas<unknown, unknown>,
 }
 
@@ -49,7 +51,6 @@ export async function jalankan(payload: Payload, tugas: TugasAi, body: unknown, 
   const sekarang = opsi.sekarang ?? new Date()
   const env = opsi.env ?? process.env
   const definisi = DEFINISI[tugas]
-  if (!definisi) return gagal('masukan', 'Tugas asisten ini belum tersedia.')
 
   const pengaturan = await ambilPengaturanAi(payload)
   if (!pengaturan.aktif) return gagal('mati', 'Asisten AI sedang dimatikan admin di Pengaturan, Asisten AI.')

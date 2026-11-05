@@ -143,6 +143,35 @@ test('brief dari keyword: perkiraan Claude terpisah dari data point., sumber res
   await expect(lagi.getByRole('button', { name: 'Buat ulang brief' })).toBeEnabled()
 })
 
+test('draf per bagian: H2 dari outline brief dan catatan penulis, pratinjau, lalu Salin draf mengisi papan klip dan menandai draf AI', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  const id = await drafBaru(page, ISI_ARTIKEL)
+  const panel = await bukaAsisten(page, id)
+  await panel.getByLabel('Keyword').fill('cara hitung gaji bersih')
+  await panel.getByRole('button', { name: 'Buat brief' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'Brief siap' })).toBeVisible()
+
+  await panel.getByLabel('Bagian dari brief').selectOption('Contoh bagian kedua dari adapter palsu')
+  await expect(panel.getByLabel('Subjudul (H2)')).toHaveValue('Contoh bagian kedua dari adapter palsu')
+  await panel.getByLabel('Catatan penulis').fill('Gaji pokok Rp10.000.000, sudah dicek di slip.')
+  await panel.getByRole('button', { name: 'Tulis draf bagian' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'Draf bagian siap' })).toHaveText('Draf bagian siap. Salin, tempel di editor isi, lalu tulis ulang.')
+  const draf = panel.locator('.asisten-draf')
+  await expect(draf.locator('.asisten-draf__h2')).toHaveText('Contoh bagian kedua dari adapter palsu')
+  await expect(draf).toContainText('Paragraf contoh dari adapter palsu, bukan tulisan Claude.')
+  await expect(panel).toContainText('1 em dash atau en dash diganti koma atau tanda hubung.')
+  await expect(page.getByRole('checkbox', { name: 'Memakai draf AI' })).not.toBeChecked()
+  await periksaAxe(page, '.asisten')
+
+  await panel.getByRole('button', { name: 'Salin draf' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'Tersalin' })).toHaveText('Tersalin.')
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    'Contoh bagian kedua dari adapter palsu\n\nParagraf contoh dari adapter palsu, bukan tulisan Claude.\n\nContoh subbagian dari adapter palsu\n\n- Butir contoh pertama.\n\n- Butir contoh kedua.',
+  )
+  await expect(page.getByRole('checkbox', { name: 'Memakai draf AI' })).toBeChecked()
+  await expect(page.locator('#action-save')).toBeDisabled()
+})
+
 test('galat API Claude: pesan jelas di sidebar, editor tetap bisa menulis', async ({ page }) => {
   const id = await drafBaru(page, { ...ISI_ARTIKEL, isi: isi(p('Teks uji [uji galat] untuk adapter palsu.')) })
   const panel = await bukaAsisten(page, id)
