@@ -13,6 +13,9 @@ import type { Kabar } from './tipe'
  *   atau dihapus. Mencatat langkah revalidasi (sudah dikerjakan hook `revalidasiPublik` saat simpan) dan
  *   memasukkan langkah berikutnya ke antrean: sitemap, IndexNow, Indexing API (bila aktif), cek status.
  *
+ * - `jalankanIndexer(payload, opsi)`: mengirim antrean yang jatuh tempo (cron dan `after()`), lalu
+ *   mencatat setiap langkah di log dan hasil cek status di `status-indeks`.
+ *
  * Antrean disimpan di Postgres (`antrean.ts`) dan dikirim terpisah dari penyimpanan dokumen, jadi
  * publikasi tidak pernah menunggu atau gagal karena mesin pencari.
  */
@@ -45,4 +48,7 @@ export async function kabari(payload: Payload, daftar: Kabar[], opsi: { req?: Pa
   }
 }
 
+export { jalankanIndexer, type RingkasanJalan } from './jalan'
+export { adapterIndexer, pakaiAdapterIndexer, type AdapterIndexer } from './adapter'
+export { adapterPalsu, type AdapterPalsu } from './palsu'
 export type { JenisKabar, Kabar, StatusIndeks } from './tipe'
