@@ -20,6 +20,22 @@ import type { Kabar } from './tipe'
  * publikasi tidak pernah menunggu atau gagal karena mesin pencari.
  */
 export async function kabari(payload: Payload, daftar: Kabar[], opsi: { req?: PayloadRequest; sekarang?: Date } = {}): Promise<void> {
+  const { req } = opsi
+  if (!req) return catatKabar(payload, daftar, opsi)
+  const hasil = (giliran.get(req) ?? Promise.resolve()).then(() => catatKabar(payload, daftar, opsi))
+  giliran.set(req, hasil.catch(() => undefined))
+  await hasil
+}
+
+/**
+ * Kabar dengan `req` yang sama dicatat bergiliran. Payload menjalankan hook setiap dokumen dalam hapus
+ * dan update massal secara paralel di satu transaksi, sehingga tanpa giliran kabar mereka saling menyalip
+ * di antara mencari dan menulis baris yang sama (baris sitemap, status indeks). Dikunci objek `req`, bukan
+ * `req.context`, karena operasi Payload bisa mengganti objek `context`.
+ */
+const giliran = new WeakMap<PayloadRequest, Promise<void>>()
+
+async function catatKabar(payload: Payload, daftar: Kabar[], opsi: { req?: PayloadRequest; sekarang?: Date }): Promise<void> {
   if (!daftar.length) return
   const { req } = opsi
   const sekarang = opsi.sekarang ?? new Date()

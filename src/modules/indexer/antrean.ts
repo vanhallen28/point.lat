@@ -53,24 +53,54 @@ const keData = (baris: BarisAntrean) => ({
   dasar: baris.dasar?.toISOString() ?? null,
 })
 
+/**
+ * Koneksi untuk SQL langsung: sesi transaksi `req` bila ada (cara yang sama dengan `getTransaction` di
+ * `@payloadcms/drizzle`), selain itu pool biasa. Di dalam hook wajib sesi transaksinya sendiri: koneksi
+ * pool lain akan menunggu baris yang belum di-commit transaksi itu, padahal transaksi itu menunggu kita.
+ */
+async function koneksi(payload: Payload, req?: PayloadRequest): Promise<Pick<Payload['db']['drizzle'], 'execute'>> {
+  const sesi = req?.transactionID ? payload.db.sessions?.[await req.transactionID] : undefined
+  return (sesi?.db as Pick<Payload['db']['drizzle'], 'execute'> | undefined) ?? payload.db.drizzle
+}
+
 /** Menambah baris, atau menggabungkannya ke baris yang sudah antre untuk langkah dan path yang sama. */
 export async function simpanBaris(payload: Payload, baris: BarisAntrean, req?: PayloadRequest): Promise<void> {
   const kunci = kunciAntrean(baris.langkah, baris.path)
-  const { docs } = await payload.find({ collection: ANTREAN, where: { kunci: { equals: kunci } }, limit: 1, depth: 0, req })
-  const ada = docs[0]
-  if (ada) {
-    const lama = dariDokumen(ada)
-    // `where`, bukan `id`: bila pelari antrean baru saja menyelesaikan baris ini, tidak ada galat dan baris dibuat lagi.
-    const { docs: diubah } = await payload.update({
-      collection: ANTREAN,
-      where: { id: { equals: ada.id } },
-      data: { ...keData(gabungBaris(lama, baris)), versi: lama.versi + 1 },
-      depth: 0,
-      req,
-    })
-    if (diubah.length) return
+  // Diulang bila baris dengan kunci ini muncul di antara mencari dan menambah (dibuat transaksi lain),
+  // supaya kabar ini tergabung ke baris itu.
+  for (;;) {
+    const { docs } = await payload.find({ collection: ANTREAN, where: { kunci: { equals: kunci } }, limit: 1, depth: 0, req })
+    const ada = docs[0]
+    if (ada) {
+      const lama = dariDokumen(ada)
+      // `where`, bukan `id`: bila pelari antrean baru saja menyelesaikan baris ini, tidak ada galat dan baris dibuat lagi.
+      const { docs: diubah } = await payload.update({
+        collection: ANTREAN,
+        where: { id: { equals: ada.id } },
+        data: { ...keData(gabungBaris(lama, baris)), versi: lama.versi + 1 },
+        depth: 0,
+        req,
+      })
+      if (diubah.length) return
+    }
+    if (await tambahBaris(payload, kunci, baris, req)) return
   }
-  await payload.create({ collection: ANTREAN, data: { kunci, ...keData(baris), versi: 0 }, req })
+}
+
+/**
+ * Menambah baris baru lewat `INSERT ... ON CONFLICT (kunci) DO NOTHING`, `false` bila baris dengan kunci
+ * itu sudah ada. `payload.create` bisa melanggar `kunci` unik saat kabar lain baru saja membuat baris
+ * yang sama (dua simpan bersamaan), dan galat unik di Postgres membatalkan seluruh transaksi simpan dokumen.
+ */
+async function tambahBaris(payload: Payload, kunci: string, baris: BarisAntrean, req?: PayloadRequest): Promise<boolean> {
+  const db = await koneksi(payload, req)
+  const { rows } = await db.execute(sql`
+    insert into antrean_indexing (kunci, langkah, path, jenis, jadwal, percobaan, tahap, dasar, versi)
+    values (${kunci}, ${baris.langkah}, ${baris.path}, ${baris.jenis}, ${baris.jadwal.toISOString()}, ${baris.percobaan},
+      ${baris.tahap}, ${baris.dasar?.toISOString() ?? null}, 0)
+    on conflict (kunci) do nothing
+    returning id`)
+  return rows.length > 0
 }
 
 export async function batalkanBaris(payload: Payload, langkah: LangkahAntrean, path: string, req?: PayloadRequest): Promise<void> {
