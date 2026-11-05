@@ -20,6 +20,8 @@ import { Pilar } from './collections/Pilar'
 import { Redirect } from './collections/Redirect'
 import { StatusIndeks } from './collections/StatusIndeks'
 import { Subkategori } from './collections/Subkategori'
+import { TautanLuar } from './collections/TautanLuar'
+import { TemuanTautan } from './collections/TemuanTautan'
 import { Tools } from './collections/Tools'
 import { TugasSeo } from './collections/TugasSeo'
 import { Video } from './collections/Video'
@@ -59,6 +61,8 @@ export default buildConfig({
     AnalitikHalaman,
     AnalitikSitus,
     TugasSeo,
+    TemuanTautan,
+    TautanLuar,
   ],
   globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter],
   // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.

@@ -52,7 +52,7 @@ async function tugas(payload: Payload) {
   return docs[0]
 }
 
-const jalan = (payload: Payload, waktu: Date) => jalankanPantau(payload, { sekarang: waktu, adapter: palsu })
+const jalan = (payload: Payload, waktu: Date) => jalankanPantau(payload, { sekarang: waktu, adapter: palsu, tugas: ['analitik'] })
 
 describe('sinkron Search Analytics harian', () => {
   beforeEach(async () => {
@@ -159,7 +159,10 @@ describe('sinkron Search Analytics harian', () => {
   it('cron GET /api/jobs/run ikut menjalankan Pantau SEO', async () => {
     const payload = await getTestPayload()
     const hasil = await jalankanJadwal(payload, { sekarang: T0, adapter: adapterIndexerPalsu(), adapterPantau: palsu })
-    expect(hasil.pantau).toEqual({ analitik: { status: 'dilewati', pesan: 'Adapter palsu tidak mengambil data Search Console.' } })
+    expect(hasil.pantau).toMatchObject({
+      analitik: { status: 'dilewati', pesan: 'Adapter palsu tidak mengambil data Search Console.' },
+      tautan: { status: 'berhasil' },
+    })
   })
 
   it('kueri berhalaman: startRow 0, lalu 25.000, sampai jawaban kurang dari 25.000 baris', async () => {

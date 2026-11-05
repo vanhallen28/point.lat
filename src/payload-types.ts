@@ -85,6 +85,8 @@ export interface Config {
     'analitik-halaman': AnalitikHalaman;
     'analitik-situs': AnalitikSitus;
     'tugas-seo': TugasSeo;
+    'temuan-tautan': TemuanTautan;
+    'tautan-luar': TautanLuar;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -111,6 +113,8 @@ export interface Config {
     'analitik-halaman': AnalitikHalamanSelect<false> | AnalitikHalamanSelect<true>;
     'analitik-situs': AnalitikSitusSelect<false> | AnalitikSitusSelect<true>;
     'tugas-seo': TugasSeoSelect<false> | TugasSeoSelect<true>;
+    'temuan-tautan': TemuanTautanSelect<false> | TemuanTautanSelect<true>;
+    'tautan-luar': TautanLuarSelect<false> | TautanLuarSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -920,6 +924,53 @@ export interface TugasSeo {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "temuan-tautan".
+ */
+export interface TemuanTautan {
+  id: number;
+  jenis: 'rusak' | 'dialihkan' | 'yatim';
+  /**
+   * Path tujuan tautan, path halaman yatim, atau dokumen yang belum terbit.
+   */
+  tujuan: string;
+  pesan: string;
+  sumberKoleksi: string;
+  sumberId?: string | null;
+  sumberJudul: string;
+  sumberPath?: string | null;
+  ditemukan: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tautan-luar".
+ */
+export interface TautanLuar {
+  id: number;
+  url: string;
+  status: 'belum' | 'baik' | 'rusak' | 'tidak-pasti';
+  kodeHttp?: number | null;
+  pesan?: string | null;
+  dicekPada?: string | null;
+  berikutnya: string;
+  /**
+   * Dokumen yang memuat tautan ini: koleksi, id, judul, path.
+   */
+  sumber?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1105,6 +1156,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tugas-seo';
         value: number | TugasSeo;
+      } | null)
+    | ({
+        relationTo: 'temuan-tautan';
+        value: number | TemuanTautan;
+      } | null)
+    | ({
+        relationTo: 'tautan-luar';
+        value: number | TautanLuar;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1668,6 +1727,37 @@ export interface TugasSeoSelect<T extends boolean = true> {
   berikutnya?: T;
   pesan?: T;
   versi?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "temuan-tautan_select".
+ */
+export interface TemuanTautanSelect<T extends boolean = true> {
+  jenis?: T;
+  tujuan?: T;
+  pesan?: T;
+  sumberKoleksi?: T;
+  sumberId?: T;
+  sumberJudul?: T;
+  sumberPath?: T;
+  ditemukan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tautan-luar_select".
+ */
+export interface TautanLuarSelect<T extends boolean = true> {
+  url?: T;
+  status?: T;
+  kodeHttp?: T;
+  pesan?: T;
+  dicekPada?: T;
+  berikutnya?: T;
+  sumber?: T;
   updatedAt?: T;
   createdAt?: T;
 }

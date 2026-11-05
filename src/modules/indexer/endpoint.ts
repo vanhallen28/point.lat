@@ -24,7 +24,7 @@ export type OpsiJadwal = NonNullable<Parameters<typeof jalankanIndexer>[1]> & { 
 /**
  * Pekerjaan berkala (spesifikasi §5 "Penjadwal"): job Payload yang jatuh tempo (jadwal terbit artikel,
  * `schedulePublish`), lalu antrean Mesin Indexing, lalu tugas Pantau SEO yang jatuh tempo (sinkron
- * Search Analytics harian). Urutan ini membuat artikel yang terbit terjadwal langsung dikabarkan pada
+ * Search Analytics dan pindai tautan harian, cek tautan luar). Urutan ini membuat artikel yang terbit terjadwal langsung dikabarkan pada
  * jalan yang sama.
  */
 export async function jalankanJadwal(payload: Payload, opsi: OpsiJadwal = {}): Promise<HasilJadwal> {
