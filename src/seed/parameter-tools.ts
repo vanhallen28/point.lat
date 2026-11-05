@@ -157,4 +157,59 @@ export const PARAMETER_DANA_DARURAT: ParameterAwal[] = [
   },
 ]
 
-export const PARAMETER_AWAL: ParameterAwal[] = [...PARAMETER_GAJI, ...PARAMETER_DANA_DARURAT]
+export const PARAMETER_BMI: ParameterAwal[] = [
+  {
+    toolId: 'bmi-kalori',
+    kunci: 'kategori-imt',
+    berlakuMulai: '2026-01-01',
+    sumber: { judul: 'Metadata indikator Indeks Massa Tubuh (BPS SIRUSA)', url: 'https://sirusa.web.bps.go.id/metadata/indikator/21524' },
+    catatan:
+      'Klasifikasi IMT dewasa Indonesia (Kemenkes): batas atas termasuk, IMT dibulatkan satu desimal. WHO memakai 25 untuk berat badan lebih dan 30 untuk obesitas. Label Normal dipakai untuk rentang berat normal.',
+    tabel: [
+      { label: 'Sangat kurus', batas: 16.9 },
+      { label: 'Kurus', batas: 18.4 },
+      { label: 'Normal', batas: 25 },
+      { label: 'Gemuk', batas: 27 },
+      { label: 'Obesitas', batas: null },
+    ],
+  },
+  {
+    toolId: 'bmi-kalori',
+    kunci: 'faktor-aktivitas',
+    berlakuMulai: '2026-01-01',
+    sumber: { judul: 'Human Energy Requirements, FAO/WHO/UNU Expert Consultation, bab 5', url: 'https://www.fao.org/4/Y5686e/y5686e07.htm' },
+    catatan: 'Nilai PAL contoh FAO untuk gaya hidup ringan (1,40 sampai 1,69), sedang (1,70 sampai 1,99), dan berat (2,00 sampai 2,40).',
+    tabel: [
+      { label: 'Ringan: kerja duduk, jarang olahraga', nilai: 1.53 },
+      { label: 'Sedang: kerja tidak berat, olahraga sekitar satu jam sehari', nilai: 1.76 },
+      { label: 'Berat: kerja fisik berat atau olahraga berat sekitar dua jam sehari', nilai: 2.25 },
+    ],
+  },
+]
+
+export const PARAMETER_IPK: ParameterAwal[] = [
+  {
+    toolId: 'ipk',
+    kunci: 'konversi-nilai',
+    berlakuMulai: '2026-01-01',
+    sumber: {
+      judul: 'Permendikbud 3 Tahun 2020 Pasal 26 (LLDIKTI Wilayah III)',
+      url: 'https://lldikti3.kemdiktisaintek.go.id/wp-content/uploads/2024/07/Permendikbud-No.-3-Tahun-2020-Standar-Nasional-Pendidikan-Tinggi.pdf',
+    },
+    catatan:
+      'A = 4 sampai E = 0 dari Permendikbud 3/2020; Permendiktisaintek 39/2025 tetap membolehkan nilai antara. Nilai antara di sini pola yang umum, sesuaikan dengan kampus.',
+    tabel: [
+      { label: 'A', nilai: 4 },
+      { label: 'A-', nilai: 3.7 },
+      { label: 'B+', nilai: 3.3 },
+      { label: 'B', nilai: 3 },
+      { label: 'B-', nilai: 2.7 },
+      { label: 'C+', nilai: 2.3 },
+      { label: 'C', nilai: 2 },
+      { label: 'D', nilai: 1 },
+      { label: 'E', nilai: 0 },
+    ],
+  },
+]
+
+export const PARAMETER_AWAL: ParameterAwal[] = [...PARAMETER_GAJI, ...PARAMETER_DANA_DARURAT, ...PARAMETER_BMI, ...PARAMETER_IPK]

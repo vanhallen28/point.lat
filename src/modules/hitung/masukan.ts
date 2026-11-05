@@ -12,26 +12,27 @@ export type NilaiMasukan = Record<string, number | string | boolean | null | num
 type Bacaan = { nilai: number | null; galat?: undefined } | { galat: string; nilai?: undefined }
 
 function bacaAngka(teks: string | undefined, isian: IsianAngka, label = isian.label): Bacaan {
+  const misal = isian.petunjuk ?? isian.contoh
   const bersih = (teks ?? '')
     .replace(/[\s\u00a0]/g, '')
     .replace(/^rp\.?/i, '')
     .replace(/(%|kg|cm|tahun|bulan|sks|kali)$/i, '')
   if (bersih === '') {
-    return isian.wajib ? { galat: `${label} belum diisi. Tulis angkanya, misalnya ${isian.contoh}.` } : { nilai: null }
+    return isian.wajib ? { galat: `${label} belum diisi. Tulis angkanya, misalnya ${misal}.` } : { nilai: null }
   }
   let angka: number
   if (isian.satuan === 'rupiah') {
     if (!/^(\d{1,3}(\.\d{3})+|\d+)(,\d+)?$/.test(bersih)) {
-      return { galat: `Tulis ${tengahKalimat(label)} dengan angka saja, misalnya ${isian.contoh}.` }
+      return { galat: `Tulis ${tengahKalimat(label)} dengan angka saja, misalnya ${misal}.` }
     }
     angka = Math.round(Number(bersih.replace(/\./g, '').replace(',', '.')))
   } else if (isian.desimal) {
     if (!/^\d+([.,]\d+)?$/.test(bersih)) {
-      return { galat: `Tulis ${tengahKalimat(label)} dengan angka, misalnya ${isian.contoh}. Pakai koma untuk desimal.` }
+      return { galat: `Tulis ${tengahKalimat(label)} dengan angka, misalnya ${misal}. Pakai koma untuk desimal.` }
     }
     angka = Number(bersih.replace(',', '.'))
   } else {
-    if (!/^\d+$/.test(bersih)) return { galat: `Tulis ${tengahKalimat(label)} dengan angka bulat, misalnya ${isian.contoh}.` }
+    if (!/^\d+$/.test(bersih)) return { galat: `Tulis ${tengahKalimat(label)} dengan angka bulat, misalnya ${misal}.` }
     angka = Number(bersih)
   }
   if (angka < isian.min) return { galat: `${label} paling sedikit ${teksAngka(isian.min, isian.satuan)}.` }

@@ -42,7 +42,10 @@ export type IsianAngka = IsianDasar & {
   wajib: boolean
   min: number
   maks: number
+  /** Isi awal form. Kosong untuk isian opsional yang sebaiknya dibiarkan kosong. */
   contoh: string
+  /** Contoh di pesan galat bila `contoh` kosong. */
+  petunjuk?: string
 }
 
 export type IsianPilihan = IsianDasar & { jenis: 'pilihan'; opsi: Opsi[]; contoh: string }

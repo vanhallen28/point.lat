@@ -1,8 +1,10 @@
 import type { ToolId } from '@/lib/konstanta'
 
+import { bmiKalori } from './bmi-kalori'
 import { cicilanKpr } from './cicilan-kpr'
 import { danaDarurat } from './dana-darurat'
 import { gajiBersih } from './gaji-bersih'
+import { ipk } from './ipk'
 import { tengahKalimat } from './format'
 import { bacaMasukan, contohMasukan } from './masukan'
 import { buatAturan, ParameterKosong, periksaDokumen, type GalatParameter } from './parameter'
@@ -21,11 +23,13 @@ import type { DefinisiParameter, Hasil, Kalkulator, Masukan, ParameterTersimpan 
  * - `sumberParameter` untuk pemuat data: kalkulator mana saja yang dokumen parameternya dibaca.
  */
 
-const RUMUS: Partial<Record<ToolId, Rumus>> = {
+const RUMUS: Record<ToolId, Rumus> = {
   'gaji-bersih': gajiBersih,
   thr,
   'cicilan-kpr': cicilanKpr,
   'dana-darurat': danaDarurat,
+  'bmi-kalori': bmiKalori,
+  ipk,
 }
 
 const BELUM_TERSEDIA = 'Kalkulator ini belum tersedia.'
