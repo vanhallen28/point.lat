@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { isLoggedIn, publishedOrLoggedIn } from '@/access'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
+import { kabariMesinPencari } from '@/hooks/kabariMesinPencari'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
 import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { validasiVtt } from '@/lib/validasi'
@@ -10,6 +11,7 @@ import { validasiVtt } from '@/lib/validasi'
 /** Artikel induk tidak disimpan di sini: frontend mencari artikel yang `videoTerkait`-nya video ini. */
 const redirect = redirectSaatPathBerubah(targetSederhana('video'))
 const revalidasi = revalidasiPublik('video')
+const kabar = kabariMesinPencari(targetSederhana('video'))
 
 export const Video: CollectionConfig = {
   slug: 'video',
@@ -17,9 +19,9 @@ export const Video: CollectionConfig = {
   admin: { useAsTitle: 'judul', defaultColumns: ['judul', 'pilar', 'durasiDetik', '_status'], group: 'Konten' },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
   hooks: {
-    beforeChange: [redirect.catatPathPublik, revalidasi.beforeChange],
-    afterChange: [redirect.buatRedirect, revalidasi.afterChange],
-    afterDelete: [revalidasi.afterDelete],
+    beforeChange: [redirect.catatPathPublik, revalidasi.beforeChange, kabar.beforeChange],
+    afterChange: [redirect.buatRedirect, revalidasi.afterChange, kabar.afterChange],
+    afterDelete: [revalidasi.afterDelete, kabar.afterDelete],
   },
   versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 30 },
   fields: [

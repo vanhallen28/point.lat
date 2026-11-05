@@ -4,11 +4,13 @@ import { isLoggedIn, publishedOrLoggedIn } from '@/access'
 import { blokHalaman } from '@/blocks/halaman'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
+import { kabariMesinPencari } from '@/hooks/kabariMesinPencari'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
 import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 
 const redirect = redirectSaatPathBerubah(targetSederhana('halaman'))
 const revalidasi = revalidasiPublik('halaman')
+const kabar = kabariMesinPencari(targetSederhana('halaman'))
 
 export const Halaman: CollectionConfig = {
   slug: 'halaman',
@@ -17,9 +19,9 @@ export const Halaman: CollectionConfig = {
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
   versions: { drafts: { autosave: { interval: 1500 } }, maxPerDoc: 30 },
   hooks: {
-    beforeChange: [redirect.catatPathPublik, revalidasi.beforeChange],
-    afterChange: [redirect.buatRedirect, revalidasi.afterChange],
-    afterDelete: [revalidasi.afterDelete],
+    beforeChange: [redirect.catatPathPublik, revalidasi.beforeChange, kabar.beforeChange],
+    afterChange: [redirect.buatRedirect, revalidasi.afterChange, kabar.afterChange],
+    afterDelete: [revalidasi.afterDelete, kabar.afterDelete],
   },
   fields: [
     { name: 'judul', type: 'text', required: true },

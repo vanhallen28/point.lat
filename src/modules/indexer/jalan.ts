@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import type { Payload } from 'payload'
 
 import { urlAbsolut } from '@/modules/seo/dokumen'
@@ -218,4 +219,24 @@ export async function jalankanIndexer(payload: Payload, opsi: { sekarang?: Date;
     (baris, hasil, lanjut) => catatHasilCek(k, baris, hasil, lanjut),
   )
   return k.ringkasan
+}
+
+/**
+ * Menjalankan antrean setelah respons simpan terkirim (`after()` Next), supaya kabar pertama tidak
+ * menunggu cron (spesifikasi §5). Di luar permintaan Next (seed, tes, `payload run`) `after` melempar
+ * galat "outside a request scope": galat itu diabaikan dan antrean menunggu cron. Galat pelari
+ * dicatat ke log server, tidak pernah menggagalkan simpan.
+ */
+export function jalankanSetelahRespons(payload: Payload): void {
+  try {
+    after(async () => {
+      try {
+        await jalankanIndexer(payload)
+      } catch (galat) {
+        payload.logger.error({ err: galat, msg: 'Mesin Indexing gagal dijalankan setelah simpan.' })
+      }
+    })
+  } catch (galat) {
+    if (!String((galat as Error)?.message).includes('outside a request scope')) throw galat
+  }
 }

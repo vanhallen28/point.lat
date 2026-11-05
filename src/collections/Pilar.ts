@@ -3,12 +3,14 @@ import type { CollectionConfig } from 'payload'
 import { anyone, isAdmin } from '@/access'
 import { seoField } from '@/fields/seo'
 import { slugField } from '@/fields/slug'
+import { kabariMesinPencari } from '@/hooks/kabariMesinPencari'
 import { redirectSaatPathBerubah, targetSederhana } from '@/hooks/redirectSaatPathBerubah'
 import { revalidasiPublik } from '@/hooks/revalidasiPublik'
 import { WARNA_PILAR } from '@/lib/konstanta'
 
 const redirect = redirectSaatPathBerubah(targetSederhana('pilar'))
 const revalidasi = revalidasiPublik('pilar')
+const kabar = kabariMesinPencari(targetSederhana('pilar'))
 
 export const Pilar: CollectionConfig = {
   slug: 'pilar',
@@ -21,9 +23,9 @@ export const Pilar: CollectionConfig = {
   },
   access: { read: anyone, create: isAdmin, update: isAdmin, delete: isAdmin },
   hooks: {
-    beforeChange: [redirect.catatPathPublik],
-    afterChange: [redirect.buatRedirect, revalidasi.afterChange],
-    afterDelete: [revalidasi.afterDelete],
+    beforeChange: [redirect.catatPathPublik, kabar.beforeChange],
+    afterChange: [redirect.buatRedirect, revalidasi.afterChange, kabar.afterChange],
+    afterDelete: [revalidasi.afterDelete, kabar.afterDelete],
   },
   fields: [
     { name: 'nama', type: 'text', required: true },

@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { array, number, text } from 'payload/shared'
 
 import { isLoggedIn } from '@/access'
+import { kabariParameterTools } from '@/hooks/kabariMesinPencari'
 import { revalidasiKoleksi } from '@/hooks/revalidasiPublik'
 import { LABEL_TOOL, TOOL_IDS, type ToolId } from '@/lib/konstanta'
 import { TAG } from '@/lib/tag'
@@ -36,7 +37,10 @@ export const ParameterTools: CollectionConfig = {
       'Untuk mengganti angka yang berubah (misalnya batas upah JP tahun depan), buat dokumen baru dengan kunci yang sama dan tanggal berlaku baru, lalu isi tanggal akhir dokumen lama.',
   },
   access: { read: isLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
-  hooks: { afterChange: [revalidasi.afterChange], afterDelete: [revalidasi.afterDelete] },
+  hooks: {
+    afterChange: [revalidasi.afterChange, kabariParameterTools.afterChange],
+    afterDelete: [revalidasi.afterDelete, kabariParameterTools.afterDelete],
+  },
   fields: [
     {
       name: 'toolId',

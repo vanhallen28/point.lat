@@ -8,7 +8,7 @@ type DokumenBerpath = { slug?: string | null; _status?: 'draft' | 'published' | 
   unknown
 >
 
-type KeTarget = (doc: DokumenBerpath) => TargetPath | null
+export type KeTarget = (doc: DokumenBerpath) => TargetPath | null
 
 const kunciKonteks = (koleksi: string, id: unknown) => `pathPublik:${koleksi}:${String(id)}`
 

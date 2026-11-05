@@ -48,7 +48,8 @@ export async function kabari(payload: Payload, daftar: Kabar[], opsi: { req?: Pa
   }
 }
 
-export { jalankanIndexer, type RingkasanJalan } from './jalan'
+export { jalankanIndexer, jalankanSetelahRespons, type RingkasanJalan } from './jalan'
+export { bandingkanVersi } from './aturan'
 export { adapterIndexer, pakaiAdapterIndexer, type AdapterIndexer } from './adapter'
 export { adapterPalsu, type AdapterPalsu } from './palsu'
-export type { JenisKabar, Kabar, StatusIndeks } from './tipe'
+export type { JenisKabar, Kabar, StatusIndeks, VersiPublik } from './tipe'
