@@ -106,7 +106,7 @@ Archivo (variable, sumbu `wdth` 62-125 dan `wght` 400-900), di-host sendiri dan 
 ### Pola tata letak
 
 - Header: logo `point.` + pill rubrik dengan titik warna pilar + tombol Tools hitam.
-- Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dibaca pekan ini" (sampai data kunjungan ada di Rencana 6, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru", keputusan pemilik 2026-11-05); slot iklan; newsletter; footer.
+- Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dibaca pekan ini" (artikel dengan klik Google terbanyak 7 hari terakhir dari sinkron Search Analytics harian; selama datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru", keputusan pemilik 2026-11-05); slot iklan; newsletter; footer.
 - Halaman artikel: kicker pilar, H1, deck, byline + diperbarui + waktu baca, kotak Intinya (latar warna pilar versi lembut atau sand, label "Intinya"), daftar isi, isi, blok sumber, FAQ, artikel terkait, profil penulis.
 - Halaman tools: kalkulator di atas lipatan, hasil besar, lalu artikel penjelasan rumus.
 - Radius 14px (kontrol), 24px (kartu). Target sentuh minimal 44px. Spasi kelipatan 4px.
@@ -141,6 +141,7 @@ Vercel Cron ──► /api/jobs/run setiap 10 menit (header rahasia)
 | Modul | Antarmuka | Di dalamnya | Adapter |
 |---|---|---|---|
 | `indexer` | `kabari(payload, kabar[])` dengan jenis `terbit` / `ubah-besar` / `pindah` / `hapus` (dipanggil hook koleksi); `jalankanIndexer(payload)` (cron dan `after()`) | antrean job di Postgres, dedup per URL dan langkah, jendela kirim sitemap dan IndexNow, retry 1/5/30 menit, kuota harian Google, cek status bertahap, klaim atomik, log | `searchConsole`, `indexNow`, `googleIndexing` (opsional), `palsu` untuk tes dan pratinjau (dipilih `INDEXER_ADAPTER`) |
+| `pantau` | `jalankanPantau(payload)` (cron: tugas harian dan cek tautan luar); `ambilDashboard(payload)` (dashboard SEO admin) | sinkron Search Analytics harian (total harian, ringkasan 28 dan 7 hari per halaman), retensi log, pindai tautan (internal rusak, alamat lama, halaman yatim), cek tautan luar mingguan, klaim tugas atomik | Search Analytics (akun layanan yang sama dengan `indexer`), pemeriksa tautan HTTP, `palsu` untuk tes (dipilih `INDEXER_ADAPTER`) |
 | `seo` | `metadata(doc)`, `jsonLd(doc)`, `analisis(doc) → daftar cek` | aturan judul/meta, canonical, robots, schema per tipe, skor checklist | (tidak ada seam, fungsi murni) |
 | `hitung` | `hitung(toolId, input, tanggal) → hasil + rincian` | rumus per tool, pemilihan parameter sesuai tanggal berlaku | (fungsi murni, parameter dari CMS) |
 | `media` | `unggah(file) → {publicId, meta}`, `url(publicId, preset)` | tanda tangan upload, preset transformasi, OG image | `cloudinary` (adapter `@payloadcms/plugin-cloud-storage`), `palsu` untuk tes |
@@ -185,6 +186,11 @@ point-lat/
 | `antreanIndexing` | langkah, path, jenis, jadwal, percobaan, tahap cek status (satu baris per langkah dan path, dihapus setelah selesai; hanya ditulis modul `indexer`) |
 | `logIndexing` | URL, jenis, langkah, adapter, status (Berhasil / Gagal, dicoba lagi / Gagal / Dilewati / Ditunda), status HTTP, pesan, percobaan ke, waktu; hanya admin yang membaca |
 | `statusIndeks` | path, status (Terindeks / Ditemukan, belum dirayapi / Dirayapi, belum diindeks / Belum dikenal Google / Dikecualikan Google / Error / Belum dicek), cek berikutnya, cek terakhir, dirayapi Google, tautan laporan Search Console, detail; tampil juga sebagai kolom di daftar artikel |
+| `analitikHalaman` | path, klik/impresi/CTR/posisi 28 hari, klik dan impresi 7 hari, tanggal data terakhir (diganti setiap sinkron; dibaca dashboard dan blok "Paling dibaca") |
+| `analitikSitus` | tanggal (waktu Pasifik), klik, impresi, CTR, posisi seluruh properti per hari (disimpan 16 bulan) |
+| `tugasSeo` | jenis tugas harian (`analitik`, `tautan`), status, mulai, selesai, berikutnya, pesan |
+| `temuanTautan` | jenis (tautan internal rusak / alamat lama / halaman yatim), tujuan, pesan, dokumen sumber (diganti setiap pindai) |
+| `tautanLuar` | URL situs lain di konten terbit, status (belum dicek / bisa dibuka / rusak / perlu dicek manual), kode HTTP, pesan, dicek pada, cek berikutnya, dokumen sumber |
 | `logAI` | pengguna, tugas, dokumen, token, biaya perkiraan, waktu |
 | `pengguna` | email, nama, peran (`admin`, `editor`; MVP hanya admin) |
 
@@ -217,7 +223,7 @@ Validasi: kotak Intinya wajib sebelum terbit; alt gambar wajib; gambar utama ≥
 | `/tentang`, `/kebijakan-redaksi`, `/pedoman-media-siber`, `/pasang-iklan`, `/kontak` | halaman statis |
 | `/sitemap.xml`, `/sitemap/{jenis}.xml`, `/news-sitemap.xml`, `/robots.txt`, `/feed.xml`, `/ads.txt`, `/{indexnow-key}.txt` | teknis |
 
-Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (divalidasi di CMS). Mengganti slug membuat redirect 301 otomatis.
+Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (divalidasi di CMS). Mengganti slug membuat redirect 301 otomatis, termasuk `/{pilar}/{subkategori}` saat slug subkategori berganti, subkategori pindah pilar, atau slug pilar berganti.
 
 ## 8. SEO
 
@@ -239,8 +245,9 @@ Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (di
 - RSS `/feed.xml`.
 - Breadcrumb tampil dan sebagai schema.
 - JSON-LD: `Article`/`NewsArticle` (explainer), `BreadcrumbList`, `Organization` (+ logo), `Person` (penulis), `VideoObject`, `WebSite`, `WebApplication` untuk tools. FAQ tetap ditulis sebagai isi; rich result FAQ (dihapus Google Mei 2026) dan HowTo (dihapus 2023) tidak diandalkan.
-- Halaman yatim (tanpa link masuk) dilaporkan di dashboard.
-- Pengecek link rusak mingguan, log 404 dengan tombol "buat redirect".
+- Halaman yatim (tanpa link masuk) dilaporkan di dashboard: artikel dan halaman terbit (tidak noindex) tanpa tautan dari isi dokumen terbit lain, relasi pilihan editor (artikel terkait, tools, video), menu header dan footer, atau pilihan beranda. Daftar otomatis (rubrik, tulisan terbaru, artikel terkait otomatis, sitemap) tidak dihitung karena isinya berganti. Dihitung pindai harian di cron.
+- Pengecek link rusak: tautan internal dicocokkan dengan database setiap hari (dokumen terbit, halaman indeks, redirect; tautan ke alamat lama yang dialihkan ikut dilaporkan); tautan ke situs lain dicek seminggu sekali (HEAD, GET bila HEAD ditolak, batas 10 detik, paling banyak 10 URL per jalan cron). 404 dan 410 atau domain hilang berarti rusak; kode lain dan batas waktu "perlu dicek manual".
+- Log 404 dengan tombol "buat redirect" (form redirect dengan path terisi).
 
 ### Mesin Indexing
 
@@ -263,7 +270,7 @@ Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cl
 
 ### Dashboard SEO (di admin)
 
-Klik, impresi, CTR, posisi per URL (Search Analytics API, disinkron harian); ringkasan status indeks; log indexing terbaru; halaman yatim; link rusak; 404 teratas. Fase 2: daftar "perlu diperbarui" berdasarkan penurunan klik.
+View admin `/admin/seo` dengan tautan di atas menu, hanya untuk admin: klik, impresi, CTR, dan posisi 28 hari (kartu angka dan grafik klik harian dengan tabel angkanya), halaman teratas per URL (Search Analytics API `searchanalytics.query`, data final, disinkron sekali sehari; data Google baru final 2 sampai 3 hari kemudian); ringkasan status indeks; log indexing terbaru dan jumlah langkah gagal 7 hari; tautan rusak; halaman yatim; 404 teratas dengan tombol "buat redirect"; status setiap tugas harian. Tanpa data (akun layanan belum diatur, adapter palsu, domain baru) dan saat sinkron gagal, setiap bagian menjelaskan sebabnya. Fase 2: daftar "perlu diperbarui" berdasarkan penurunan klik.
 
 ## 9. Media: Cloudinary
 
