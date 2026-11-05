@@ -51,7 +51,7 @@ describe('global situs', () => {
       data: {
         tataLetak: [
           { blockType: 'heroBeranda', judul: 'Intinya dulu.' },
-          { blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 4 },
+          { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 4 },
         ],
       },
     })

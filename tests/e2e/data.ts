@@ -40,7 +40,7 @@ export const SLUG_VIDEO = { pph21: 'pph-21-satu-slip-gaji', otp: 'kode-otp-janga
 
 /**
  * Klik Google 7 hari contoh (bentuk hasil sinkron Search Analytics) yang diisi `siapkan.ts`. Beranda
- * dan halaman 404 menampilkan "Paling dibaca pekan ini" dengan urutan `POPULER`; glosarium, beranda,
+ * dan halaman 404 menampilkan "Paling dicari pekan ini" dengan urutan `POPULER`; glosarium, beranda,
  * dan tools tidak ikut karena bukan tulisan.
  */
 export const KLIK_CONTOH: [path: string, klik7: number][] = [

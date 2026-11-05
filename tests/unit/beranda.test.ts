@@ -33,7 +33,7 @@ const blok = {
   hero: { blockType: 'heroBeranda', id: 'h', judul: 'Intinya dulu.', subjudul: ' Uang, karier, dan kesehatan. ', placeholderCari: 'misal: cara hitung THR' },
   mozaik: { blockType: 'mozaikPilihan', id: 'm', artikel: [artikel(2), artikel(5, 'draft'), artikel(3)], tampilkanTools: true },
   video: { blockType: 'stripVideo', id: 'v', judul: 'Intinya dalam 45 detik', video: [] },
-  palingDibaca: { blockType: 'palingDibaca', id: 'p', judul: 'Paling dibaca pekan ini', jumlah: 2 },
+  palingDibaca: { blockType: 'palingDibaca', id: 'p', judul: 'Paling dicari pekan ini', jumlah: 2 },
   newsletter: { blockType: 'newsletterBlok', id: 'n', judul: null, teks: null },
   iklan: { blockType: 'slotIklan', id: 'i', idSlot: 'beranda-samping' },
 } satisfies Record<string, Blok>
@@ -61,15 +61,15 @@ describe('susunBeranda', () => {
     expect(bagian[2].jenis === 'video' && bagian[2].video.map((v) => v.id)).toEqual([7, 8])
   })
 
-  it('"Paling dibaca" jujur: tulisan terbaru di luar mozaik, berjudul tulisan terbaru; newsletter jadi kolom sampingnya', () => {
+  it('"Paling dicari" jujur: tulisan terbaru di luar mozaik, berjudul tulisan terbaru; newsletter jadi kolom sampingnya', () => {
     const [, , terbaru] = susunBeranda([blok.hero, blok.mozaik, blok.palingDibaca, blok.newsletter], sumber)
     expect(terbaru).toMatchObject({ jenis: 'terbaru', judul: JUDUL_TERBARU, newsletter })
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel.map((k) => k.id)).toEqual([1, 4])
   })
 
-  it('"Paling dibaca pekan ini" bila klik 7 hari cukup untuk semua tempat: urutan peringkat, judul editor, artikel mozaik boleh ikut', () => {
+  it('"Paling dicari pekan ini" bila klik 7 hari cukup untuk semua tempat: urutan peringkat, judul editor, artikel mozaik boleh ikut', () => {
     const [, , populer] = susunBeranda([blok.hero, blok.mozaik, blok.palingDibaca, blok.newsletter], { ...sumber, populer: [3, 6, 1].map(kartu) })
-    expect(populer).toMatchObject({ jenis: 'terbaru', judul: 'Paling dibaca pekan ini', newsletter })
+    expect(populer).toMatchObject({ jenis: 'terbaru', judul: 'Paling dicari pekan ini', newsletter })
     expect(populer.jenis === 'terbaru' && populer.artikel.map((k) => k.id)).toEqual([3, 6])
     const [, tanpaJudul] = susunBeranda([blok.hero, { ...blok.palingDibaca, judul: ' ' }], { ...sumber, populer: [3, 6].map(kartu) })
     expect(tanpaJudul).toMatchObject({ judul: JUDUL_POPULER })
@@ -80,7 +80,7 @@ describe('susunBeranda', () => {
     expect(terbaru).toMatchObject({ judul: JUDUL_TERBARU })
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel.map((k) => k.id)).toEqual([1, 4])
     expect(daftarPopuler([kartu(9)], [kartu(1), kartu(2), kartu(3)], 3)).toEqual({ judul: 'Tulisan terbaru', artikel: [1, 2, 3].map(kartu) })
-    expect(daftarPopuler([9, 8, 7, 6].map(kartu), [], 3)).toEqual({ judul: 'Paling dibaca pekan ini', artikel: [9, 8, 7].map(kartu) })
+    expect(daftarPopuler([9, 8, 7, 6].map(kartu), [], 3)).toEqual({ judul: 'Paling dicari pekan ini', artikel: [9, 8, 7].map(kartu) })
   })
 
   it('newsletter berdiri sendiri bila tidak tepat setelah tulisan terbaru, judul blok mengganti judul global', () => {

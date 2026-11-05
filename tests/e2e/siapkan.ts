@@ -313,7 +313,7 @@ await payload.updateGlobal({
       },
       { blockType: 'mozaikPilihan', artikel: [panduan.id, belajar.id, sehat.id, tekno.id] },
       { blockType: 'stripVideo', judul: 'Intinya dalam 45 detik' },
-      { blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 4 },
+      { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 4 },
       { blockType: 'slotIklan', idSlot: 'beranda-samping' },
       { blockType: 'newsletterBlok' },
     ],

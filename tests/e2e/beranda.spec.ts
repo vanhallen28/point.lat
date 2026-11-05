@@ -55,7 +55,7 @@ test('strip video gelap, paling dibaca pekan ini dari klik Google, dan newslette
   await expect(strip.getByRole('link', { name: /PPh 21 dijelaskan/ })).toHaveAttribute('href', `/video/${SLUG_VIDEO.pph21}`)
   await expect(strip.getByRole('link', { name: 'Semua video' })).toHaveAttribute('href', '/video')
 
-  const populer = page.getByRole('region', { name: 'Paling dibaca pekan ini' })
+  const populer = page.getByRole('region', { name: 'Paling dicari pekan ini' })
   await expect(populer.getByRole('link')).toHaveCount(4)
   expect(await populer.getByRole('link').evaluateAll((a) => a.map((el) => el.getAttribute('href')))).toEqual(POPULER.map((slug) => `/${slug}`))
   await expect(page.getByRole('region', { name: 'Tulisan terbaru' })).toHaveCount(0)
@@ -73,7 +73,7 @@ test('jarak antarbagian beranda tetap, tanpa celah kosong, di 375 dan 1440 px', 
     const hero = await kotak('Intinya dulu.')
     const mozaik = await kotak('Pilihan redaksi')
     const strip = await kotak('Intinya dalam 45 detik')
-    const populer = await kotak('Paling dibaca pekan ini')
+    const populer = await kotak('Paling dicari pekan ini')
     const jarak = [mozaik.y - (hero.y + hero.height), strip.y - (mozaik.y + mozaik.height), populer.y - (strip.y + strip.height)]
     expect(jarak.map(Math.round), `${lebar}px`).toEqual([40, 56, 56])
   }

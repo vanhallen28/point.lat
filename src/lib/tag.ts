@@ -10,7 +10,7 @@
  * - `media`: dokumen media (alt, caption, kredit, ukuran) yang ditampilkan halaman.
  * - `redirect`: tabel redirect yang dibaca halaman saat path tidak cocok dengan dokumen.
  * - `parameter-tools`: angka aturan kalkulator yang dibaca halaman `/tools/{slug}`.
- * - `analitik`: klik Search Console per halaman ("Paling dibaca pekan ini"), dibuang setiap sinkron harian.
+ * - `analitik`: klik Search Console per halaman ("Paling dicari pekan ini"), dibuang setiap sinkron harian.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const

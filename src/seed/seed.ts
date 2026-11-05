@@ -127,7 +127,7 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
           subjudul: 'Uang, karier, teknologi, pendidikan, dan kesehatan. Dijelaskan dari intinya, lalu bisa langsung kamu hitung.',
           placeholderCari: 'misal: cara hitung THR',
         },
-        { blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 4 },
+        { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 4 },
         { blockType: 'newsletterBlok', judul: 'Intinya, tiap Senin.' },
       ],
     },

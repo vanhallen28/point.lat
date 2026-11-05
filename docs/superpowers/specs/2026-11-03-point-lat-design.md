@@ -106,7 +106,7 @@ Archivo (variable, sumbu `wdth` 62-125 dan `wght` 400-900), di-host sendiri dan 
 ### Pola tata letak
 
 - Header: logo `point.` + pill rubrik dengan titik warna pilar + tombol Tools hitam.
-- Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dibaca pekan ini" (artikel dengan klik Google terbanyak 7 hari terakhir dari sinkron Search Analytics harian; selama datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru", keputusan pemilik 2026-11-05); slot iklan; newsletter; footer.
+- Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dicari pekan ini" (judul diubah pemilik 2026-11-05 dari "Paling dibaca pekan ini" karena datanya klik dari pencarian Google, bukan semua pembaca; artikel dengan klik Google terbanyak 7 hari terakhir dari sinkron Search Analytics harian; selama datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru", keputusan pemilik 2026-11-05); slot iklan; newsletter; footer.
 - Halaman artikel: kicker pilar, H1, deck, byline + diperbarui + waktu baca, kotak Intinya (latar warna pilar versi lembut atau sand, label "Intinya"), daftar isi, isi, blok sumber, FAQ, artikel terkait, profil penulis.
 - Halaman tools: kalkulator di atas lipatan, hasil besar, lalu artikel penjelasan rumus.
 - Radius 14px (kontrol), 24px (kartu). Target sentuh minimal 44px. Spasi kelipatan 4px.
@@ -186,7 +186,7 @@ point-lat/
 | `antreanIndexing` | langkah, path, jenis, jadwal, percobaan, tahap cek status (satu baris per langkah dan path, dihapus setelah selesai; hanya ditulis modul `indexer`) |
 | `logIndexing` | URL, jenis, langkah, adapter, status (Berhasil / Gagal, dicoba lagi / Gagal / Dilewati / Ditunda), status HTTP, pesan, percobaan ke, waktu; hanya admin yang membaca |
 | `statusIndeks` | path, status (Terindeks / Ditemukan, belum dirayapi / Dirayapi, belum diindeks / Belum dikenal Google / Dikecualikan Google / Error / Belum dicek), cek berikutnya, cek terakhir, dirayapi Google, tautan laporan Search Console, detail; tampil juga sebagai kolom di daftar artikel |
-| `analitikHalaman` | path, klik/impresi/CTR/posisi 28 hari, klik dan impresi 7 hari, tanggal data terakhir (diganti setiap sinkron; dibaca dashboard dan blok "Paling dibaca") |
+| `analitikHalaman` | path, klik/impresi/CTR/posisi 28 hari, klik dan impresi 7 hari, tanggal data terakhir (diganti setiap sinkron; dibaca dashboard dan blok "Paling dicari") |
 | `analitikSitus` | tanggal (waktu Pasifik), klik, impresi, CTR, posisi seluruh properti per hari (disimpan 16 bulan) |
 | `tugasSeo` | jenis tugas harian (`analitik`, `tautan`), status, mulai, selesai, berikutnya, pesan |
 | `temuanTautan` | jenis (tautan internal rusak / alamat lama / halaman yatim), tujuan, pesan, dokumen sumber (diganti setiap pindai) |

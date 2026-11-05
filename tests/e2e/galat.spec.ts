@@ -58,7 +58,7 @@ test('halaman 404: judul, jalan kembali, paling dibaca pekan ini, dan setiap kun
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Halaman ini tidak ada.')
   await expect(page.getByRole('link', { name: 'Kembali ke beranda' })).toHaveAttribute('href', '/')
-  const populer = page.getByRole('region', { name: 'Paling dibaca pekan ini' })
+  const populer = page.getByRole('region', { name: 'Paling dicari pekan ini' })
   await expect(populer.getByRole('link')).toHaveCount(3)
   await expect(populer.getByRole('link').first()).toHaveAttribute('href', `/${POPULER[0]}`)
   await expect.poll(() => jumlahLog(request, path)).toBe(2)

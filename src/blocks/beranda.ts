@@ -50,12 +50,12 @@ export const BlokStripVideo: Block = {
 export const BlokPalingDibaca: Block = {
   slug: 'palingDibaca',
   interfaceName: 'BlokPalingDibaca',
-  labels: { singular: 'Paling dibaca', plural: 'Paling dibaca' },
+  labels: { singular: 'Paling dicari', plural: 'Paling dicari' },
   fields: [
     {
       name: 'judul',
       type: 'text',
-      defaultValue: 'Paling dibaca pekan ini',
+      defaultValue: 'Paling dicari pekan ini',
       admin: {
         description:
           'Diisi artikel dengan klik Google terbanyak 7 hari terakhir (disinkron harian). Bila datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".',

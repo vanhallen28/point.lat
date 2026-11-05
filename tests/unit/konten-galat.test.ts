@@ -51,14 +51,14 @@ describe('halaman 404', () => {
     const html = renderToStaticMarkup(
       h(TidakDitemukan, {
         daftar: {
-          judul: 'Paling dibaca pekan ini',
+          judul: 'Paling dicari pekan ini',
           artikel: [{ id: 1, judul: 'Cara hitung THR', href: '/cara-hitung-thr', tipe: 'panduan', pilar: null, intinya: null }],
         },
       }),
     )
     expect(html).toMatch(/<h1 class="[^"]*">Halaman ini tidak ada\.<\/h1>/)
     expect(html).toMatch(/<a class="[^"]*" href="\/">Kembali ke beranda/)
-    expect(html).toMatch(/<section aria-labelledby="daftar-tulisan" class="[^"]*"><h2 id="daftar-tulisan" class="[^"]*">Paling dibaca pekan ini<\/h2>/)
+    expect(html).toMatch(/<section aria-labelledby="daftar-tulisan" class="[^"]*"><h2 id="daftar-tulisan" class="[^"]*">Paling dicari pekan ini<\/h2>/)
     expect(html).toContain('href="/cara-hitung-thr"')
     expect(renderToStaticMarkup(h(TidakDitemukan, { daftar: { judul: 'Tulisan terbaru', artikel: [] } }))).not.toContain('Tulisan terbaru')
   })

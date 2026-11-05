@@ -40,7 +40,7 @@ describe('beranda dari global', () => {
         tataLetak: [
           { blockType: 'heroBeranda', judul: 'Intinya dulu.', subjudul: 'Dijelaskan dari intinya.' },
           { blockType: 'mozaikPilihan', artikel: [pilihan.id, draf.id] },
-          { blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 3 },
+          { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 3 },
           { blockType: 'newsletterBlok' },
         ],
       },
@@ -80,9 +80,9 @@ describe('beranda dari global', () => {
     expect((await ambilPopuler(payload, 5)).map((k) => k.id)).toEqual([b.id, a.id, c.id])
     expect((await ambilPopuler(payload, 2)).map((k) => k.id)).toEqual([b.id, a.id])
 
-    await payload.updateGlobal({ slug: 'beranda', data: { tataLetak: [{ blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 3 }] } })
+    await payload.updateGlobal({ slug: 'beranda', data: { tataLetak: [{ blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 3 }] } })
     const [, populer] = await ambilBeranda(payload)
-    expect(populer).toMatchObject({ jenis: 'terbaru', judul: 'Paling dibaca pekan ini' })
+    expect(populer).toMatchObject({ jenis: 'terbaru', judul: 'Paling dicari pekan ini' })
     expect(populer.jenis === 'terbaru' && populer.artikel.map((k) => k.id)).toEqual([b.id, a.id, c.id])
     await payload.delete({ collection: 'analitik-halaman', where: { id: { exists: true } } })
   })

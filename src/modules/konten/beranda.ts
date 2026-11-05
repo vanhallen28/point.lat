@@ -8,18 +8,18 @@ import { kartuVideo } from './video'
 export const HERO_BAWAAN = { judul: 'Intinya dulu.', subjudul: null, placeholder: 'misal: cara hitung THR' } as const
 
 /**
- * Judul blok "Paling dibaca" selama data klik belum cukup: isinya tulisan terbaru, jadi judulnya juga
+ * Judul blok "Paling dicari" selama data klik belum cukup: isinya tulisan terbaru, jadi judulnya juga
  * jujur menyebut itu, apa pun isian editor (keputusan pemilik di Rencana 4B).
  */
 export const JUDUL_TERBARU = 'Tulisan terbaru'
 
 /** Judul daftar tulisan dengan klik Google terbanyak 7 hari terakhir (spesifikasi §4). */
-export const JUDUL_POPULER = 'Paling dibaca pekan ini'
+export const JUDUL_POPULER = 'Paling dicari pekan ini'
 
 export type DaftarPopuler = { judul: string; artikel: KartuArtikel[] }
 
 /**
- * "Paling dibaca pekan ini" hanya bila klik Google 7 hari terakhir cukup untuk mengisi semua tempat
+ * "Paling dicari pekan ini" hanya bila klik Google 7 hari terakhir cukup untuk mengisi semua tempat
  * (`jumlah`); selain itu tulisan terbaru berjudul `JUDUL_TERBARU`. Dipakai blok beranda dan halaman 404.
  */
 export function daftarPopuler(populer: KartuArtikel[], terbaru: KartuArtikel[], jumlah: number, judulPopuler = JUDUL_POPULER): DaftarPopuler {
@@ -77,7 +77,7 @@ function kartuStrip(relasi: (number | Video)[] | null | undefined): KartuVideo[]
  * - Hanya hero pertama yang dipakai (satu H1); tanpa hero, `HERO_BAWAAN` dipasang paling atas.
  * - Mozaik memakai artikel terbit pilihan editor; kotak "Hitung sendiri" berisi tools terbit.
  * - Strip video memakai pilihan editor, cadangannya video terbit terbaru.
- * - "Paling dibaca" menampilkan artikel dengan klik Google terbanyak 7 hari terakhir (judul editor, bawaan
+ * - "Paling dicari" menampilkan artikel dengan klik Google terbanyak 7 hari terakhir (judul editor, bawaan
  *   `JUDUL_POPULER`) bila datanya cukup untuk semua tempat; peringkat apa adanya, jadi artikel mozaik bisa
  *   ikut. Bila belum cukup: tulisan terbaru di luar mozaik dengan judul `JUDUL_TERBARU`.
  * - Newsletter hanya bila global `newsletter` aktif; bila tepat setelah tulisan terbaru, ia menjadi

@@ -20,7 +20,7 @@ import type {
 /** Kueri total harian mencakup 35 hari sampai kemarin: cukup untuk 28 hari walau data final terlambat beberapa hari. */
 export const RENTANG_HARIAN = 35
 
-/** Ringkasan per halaman: 28 hari (tabel dashboard) dan 7 hari ("Paling dibaca pekan ini"). */
+/** Ringkasan per halaman: 28 hari (tabel dashboard) dan 7 hari ("Paling dicari pekan ini"). */
 export const HARI_RINGKASAN = 28
 export const HARI_PEKAN = 7
 

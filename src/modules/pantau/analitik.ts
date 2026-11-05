@@ -75,7 +75,7 @@ const angka = new Intl.NumberFormat('id-ID')
  * 1. Total harian properti 35 hari sampai kemarin (dimensi `date`, data final). Data Search Console
  *    biasanya baru final 2 sampai 3 hari kemudian, jadi tanggal terakhir yang berisi menjadi `sampai`.
  * 2. Klik, impresi, CTR, dan posisi per halaman untuk 28 hari dan 7 hari sampai tanggal itu.
- * 3. Disimpan dalam satu transaksi, lalu cache "Paling dibaca pekan ini" dibuang (tag `analitik`).
+ * 3. Disimpan dalam satu transaksi, lalu cache "Paling dicari pekan ini" dibuang (tag `analitik`).
  *
  * Bila Google tidak dipanggil (akun layanan belum diatur, adapter palsu) atau gagal, data lama tidak
  * disentuh. Bila tidak ada data final sama sekali dalam 35 hari, ringkasan halaman dikosongkan.

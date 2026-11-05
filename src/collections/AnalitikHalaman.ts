@@ -6,7 +6,7 @@ import { isAdmin, nobody } from '@/access'
  * Klik, impresi, CTR, dan posisi per path dari Search Analytics (spesifikasi §8 "Dashboard SEO"):
  * ringkasan 28 hari dan klik 7 hari sampai tanggal terakhir yang datanya final (`sampai`). Diganti
  * seluruhnya setiap sinkron harian modul pantau; path yang tidak lagi muncul di laporan ikut hilang.
- * Dibaca dashboard SEO dan blok "Paling dibaca pekan ini" (lewat modul konten).
+ * Dibaca dashboard SEO dan blok "Paling dicari pekan ini" (lewat modul konten).
  */
 export const AnalitikHalaman: CollectionConfig = {
   slug: 'analitik-halaman',
