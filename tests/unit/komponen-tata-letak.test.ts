@@ -1,10 +1,14 @@
 import { createElement as h } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Ikon } from '@/components/dasar/Ikon'
 import { Footer } from '@/components/tata-letak/Footer'
 import { Header } from '@/components/tata-letak/Header'
+import { tandaAktif } from '@/modules/konten/tampilan'
+
+const path = vi.hoisted(() => ({ sekarang: null as string | null }))
+vi.mock('next/navigation', () => ({ usePathname: () => path.sekarang }))
 
 describe('Ikon', () => {
   it('dekoratif disembunyikan dari pembaca layar; dengan label dibaca sebagai gambar', () => {
@@ -37,9 +41,36 @@ describe('Header', () => {
     expect(html).toMatch(/href="\/tools"[^>]*>Tools<\/a>/)
   })
 
+  it('menandai rubrik dan Tools yang sedang dibuka dengan aria-current', () => {
+    const data = {
+      menu: [
+        { label: 'Uang & Karier', href: '/uang-karier', warna: 'hijau' as const },
+        { label: 'Sehat', href: '/sehat', warna: 'koral' as const },
+      ],
+      tools: { label: 'Tools', href: '/tools' },
+    }
+    path.sekarang = '/uang-karier/pajak'
+    expect(renderToStaticMarkup(h(Header, { data })).match(/aria-current="[^"]*"/g)).toEqual(['aria-current="true"'])
+    path.sekarang = '/tools/gaji-bersih'
+    expect(renderToStaticMarkup(h(Header, { data }))).toMatch(/aria-current="true" href="\/tools">Tools<\/a>/)
+    path.sekarang = null
+  })
+
   it('tanpa menu tidak merender nav kosong', () => {
     const html = renderToStaticMarkup(h(Header, { data: { menu: [], tools: { label: 'Tools', href: '/tools' } } }))
     expect(html).not.toContain('<nav')
+  })
+})
+
+describe('tandaAktif', () => {
+  it('page untuk path yang sama, true untuk path di bawahnya, kosong untuk beranda dan URL luar', () => {
+    expect(tandaAktif('/uang-karier', '/uang-karier')).toBe('page')
+    expect(tandaAktif('/uang-karier/pajak', '/uang-karier')).toBe('true')
+    expect(tandaAktif('/uang-karierku', '/uang-karier')).toBeUndefined()
+    expect(tandaAktif('/tools', '/')).toBeUndefined()
+    expect(tandaAktif('/', '/')).toBe('page')
+    expect(tandaAktif('/tools', 'https://point.kit.com/tools')).toBeUndefined()
+    expect(tandaAktif(null, '/tools')).toBeUndefined()
   })
 })
 

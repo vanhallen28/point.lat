@@ -82,6 +82,19 @@
   text-decoration: underline;
 }
 
+/* Bagian yang sedang dibuka: pill tebal berlatar sand, tombol Tools bergaris bawah. Tidak hanya warna. */
+.pil[aria-current] {
+  box-shadow: inset 0 0 0 1px var(--garis);
+  background: var(--permukaan);
+  font-weight: 800;
+}
+
+.tools[aria-current] {
+  text-decoration: underline;
+  text-decoration-thickness: var(--garis-tebal);
+  text-underline-offset: 0.2em;
+}
+
 .pil:active,
 .tools:active {
   transform: scale(0.97);

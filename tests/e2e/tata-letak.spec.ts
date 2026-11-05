@@ -17,6 +17,28 @@ test('header berisi rubrik dari CMS, tombol Tools, dan bahasa halaman Indonesia'
   await expect(page.getByRole('contentinfo').getByRole('navigation', { name: 'Tentang point.' }).getByRole('link')).toHaveCount(6)
 })
 
+test('header menandai rubrik dan Tools yang sedang dibuka, juga sebelum JavaScript jalan', async ({ page, browser }) => {
+  const rubrik = page.getByRole('navigation', { name: 'Rubrik' })
+  const tools = page.getByRole('banner').getByRole('link', { name: 'Tools' })
+  await page.goto('/')
+  await expect(page.getByRole('banner').locator('[aria-current]')).toHaveCount(0)
+  await page.goto('/uang-karier')
+  await expect(rubrik.getByRole('link', { name: 'Uang & Karier' })).toHaveAttribute('aria-current', 'page')
+  await rubrik.getByRole('link', { name: 'Sehat' }).click()
+  await expect(page).toHaveURL('/sehat')
+  await expect(rubrik.getByRole('link', { name: 'Sehat' })).toHaveAttribute('aria-current', 'page')
+  await expect(rubrik.getByRole('link', { name: 'Uang & Karier' })).not.toHaveAttribute('aria-current')
+  await page.goto('/tools/gaji-bersih')
+  await expect(tools).toHaveAttribute('aria-current', 'true')
+
+  const tanpaJs = await browser.newContext({ javaScriptEnabled: false })
+  const halaman = await tanpaJs.newPage()
+  await cegatCloudinary(halaman)
+  await halaman.goto('/uang-karier/pajak')
+  await expect(halaman.getByRole('navigation', { name: 'Rubrik' }).getByRole('link', { name: 'Uang & Karier' })).toHaveAttribute('aria-current', 'true')
+  await tanpaJs.close()
+})
+
 test('skip link muncul saat Tab pertama dan menuju isi', async ({ page }) => {
   await page.goto('/')
   await page.keyboard.press('Tab')
