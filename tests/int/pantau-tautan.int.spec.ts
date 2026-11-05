@@ -68,7 +68,12 @@ describe('pindai tautan dan pemeriksa tautan luar', () => {
       ['dialihkan', lama, PESAN_TEMUAN.dialihkan(`/${tujuan.slug}`), 'artikel', sumber.judul, `/${sumber.slug}`],
       ['yatim', `/${sumber.slug}`, PESAN_TEMUAN.yatim, 'artikel', sumber.judul, `/${sumber.slug}`],
     ])
-    const { docs: yatimSemua } = await payload.find({ collection: 'temuan-tautan', where: { jenis: { equals: 'yatim' } }, limit: 1000, depth: 0 })
+    // Dicari lewat path, bukan halaman pertama semua temuan: database tes bisa menyimpan ribuan dokumen dari putaran lain.
+    const { docs: yatimSemua } = await payload.find({
+      collection: 'temuan-tautan',
+      where: { and: [{ jenis: { equals: 'yatim' } }, { tujuan: { in: [`/${yatim.slug}`, `/${tujuan.slug}`] } }] },
+      depth: 0,
+    })
     expect(yatimSemua.map((t) => t.tujuan)).toContain(`/${yatim.slug}`)
     expect(yatimSemua.map((t) => t.tujuan)).not.toContain(`/${tujuan.slug}`)
 
