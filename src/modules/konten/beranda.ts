@@ -8,10 +8,24 @@ import { kartuVideo } from './video'
 export const HERO_BAWAAN = { judul: 'Intinya dulu.', subjudul: null, placeholder: 'misal: cara hitung THR' } as const
 
 /**
- * Judul blok "Paling dibaca" selama data kunjungan belum ada (Rencana 6): isinya tulisan terbaru,
- * jadi judulnya juga jujur menyebut itu, apa pun isian editor.
+ * Judul blok "Paling dibaca" selama data klik belum cukup: isinya tulisan terbaru, jadi judulnya juga
+ * jujur menyebut itu, apa pun isian editor (keputusan pemilik di Rencana 4B).
  */
 export const JUDUL_TERBARU = 'Tulisan terbaru'
+
+/** Judul daftar tulisan dengan klik Google terbanyak 7 hari terakhir (spesifikasi §4). */
+export const JUDUL_POPULER = 'Paling dibaca pekan ini'
+
+export type DaftarPopuler = { judul: string; artikel: KartuArtikel[] }
+
+/**
+ * "Paling dibaca pekan ini" hanya bila klik Google 7 hari terakhir cukup untuk mengisi semua tempat
+ * (`jumlah`); selain itu tulisan terbaru berjudul `JUDUL_TERBARU`. Dipakai blok beranda dan halaman 404.
+ */
+export function daftarPopuler(populer: KartuArtikel[], terbaru: KartuArtikel[], jumlah: number, judulPopuler = JUDUL_POPULER): DaftarPopuler {
+  if (populer.length >= jumlah) return { judul: judulPopuler, artikel: populer.slice(0, jumlah) }
+  return { judul: JUDUL_TERBARU, artikel: terbaru.slice(0, jumlah) }
+}
 
 export const JUDUL_VIDEO_BAWAAN = 'Intinya dalam 45 detik'
 export const MAKS_VIDEO_BERANDA = 4
@@ -23,6 +37,8 @@ export const MAKS_TERBARU_BERANDA = 15
 /** Data yang tidak disimpan di global `beranda` tetapi ditampilkan bloknya. */
 export type SumberBeranda = {
   terbaru: KartuArtikel[]
+  /** Artikel dengan klik Google terbanyak 7 hari terakhir, terbanyak dulu (sinkron Search Analytics). */
+  populer: KartuArtikel[]
   video: KartuVideo[]
   tools: ItemTools[]
   newsletter: DataNewsletter | null
@@ -61,7 +77,9 @@ function kartuStrip(relasi: (number | Video)[] | null | undefined): KartuVideo[]
  * - Hanya hero pertama yang dipakai (satu H1); tanpa hero, `HERO_BAWAAN` dipasang paling atas.
  * - Mozaik memakai artikel terbit pilihan editor; kotak "Hitung sendiri" berisi tools terbit.
  * - Strip video memakai pilihan editor, cadangannya video terbit terbaru.
- * - "Paling dibaca" menampilkan tulisan terbaru di luar mozaik dengan judul `JUDUL_TERBARU`.
+ * - "Paling dibaca" menampilkan artikel dengan klik Google terbanyak 7 hari terakhir (judul editor, bawaan
+ *   `JUDUL_POPULER`) bila datanya cukup untuk semua tempat; peringkat apa adanya, jadi artikel mozaik bisa
+ *   ikut. Bila belum cukup: tulisan terbaru di luar mozaik dengan judul `JUDUL_TERBARU`.
  * - Newsletter hanya bila global `newsletter` aktif; bila tepat setelah tulisan terbaru, ia menjadi
  *   kolom samping blok itu (seperti mockup).
  * - Slot iklan belum dirender (Rencana 8) supaya tidak ada ruang kosong.
@@ -100,8 +118,9 @@ export function susunBeranda(tataLetak: Blok[], sumber: SumberBeranda): BagianBe
         break
       }
       case 'palingDibaca': {
-        const artikel = sumber.terbaru.filter((k) => !diMozaik.has(k.id)).slice(0, blok.jumlah ?? JUMLAH_TERBARU_BAWAAN)
-        if (artikel.length > 0) bagian.push({ jenis: 'terbaru', id, judul: JUDUL_TERBARU, artikel, newsletter: null })
+        const terbaru = sumber.terbaru.filter((k) => !diMozaik.has(k.id))
+        const daftar = daftarPopuler(sumber.populer, terbaru, blok.jumlah ?? JUMLAH_TERBARU_BAWAAN, blok.judul?.trim() || JUDUL_POPULER)
+        if (daftar.artikel.length > 0) bagian.push({ jenis: 'terbaru', id, ...daftar, newsletter: null })
         break
       }
       case 'newsletterBlok': {

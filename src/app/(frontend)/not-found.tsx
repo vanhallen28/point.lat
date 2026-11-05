@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
 import { TidakDitemukan } from '@/components/galat/TidakDitemukan'
-import { muatSitus, muatTerbaru } from '@/modules/konten'
+import { daftarPopuler, muatPopuler, muatSitus, muatTerbaru } from '@/modules/konten'
 import { metadataTidakDitemukan } from '@/modules/seo'
 
-/** Jumlah tulisan terbaru di halaman 404. Rencana 6 bisa menggantinya dengan yang paling banyak diklik. */
-const JUMLAH_TERBARU = 3
+/** Jumlah artikel di halaman 404: paling banyak diklik pekan ini bila datanya cukup, selain itu tulisan terbaru. */
+const JUMLAH_ARTIKEL = 3
 
 export async function generateMetadata(): Promise<Metadata> {
   return metadataTidakDitemukan(await muatSitus())
@@ -13,5 +13,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Dipakai untuk setiap `notFound()` di halaman publik dan path yang tidak cocok dengan rute mana pun. */
 export default async function HalamanTidakDitemukan() {
-  return <TidakDitemukan terbaru={await muatTerbaru(JUMLAH_TERBARU)} />
+  const [populer, terbaru] = await Promise.all([muatPopuler(JUMLAH_ARTIKEL), muatTerbaru(JUMLAH_ARTIKEL)])
+  return <TidakDitemukan daftar={daftarPopuler(populer, terbaru, JUMLAH_ARTIKEL)} />
 }

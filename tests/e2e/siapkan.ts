@@ -7,7 +7,7 @@ import type { Halaman } from '@/payload-types'
 import { klienPalsu } from '@/modules/media/palsu'
 import { seed } from '@/seed/seed'
 
-import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, KUNCI_INDEXNOW, p, SLUG, SLUG_HALAMAN, SLUG_SUB, SLUG_VIDEO, tautanKe } from './data'
+import { ADMIN_E2E, blok, gambar, h2, isi, JUDUL_PANDUAN, KLIK_CONTOH, KUNCI_INDEXNOW, p, SLUG, SLUG_HALAMAN, SLUG_SUB, SLUG_VIDEO, tautanKe } from './data'
 
 /**
  * Mengisi database E2E sebelum server dibangun dan dinyalakan (`webServer` di playwright.config.ts).
@@ -319,6 +319,13 @@ await payload.updateGlobal({
     ],
   },
 })
+
+for (const [path, klik7] of KLIK_CONTOH) {
+  await payload.create({
+    collection: 'analitik-halaman',
+    data: { path, klik7, impresi7: klik7 * 10, klik28: klik7 * 4, impresi28: klik7 * 40, ctr28: 0.1, posisi28: 6.4, sampai: '2026-11-02' },
+  })
+}
 
 await payload.create({ collection: 'redirect', data: { dari: '/promo-lama', ke: '/glosarium', kode: '301' } })
 await payload.create({ collection: 'redirect', data: { dari: '/glosarium/ptkp-lama', ke: '/glosarium/ptkp', kode: '301' } })

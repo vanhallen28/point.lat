@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { pakaiPemicuRevalidasi } from '@/hooks/revalidasiPublik'
-import { ambilBeranda } from '@/modules/konten/data'
+import { ambilBeranda, ambilPopuler } from '@/modules/konten/data'
 
 import { dataArtikelTerbit, siapkanRelasiArtikel } from './fixtures'
 import { getTestPayload } from './helpers'
@@ -55,5 +55,35 @@ describe('beranda dari global', () => {
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel[0].id).toBe(baru.id)
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel.map((k) => k.id)).not.toContain(pilihan.id)
     await payload.updateGlobal({ slug: 'newsletter', data: { aktif: false } })
+  })
+
+  it('paling dibaca pekan ini: artikel terbit dengan klik 7 hari terbanyak, tanpa draf, glosarium, dan path lain', async () => {
+    const payload = await getTestPayload()
+    await payload.delete({ collection: 'analitik-halaman', where: { id: { exists: true } } })
+    const relasi = await siapkanRelasiArtikel(payload)
+    const a = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
+    const b = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
+    const c = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
+    const draf = await payload.create({ collection: 'artikel', draft: true, data: { ...dataArtikelTerbit(relasi), _status: 'draft' } })
+    const istilah = await payload.create({ collection: 'artikel', data: { ...dataArtikelTerbit(relasi), tipe: 'glosarium' } })
+    const klik = (path: string, klik7: number, klik28 = klik7) =>
+      payload.create({ collection: 'analitik-halaman', data: { path, klik7, impresi7: 100, klik28, impresi28: 400, ctr28: 0.1, posisi28: 5, sampai: '2026-11-02' } })
+    await klik(`/${b.slug}`, 30)
+    await klik(`/${a.slug}`, 12, 50)
+    await klik(`/${c.slug}`, 12, 20)
+    await klik(`/${draf.slug}`, 90)
+    await klik(`/glosarium/${istilah.slug}`, 80)
+    await klik('/', 70)
+    await klik('/tools/gaji-bersih', 60)
+    await klik(`/${a.slug}-lama`, 0, 9)
+
+    expect((await ambilPopuler(payload, 5)).map((k) => k.id)).toEqual([b.id, a.id, c.id])
+    expect((await ambilPopuler(payload, 2)).map((k) => k.id)).toEqual([b.id, a.id])
+
+    await payload.updateGlobal({ slug: 'beranda', data: { tataLetak: [{ blockType: 'palingDibaca', judul: 'Paling dibaca pekan ini', jumlah: 3 }] } })
+    const [, populer] = await ambilBeranda(payload)
+    expect(populer).toMatchObject({ jenis: 'terbaru', judul: 'Paling dibaca pekan ini' })
+    expect(populer.jenis === 'terbaru' && populer.artikel.map((k) => k.id)).toEqual([b.id, a.id, c.id])
+    await payload.delete({ collection: 'analitik-halaman', where: { id: { exists: true } } })
   })
 })

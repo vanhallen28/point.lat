@@ -18,6 +18,7 @@ export {
   muatHalaman,
   muatHeader,
   muatPenulis,
+  muatPopuler,
   muatRedirect,
   muatRubrik,
   muatSitus,
@@ -37,6 +38,7 @@ export {
   ambilHalaman,
   ambilHeader,
   ambilPenulis,
+  ambilPopuler,
   ambilRubrik,
   ambilTakarir,
   ambilTerbaru,
@@ -48,7 +50,9 @@ export {
 } from './data'
 export { kataKueri, MAKS_HASIL_CARI, MAKS_KATA, MAKS_KUERI, rapikanKueri, urutkanHasil } from './cari'
 export {
+  daftarPopuler,
   HERO_BAWAAN,
+  JUDUL_POPULER,
   JUDUL_TERBARU,
   JUDUL_VIDEO_BAWAAN,
   JUMLAH_TERBARU_BAWAAN,
@@ -56,6 +60,7 @@ export {
   MAKS_VIDEO_BERANDA,
   susunBeranda,
   susunNewsletter,
+  type DaftarPopuler,
   type SumberBeranda,
 } from './beranda'
 export { itemTools, kelompokkanTools, parameterTersimpan, susunKalkulator, susunTool } from './tools'

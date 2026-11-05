@@ -5,8 +5,8 @@ import gaya from './Beranda.module.css'
 import { KotakNewsletter } from './KotakNewsletter'
 
 /**
- * Daftar tulisan terbaru bertitik warna pilar (posisi "Paling dibaca" di mockup, sampai data kunjungan
- * ada di Rencana 6), dengan newsletter di kolom samping bila editor meletakkannya tepat setelahnya.
+ * Blok "Paling dibaca pekan ini" (klik Google 7 hari), atau tulisan terbaru selama datanya belum cukup:
+ * daftar bertitik warna pilar, dengan newsletter di kolom samping bila editor meletakkannya tepat setelahnya.
  */
 export function TerbaruBeranda({ terbaru }: { terbaru: Extract<BagianBeranda, { jenis: 'terbaru' }> }) {
   return (

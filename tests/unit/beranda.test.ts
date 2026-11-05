@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { HERO_BAWAAN, JUDUL_TERBARU, susunBeranda, susunNewsletter, type SumberBeranda } from '@/modules/konten/beranda'
+import { daftarPopuler, HERO_BAWAAN, JUDUL_POPULER, JUDUL_TERBARU, susunBeranda, susunNewsletter, type SumberBeranda } from '@/modules/konten/beranda'
 import type { KartuArtikel, KartuVideo } from '@/modules/konten/tipe'
 import type { Artikel, Beranda, Media, Pilar, Video } from '@/payload-types'
 
@@ -23,6 +23,7 @@ const newsletter = { judul: 'Intinya, tiap Senin.', teks: 'Lima tulisan terbaik 
 
 const sumber: SumberBeranda = {
   terbaru: [1, 2, 3, 4, 5, 6].map(kartu),
+  populer: [],
   video: [7, 8].map(kartuVid),
   tools: [{ id: 9, nama: 'Gaji Bersih', href: '/tools/gaji-bersih', ringkasan: 'Hitung gaji bersih.' }],
   newsletter,
@@ -66,6 +67,22 @@ describe('susunBeranda', () => {
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel.map((k) => k.id)).toEqual([1, 4])
   })
 
+  it('"Paling dibaca pekan ini" bila klik 7 hari cukup untuk semua tempat: urutan peringkat, judul editor, artikel mozaik boleh ikut', () => {
+    const [, , populer] = susunBeranda([blok.hero, blok.mozaik, blok.palingDibaca, blok.newsletter], { ...sumber, populer: [3, 6, 1].map(kartu) })
+    expect(populer).toMatchObject({ jenis: 'terbaru', judul: 'Paling dibaca pekan ini', newsletter })
+    expect(populer.jenis === 'terbaru' && populer.artikel.map((k) => k.id)).toEqual([3, 6])
+    const [, tanpaJudul] = susunBeranda([blok.hero, { ...blok.palingDibaca, judul: ' ' }], { ...sumber, populer: [3, 6].map(kartu) })
+    expect(tanpaJudul).toMatchObject({ judul: JUDUL_POPULER })
+  })
+
+  it('klik 7 hari belum cukup untuk semua tempat: tetap tulisan terbaru, tidak dicampur', () => {
+    const [, , terbaru] = susunBeranda([blok.hero, blok.mozaik, blok.palingDibaca], { ...sumber, populer: [6].map(kartu) })
+    expect(terbaru).toMatchObject({ judul: JUDUL_TERBARU })
+    expect(terbaru.jenis === 'terbaru' && terbaru.artikel.map((k) => k.id)).toEqual([1, 4])
+    expect(daftarPopuler([kartu(9)], [kartu(1), kartu(2), kartu(3)], 3)).toEqual({ judul: 'Tulisan terbaru', artikel: [1, 2, 3].map(kartu) })
+    expect(daftarPopuler([9, 8, 7, 6].map(kartu), [], 3)).toEqual({ judul: 'Paling dibaca pekan ini', artikel: [9, 8, 7].map(kartu) })
+  })
+
   it('newsletter berdiri sendiri bila tidak tepat setelah tulisan terbaru, judul blok mengganti judul global', () => {
     const bagian = susunBeranda([blok.hero, { ...blok.newsletter, judul: 'Langganan intinya' }], sumber)
     expect(bagian[1]).toEqual({ jenis: 'newsletter', id: 'n', newsletter: { ...newsletter, judul: 'Langganan intinya' } })
@@ -73,7 +90,7 @@ describe('susunBeranda', () => {
   })
 
   it('tanpa hero: hero bawaan di atas; hero kedua dibuang; blok kosong dilewati', () => {
-    const kosong: SumberBeranda = { terbaru: [], video: [], tools: [], newsletter: null }
+    const kosong: SumberBeranda = { terbaru: [], populer: [], video: [], tools: [], newsletter: null }
     const bagian = susunBeranda([blok.video, blok.palingDibaca, { ...blok.mozaik, artikel: [artikel(5, 'draft')] }], kosong)
     expect(bagian).toEqual([{ jenis: 'hero', id: 'hero-bawaan', ...HERO_BAWAAN }])
     expect(susunBeranda([blok.hero, { ...blok.hero, id: 'h2' }], kosong).filter((b) => b.jenis === 'hero')).toHaveLength(1)

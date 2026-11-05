@@ -14,6 +14,7 @@ import {
   ambilHalaman,
   ambilHeader,
   ambilPenulis,
+  ambilPopuler,
   ambilRubrik,
   ambilTakarir,
   ambilTerbaru,
@@ -93,6 +94,12 @@ export const muatTerbaru = unstable_cache(async (jumlah: number) => ambilTerbaru
   revalidate: SEJAM,
 })
 
+/** Artikel paling banyak diklik pekan ini (halaman 404). Tag `analitik` dibuang setiap sinkron Search Analytics. */
+export const muatPopuler = unstable_cache(async (jumlah: number) => ambilPopuler(await payload(), jumlah), ['konten', 'populer'], {
+  tags: [TAG.analitik, TAG.koleksi('artikel'), TAG.koleksi('pilar')],
+  revalidate: SEJAM,
+})
+
 /**
  * Halaman rubrik pilar dan subkategori. Intro pilar bisa menautkan dokumen apa pun, jadi tagnya sama
  * dengan halaman artikel.
@@ -150,10 +157,11 @@ export const muatCari = unstable_cache(async (kueri: string) => cariArtikel(awai
 
 /**
  * Beranda. Tag `beranda` dibuang saat global beranda atau newsletter disimpan dan saat artikel, pilar,
- * video, atau tools terbit (`tagRevalidasi`); `media` untuk poster video.
+ * video, atau tools terbit (`tagRevalidasi`); `media` untuk poster video; `analitik` setiap sinkron
+ * Search Analytics ("Paling dibaca pekan ini").
  */
 export const muatBeranda = unstable_cache(async () => ambilBeranda(await payload()), ['konten', 'beranda'], {
-  tags: [TAG.beranda, TAG.media],
+  tags: [TAG.beranda, TAG.media, TAG.analitik],
   revalidate: SEJAM,
 })
 

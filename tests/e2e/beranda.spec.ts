@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { cegatCloudinary, periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
-import { SLUG, SLUG_VIDEO, UKURAN_LAYAR } from './data'
+import { POPULER, SLUG_VIDEO, UKURAN_LAYAR } from './data'
 
 test.beforeEach(async ({ page }) => {
   await cegatCloudinary(page)
@@ -47,7 +47,7 @@ test('mozaik di tablet 768 px: kartu samping berdampingan, kotak Hitung sendiri 
   expect(tools).toBeLessThan(tekno.y + tekno.height)
 })
 
-test('strip video gelap, tulisan terbaru di luar mozaik, dan newsletter ke form penyedia', async ({ page }) => {
+test('strip video gelap, paling dibaca pekan ini dari klik Google, dan newsletter ke form penyedia', async ({ page }) => {
   await page.goto('/')
   const strip = page.getByRole('region', { name: 'Intinya dalam 45 detik' })
   await expect(strip).toHaveCSS('background-color', 'rgb(17, 17, 17)')
@@ -55,10 +55,10 @@ test('strip video gelap, tulisan terbaru di luar mozaik, dan newsletter ke form 
   await expect(strip.getByRole('link', { name: /PPh 21 dijelaskan/ })).toHaveAttribute('href', `/video/${SLUG_VIDEO.pph21}`)
   await expect(strip.getByRole('link', { name: 'Semua video' })).toHaveAttribute('href', '/video')
 
-  const terbaru = page.getByRole('region', { name: 'Tulisan terbaru' })
-  await expect(terbaru.getByRole('link')).toHaveCount(2)
-  await expect(terbaru.getByRole('link').first()).toHaveAttribute('href', `/${SLUG.danaDarurat}`)
-  await expect(terbaru.getByRole('link', { name: /Cara hitung gaji bersih/ })).toHaveCount(0)
+  const populer = page.getByRole('region', { name: 'Paling dibaca pekan ini' })
+  await expect(populer.getByRole('link')).toHaveCount(4)
+  expect(await populer.getByRole('link').evaluateAll((a) => a.map((el) => el.getAttribute('href')))).toEqual(POPULER.map((slug) => `/${slug}`))
+  await expect(page.getByRole('region', { name: 'Tulisan terbaru' })).toHaveCount(0)
 
   const newsletter = page.getByRole('complementary', { name: 'Newsletter' })
   await expect(newsletter.getByRole('heading', { level: 2 })).toHaveText('Intinya, tiap Senin.')
@@ -73,8 +73,8 @@ test('jarak antarbagian beranda tetap, tanpa celah kosong, di 375 dan 1440 px', 
     const hero = await kotak('Intinya dulu.')
     const mozaik = await kotak('Pilihan redaksi')
     const strip = await kotak('Intinya dalam 45 detik')
-    const terbaru = await kotak('Tulisan terbaru')
-    const jarak = [mozaik.y - (hero.y + hero.height), strip.y - (mozaik.y + mozaik.height), terbaru.y - (strip.y + strip.height)]
+    const populer = await kotak('Paling dibaca pekan ini')
+    const jarak = [mozaik.y - (hero.y + hero.height), strip.y - (mozaik.y + mozaik.height), populer.y - (strip.y + strip.height)]
     expect(jarak.map(Math.round), `${lebar}px`).toEqual([40, 56, 56])
   }
 })

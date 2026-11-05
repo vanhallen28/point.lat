@@ -52,6 +52,6 @@ describe('FormCari dan HalamanCari', () => {
   })
 
   it('halaman 404 punya form cari', () => {
-    expect(renderToStaticMarkup(h(TidakDitemukan, { terbaru: [] }))).toMatch(/<form role="search" class="[^"]*" action="\/cari" method="get">/)
+    expect(renderToStaticMarkup(h(TidakDitemukan, { daftar: { judul: 'Tulisan terbaru', artikel: [] } }))).toMatch(/<form role="search" class="[^"]*" action="\/cari" method="get">/)
   })
 })

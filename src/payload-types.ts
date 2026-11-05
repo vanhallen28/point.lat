@@ -1848,7 +1848,7 @@ export interface BlokStripVideo {
  */
 export interface BlokPalingDibaca {
   /**
-   * Sementara data pembaca belum tersedia, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".
+   * Diisi artikel dengan klik Google terbanyak 7 hari terakhir (disinkron harian). Bila datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".
    */
   judul?: string | null;
   jumlah?: number | null;

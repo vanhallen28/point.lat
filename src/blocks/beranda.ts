@@ -56,7 +56,10 @@ export const BlokPalingDibaca: Block = {
       name: 'judul',
       type: 'text',
       defaultValue: 'Paling dibaca pekan ini',
-      admin: { description: 'Sementara data pembaca belum tersedia, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".' },
+      admin: {
+        description:
+          'Diisi artikel dengan klik Google terbanyak 7 hari terakhir (disinkron harian). Bila datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru".',
+      },
     },
     { name: 'jumlah', type: 'number', defaultValue: 4, min: 1, max: 10 },
   ],

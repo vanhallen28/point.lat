@@ -81,7 +81,7 @@ test('kartu ke artikel memakai View Transitions dengan judul sebagai elemen bers
       return asli(...arg)
     }) as typeof document.startViewTransition
   })
-  const kartu = page.getByRole('region', { name: 'Tulisan terbaru' }).getByRole('link').first()
+  const kartu = page.getByRole('region', { name: 'Paling dibaca pekan ini' }).getByRole('link').first()
   const judul = await kartu.getByRole('heading').textContent()
   await kartu.click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(judul ?? '')

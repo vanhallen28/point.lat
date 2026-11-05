@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 
 import { cegatCloudinary, periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
-import { ADMIN_E2E, SLUG, UKURAN_LAYAR } from './data'
+import { ADMIN_E2E, POPULER, SLUG, UKURAN_LAYAR } from './data'
 
 test.beforeEach(async ({ page }) => {
   await cegatCloudinary(page)
@@ -46,7 +46,7 @@ async function jumlahLog(request: APIRequestContext, path: string): Promise<numb
   return (await log.json()).docs[0]?.jumlah ?? 0
 }
 
-test('halaman 404: judul, jalan kembali, tulisan terbaru, dan setiap kunjungan tercatat', async ({ page, request }) => {
+test('halaman 404: judul, jalan kembali, paling dibaca pekan ini, dan setiap kunjungan tercatat', async ({ page, request }) => {
   const path = `/jalan-buntu-${Date.now()}`
   for (let i = 0; i < 2; i++) {
     const beacon = page.waitForRequest((r) => r.url().endsWith('/api/log-404/catat') && r.method() === 'POST')
@@ -58,7 +58,9 @@ test('halaman 404: judul, jalan kembali, tulisan terbaru, dan setiap kunjungan t
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Halaman ini tidak ada.')
   await expect(page.getByRole('link', { name: 'Kembali ke beranda' })).toHaveAttribute('href', '/')
-  await expect(page.getByRole('region', { name: 'Tulisan terbaru' }).getByRole('link')).toHaveCount(3)
+  const populer = page.getByRole('region', { name: 'Paling dibaca pekan ini' })
+  await expect(populer.getByRole('link')).toHaveCount(3)
+  await expect(populer.getByRole('link').first()).toHaveAttribute('href', `/${POPULER[0]}`)
   await expect.poll(() => jumlahLog(request, path)).toBe(2)
 })
 

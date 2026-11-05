@@ -38,6 +38,22 @@ export const SLUG_HALAMAN = { tentang: 'tentang', kebijakanRedaksi: 'kebijakan-r
 /** Video contoh: dua terbit (PPh 21 lebih dulu dibuat), satu draf. */
 export const SLUG_VIDEO = { pph21: 'pph-21-satu-slip-gaji', otp: 'kode-otp-jangan-dibagikan', draf: 'video-draf' } as const
 
+/**
+ * Klik Google 7 hari contoh (bentuk hasil sinkron Search Analytics) yang diisi `siapkan.ts`. Beranda
+ * dan halaman 404 menampilkan "Paling dibaca pekan ini" dengan urutan `POPULER`; glosarium, beranda,
+ * dan tools tidak ikut karena bukan tulisan.
+ */
+export const KLIK_CONTOH: [path: string, klik7: number][] = [
+  ['/', 90],
+  ['/glosarium/ptkp', 60],
+  [`/${SLUG.danaDarurat}`, 40],
+  ['/tools/gaji-bersih', 30],
+  [`/${SLUG.explainer}`, 25],
+  [`/${SLUG.tekno}`, 12],
+  [`/${SLUG.panduan}`, 7],
+]
+export const POPULER = [SLUG.danaDarurat, SLUG.explainer, SLUG.tekno, SLUG.panduan] as const
+
 /** Kunci IndexNow di pengaturan SEO database E2E, dilayani di `/{kunci}.txt`. */
 export const KUNCI_INDEXNOW = 'e2e-kunci-indexnow-2026'
 

@@ -170,6 +170,34 @@ export async function ambilTerbaru(payload: Payload, jumlah: number): Promise<Ka
   return kartuTerbit(payload, [], jumlah)
 }
 
+/** Path dengan klik terbanyak yang dibaca: cukup banyak supaya beranda, tools, dan glosarium yang ikut tersaring tidak mengurangi daftar. */
+const MAKS_PATH_POPULER = 100
+
+/**
+ * Artikel terbit (bukan glosarium) dengan klik Google terbanyak 7 hari terakhir, terbanyak dulu. Data dari
+ * koleksi `analitik-halaman` yang diganti setiap sinkron Search Analytics harian (modul pantau); path
+ * yang bukan artikel (beranda, rubrik, tools) dilewati.
+ */
+export async function ambilPopuler(payload: Payload, jumlah: number): Promise<KartuArtikel[]> {
+  const { docs } = await payload.find({
+    collection: 'analitik-halaman',
+    where: { klik7: { greater_than: 0 } },
+    sort: ['-klik7', '-klik28', 'path'],
+    limit: MAKS_PATH_POPULER,
+    depth: 0,
+    pagination: false,
+    select: { path: true },
+  })
+  const peringkat = new Map(docs.map((d, i) => [d.path, i]))
+  const slug = docs.flatMap((d) => /^\/([^/]+)$/.exec(d.path)?.[1] ?? [])
+  if (slug.length === 0) return []
+  const kartu = await kartuTerbit(payload, [{ slug: { in: slug } }], slug.length)
+  return kartu
+    .filter((k) => peringkat.has(k.href))
+    .sort((a, b) => peringkat.get(a.href)! - peringkat.get(b.href)!)
+    .slice(0, jumlah)
+}
+
 /**
  * Halaman rubrik `/{pilar}` (`subSlug` `null`) atau `/{pilar}/{subkategori}`. `null` bila pilar
  * tidak ada, atau subkategori tidak ada atau milik pilar lain. Intro pilar dimuat seperti isi
@@ -348,13 +376,15 @@ const POPULATE_BERANDA = {
 
 /**
  * Beranda: blok global `beranda` (versi yang tersimpan tanpa draf) ditambah data yang tidak disimpan
- * di global itu: tulisan terbaru, video terbaru (cadangan strip video), tools terbit, dan newsletter.
+ * di global itu: tulisan terbaru, artikel paling banyak diklik pekan ini, video terbaru (cadangan strip
+ * video), tools terbit, dan newsletter.
  */
 export async function ambilBeranda(payload: Payload): Promise<BagianBeranda[]> {
   const beranda = await payload.findGlobal({ slug: 'beranda', depth: 2, populate: POPULATE_BERANDA })
   const newsletter = await payload.findGlobal({ slug: 'newsletter', depth: 0 })
   return susunBeranda(beranda.tataLetak ?? [], {
     terbaru: await kartuTerbit(payload, [], MAKS_TERBARU_BERANDA),
+    populer: await ambilPopuler(payload, MAKS_TERBARU_BERANDA),
     video: await kartuVideoTerbit(payload, [], MAKS_VIDEO_BERANDA),
     tools: (await ambilTools(payload)).flatMap((k) => k.tools),
     newsletter: susunNewsletter(newsletter),
