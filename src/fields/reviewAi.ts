@@ -1,16 +1,18 @@
 import type { Field } from 'payload'
 
-import { BUTIR_REVIEW, validasiButirReview } from '@/modules/ai/review'
+import { BUTIR_REVIEW, tetapPakaiDrafAi, validasiButirReview } from '@/modules/ai/review'
 
 /**
  * Tanda artikel yang memakai draf AI. Hanya bisa dinyalakan sidebar Asisten AI (saat editor menyalin draf
- * bagian atau menerapkan Intinya atau FAQ), jadi editor tidak bisa melepasnya diam-diam dari form.
+ * bagian atau menerapkan Intinya atau FAQ), jadi editor tidak bisa melepasnya diam-diam dari form; setelah
+ * tersimpan menyala, API dan update massal juga tidak bisa mematikannya (`tetapPakaiDrafAi`).
  */
 export const pakaiDrafAiField: Field = {
   name: 'pakaiDrafAi',
   type: 'checkbox',
   label: 'Memakai draf AI',
   defaultValue: false,
+  hooks: { beforeValidate: [tetapPakaiDrafAi] },
   admin: {
     position: 'sidebar',
     readOnly: true,

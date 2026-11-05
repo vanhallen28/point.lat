@@ -300,9 +300,10 @@ Fase 2: naskah video 45 detik + daftar shot (bahan untuk huashu-art-motion / rem
 
 Pengaman:
 - AI hanya memberi saran ke editor; tidak punya akses menerbitkan.
-- Artikel yang memakai draf AI (menyalin draf bagian, menerapkan Intinya atau FAQ) wajib mencentang checklist review manusia (sumber dicek, angka dicek, insight/pengalaman penulis ditambahkan) sebelum tombol Terbitkan aktif. Validasinya juga berlaku untuk terbit massal dan terjadwal.
+- Artikel yang memakai draf AI (menyalin draf bagian, menerapkan Intinya atau FAQ) wajib mencentang checklist review manusia (sumber dicek, angka dicek, insight/pengalaman penulis ditambahkan) sebelum tombol Terbitkan aktif. Validasinya juga berlaku untuk terbit massal dan terjadwal, dan tanda "memakai draf AI" yang sudah tersimpan tidak bisa dimatikan lewat form, API, atau update massal.
 - Anggaran bulanan (US$, direset awal bulan waktu Jakarta) dihitung dari token setiap panggilan dikali harga per model di global `asistenAI`. Biaya maksimal permintaan dicadangkan sebelum Claude dipanggil, jadi anggaran tidak terlewati walau permintaan berjalan bersamaan. Saat habis, tombol AI nonaktif dengan pesan jelas; cek pola dan cek klaim tetap bisa dipakai.
 - Semua pemanggilan dicatat di `logAI`; paling banyak 6 permintaan per menit per pengguna.
+- Sidebar menyebut bahwa tombol AI mengirim teks yang dibutuhkan tugasnya ke Claude (Anthropic), dan meminta editor tidak menulis data pribadi di catatan penulis.
 - Kunci API dan nama model di env server (`ANTHROPIC_API_KEY`, `AI_ADAPTER`, `AI_MODEL*`).
 
 ## 11. Iklan & privasi

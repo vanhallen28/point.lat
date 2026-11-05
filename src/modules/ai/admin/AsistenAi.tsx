@@ -64,6 +64,11 @@ export function AsistenAi() {
   return (
     <section className="asisten" aria-labelledby="asisten-judul">
       <h3 id="asisten-judul">Asisten AI</h3>
+      {/* Keputusan pemilik (Rencana 7): editor tahu teks apa yang keluar dari situs sebelum memakai tombol AI. */}
+      <p className="asisten__catatan">
+        Tombol AI mengirim teks yang dibutuhkan tugasnya ke Claude (Anthropic) untuk diproses. Jangan tulis data pribadi di catatan
+        penulis.
+      </p>
       {siap ? (
         <p className="asisten__anggaran">
           Anggaran bulan ini: {teksBiaya(status.anggaran.terpakai)} dari {teksBiaya(status.anggaran.batas)} terpakai.

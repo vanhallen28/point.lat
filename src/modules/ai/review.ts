@@ -38,3 +38,13 @@ export function reviewLengkap(pakaiDrafAi: unknown, review: ReviewAi): boolean {
 export function validasiButirReview(nilai: unknown, { data }: { data?: { pakaiDrafAi?: unknown } | null }): true | string {
   return !data?.pakaiDrafAi || nilai === true ? true : PESAN_REVIEW
 }
+
+/**
+ * Hook `beforeValidate` field `pakaiDrafAi`: sekali tersimpan menyala, tanda tetap menyala. Form admin sudah
+ * hanya-baca; hook ini menutup jalan lain (REST API, update massal, terbit massal dengan `pakaiDrafAi: false`)
+ * supaya checklist review tidak terlewati diam-diam (temuan review Rencana 7). Berjalan sebelum validasi,
+ * jadi validasi checklist dokumen yang sama sudah melihat tanda yang menyala.
+ */
+export function tetapPakaiDrafAi({ value, originalDoc }: { value?: unknown; originalDoc?: { pakaiDrafAi?: unknown } | null }): unknown {
+  return originalDoc?.pakaiDrafAi === true ? true : value
+}

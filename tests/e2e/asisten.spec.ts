@@ -96,6 +96,9 @@ test('saran meta dari adapter palsu: judul SEO dan Intinya diterapkan hanya lewa
   const id = await drafBaru(page, ISI_ARTIKEL)
   const panel = await bukaAsisten(page, id)
   await expect(panel).toContainText('Mode palsu: hasil AI berupa contoh, bukan dari Claude.')
+  await expect(panel).toContainText(
+    'Tombol AI mengirim teks yang dibutuhkan tugasnya ke Claude (Anthropic) untuk diproses. Jangan tulis data pribadi di catatan penulis.',
+  )
   await expect(panel).toContainText(/Anggaran bulan ini: US\$[\d,]+ dari US\$10,00 terpakai\./)
 
   await panel.getByRole('button', { name: 'Buat saran meta' }).click()

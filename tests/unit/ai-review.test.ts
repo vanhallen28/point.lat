@@ -2,7 +2,7 @@ import type { Field } from 'payload'
 import { describe, expect, it } from 'vitest'
 
 import { pakaiDrafAiField, reviewAiField } from '@/fields/reviewAi'
-import { BUTIR_REVIEW, PESAN_REVIEW, reviewLengkap, validasiButirReview } from '@/modules/ai/review'
+import { BUTIR_REVIEW, PESAN_REVIEW, reviewLengkap, tetapPakaiDrafAi, validasiButirReview } from '@/modules/ai/review'
 
 const LENGKAP = { sumberDicek: true, angkaDicek: true, pengalamanDitambah: true }
 
@@ -29,5 +29,14 @@ describe('checklist review draf AI', () => {
     expect(pakaiDrafAiField).toMatchObject({ name: 'pakaiDrafAi', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar', readOnly: true } })
     const kondisi = (reviewAiField as Extract<Field, { type: 'group' }>).admin?.condition as (data: Record<string, unknown>) => boolean
     expect([kondisi({ pakaiDrafAi: true }), kondisi({ pakaiDrafAi: false }), kondisi({})]).toEqual([true, false, false])
+  })
+
+  it('tanda draf AI yang sudah tersimpan tetap menyala walau dikirim false lewat API (hook beforeValidate)', () => {
+    expect(pakaiDrafAiField).toMatchObject({ hooks: { beforeValidate: [tetapPakaiDrafAi] } })
+    expect(tetapPakaiDrafAi({ value: false, originalDoc: { pakaiDrafAi: true } })).toBe(true)
+    expect(tetapPakaiDrafAi({ value: undefined, originalDoc: { pakaiDrafAi: true } })).toBe(true)
+    expect(tetapPakaiDrafAi({ value: true, originalDoc: { pakaiDrafAi: false } })).toBe(true)
+    expect(tetapPakaiDrafAi({ value: false, originalDoc: { pakaiDrafAi: false } })).toBe(false)
+    expect(tetapPakaiDrafAi({ value: true, originalDoc: undefined })).toBe(true)
   })
 })

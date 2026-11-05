@@ -59,4 +59,26 @@ describe('checklist review draf AI', () => {
     const dihapus = await payload.delete({ collection: 'artikel', where })
     expect([dihapus.docs.length, dihapus.errors]).toEqual([2, []])
   })
+
+  it('tanda draf AI tidak bisa dilepas lewat API: simpan draf dan terbit massal dengan pakaiDrafAi false tetap memakai checklist', async () => {
+    const payload = await getTestPayload()
+    const kelompok = unik('lepas-ai')
+    const a = await draf(payload, relasi, { deck: kelompok })
+    const b = await draf(payload, relasi, { deck: kelompok })
+    const where = { deck: { equals: kelompok } }
+
+    const disimpan = await payload.update({ collection: 'artikel', id: a.id, draft: true, data: { _status: 'draft', pakaiDrafAi: false } })
+    expect(disimpan.pakaiDrafAi).toBe(true)
+
+    const ditolak = await payload.update({ collection: 'artikel', where, data: { _status: 'published', pakaiDrafAi: false } })
+    expect(ditolak.docs).toEqual([])
+    expect(ditolak.errors.map((e) => e.id).sort()).toEqual([a.id, b.id].sort())
+    const { docs } = await payload.find({ collection: 'artikel', where, draft: true, sort: 'id', depth: 0 })
+    expect(docs.map((d) => [d._status, d.pakaiDrafAi])).toEqual([
+      ['draft', true],
+      ['draft', true],
+    ])
+
+    expect((await payload.delete({ collection: 'artikel', where })).errors).toEqual([])
+  })
 })
