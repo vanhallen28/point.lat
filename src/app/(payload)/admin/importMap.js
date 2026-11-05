@@ -24,6 +24,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PanelSeo as PanelSeo_6216d39b2a8cdc0c7a12a6c0056252ee } from '@/modules/seo/PanelSeo'
 import { PetunjukReview as PetunjukReview_9dfe39f0483f51a0d254e279d2a878bf } from '@/modules/ai/admin/PetunjukReview'
+import { AsistenAi as AsistenAi_f549d98d040d13d9d3bf25316ccfffb6 } from '@/modules/ai/admin/AsistenAi'
 import { SelStatusIndeks as SelStatusIndeks_4aa4889310bcd7c06181f91b15b42b75 } from '@/modules/indexer/admin/SelStatusIndeks'
 import { TombolTerbit as TombolTerbit_9e1969ad26b51056e39a25585c0ce380 } from '@/modules/ai/admin/TombolTerbit'
 import { SelBuatRedirect as SelBuatRedirect_9f3e78885105faed9af81223ca0b8add } from '@/modules/pantau/admin/SelBuatRedirect'
@@ -64,6 +65,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/modules/seo/PanelSeo#PanelSeo": PanelSeo_6216d39b2a8cdc0c7a12a6c0056252ee,
   "@/modules/ai/admin/PetunjukReview#PetunjukReview": PetunjukReview_9dfe39f0483f51a0d254e279d2a878bf,
+  "@/modules/ai/admin/AsistenAi#AsistenAi": AsistenAi_f549d98d040d13d9d3bf25316ccfffb6,
   "@/modules/indexer/admin/SelStatusIndeks#SelStatusIndeks": SelStatusIndeks_4aa4889310bcd7c06181f91b15b42b75,
   "@/modules/ai/admin/TombolTerbit#TombolTerbit": TombolTerbit_9e1969ad26b51056e39a25585c0ce380,
   "@/modules/pantau/admin/SelBuatRedirect#SelBuatRedirect": SelBuatRedirect_9f3e78885105faed9af81223ca0b8add,

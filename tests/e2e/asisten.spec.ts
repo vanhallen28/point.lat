@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import { periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
-import { ADMIN_E2E } from './data'
+import { ADMIN_E2E, h2, isi, p, UKURAN_LAYAR } from './data'
 
 /**
  * Draf buatan tes di file ini, dihapus setelah setiap tes supaya daftar artikel admin di spec lain (kolom status indeks di
@@ -15,7 +15,7 @@ test.afterEach(async ({ page }) => {
   for (const id of drafTes.splice(0)) expect((await page.request.delete(`/api/artikel/${id}?overrideLock=true`)).status()).toBe(200)
 })
 
-/** Draf artikel baru lewat REST (hanya judul; draf tidak divalidasi). */
+/** Draf artikel baru lewat REST (draf tidak divalidasi, jadi cukup isian yang diuji). */
 async function drafBaru(page: Page, data: Record<string, unknown> = {}): Promise<number> {
   await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
   const jawaban = await page.request.post('/api/artikel?draft=true', { data: { judul: `Draf asisten ${Date.now()}`, _status: 'draft', ...data } })
@@ -24,6 +24,23 @@ async function drafBaru(page: Page, data: Record<string, unknown> = {}): Promise
   drafTes.push(id)
   return id
 }
+
+const ISI_ARTIKEL = {
+  deck: 'Cara menghitung gaji bersih bulanan.',
+  intinya: [{ poin: 'Poin lama pertama.' }, { poin: 'Poin lama kedua.' }],
+  isi: isi(h2('Apa itu gaji bersih'), p('Gaji bersih adalah gaji kotor dikurangi PPh 21 dan iuran BPJS.')),
+}
+
+async function bukaAsisten(page: Page, id: number) {
+  await page.goto(`/admin/collections/artikel/${id}`)
+  const panel = page.getByRole('region', { name: 'Asisten AI' })
+  await panel.scrollIntoViewIfNeeded()
+  return panel
+}
+
+/** Isian dari state form admin (`name` input Payload sama dengan path field). */
+const nilaiInput = (page: Page, awalan: string) =>
+  page.evaluate((a) => [...document.querySelectorAll<HTMLInputElement>(`[name^="${a}"]`)].filter((e) => !e.name.endsWith('.id')).map((e) => e.value), awalan)
 
 test('artikel yang memakai draf AI: tombol terbit nonaktif sampai ketiga butir review dicentang', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
@@ -56,3 +73,92 @@ test('artikel tanpa draf AI: checklist review tidak tampil dan tombol terbit akt
   await expect(page.getByRole('checkbox', { name: 'Sumber sudah dicek', exact: true })).toHaveCount(0)
   await periksaAxe(page, '.field-description-pakaiDrafAi')
 })
+
+test('saran meta dari adapter palsu: judul SEO dan Intinya diterapkan hanya lewat tombol, Intinya menandai draf AI, dan Batalkan mengembalikan poin lama', async ({ page }) => {
+  const id = await drafBaru(page, ISI_ARTIKEL)
+  const panel = await bukaAsisten(page, id)
+  await expect(panel).toContainText('Mode palsu: hasil AI berupa contoh, bukan dari Claude.')
+  await expect(panel).toContainText(/Anggaran bulan ini: US\$[\d,]+ dari US\$10,00 terpakai\./)
+
+  await panel.getByRole('button', { name: 'Buat saran meta' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'Saran meta siap' })).toHaveText('Saran meta siap. Pilih isian yang mau kamu pakai.')
+  await expect(page.getByRole('checkbox', { name: 'Memakai draf AI' })).not.toBeChecked()
+  await periksaAxe(page, '.asisten')
+
+  await panel.getByRole('button', { name: 'Pakai judul SEO ini' }).click()
+  await expect(panel.getByRole('button', { name: 'Batalkan Judul SEO' })).toBeFocused()
+  await panel.getByRole('button', { name: 'Ganti poin Intinya' }).click()
+  await expect
+    .poll(() => nilaiInput(page, 'intinya.'))
+    .toEqual(['Poin pertama contoh dari adapter palsu.', 'Poin kedua contoh dari adapter palsu.', 'Poin ketiga contoh dari adapter palsu.'])
+  await expect(page.getByRole('checkbox', { name: 'Memakai draf AI' })).toBeChecked()
+  await expect(page.locator('#action-save')).toBeDisabled()
+
+  await panel.getByRole('button', { name: 'Batalkan Intinya' }).click()
+  await expect.poll(() => nilaiInput(page, 'intinya.')).toEqual(['Poin lama pertama.', 'Poin lama kedua.'])
+  await page.locator('.tabs-field__tab-button', { hasText: 'SEO' }).click()
+  await expect(page.getByLabel('Judul SEO', { exact: true })).toHaveValue('Contoh judul SEO dari adapter palsu untuk uji asisten')
+})
+
+test('galat API Claude: pesan jelas di sidebar, editor tetap bisa menulis', async ({ page }) => {
+  const id = await drafBaru(page, { ...ISI_ARTIKEL, isi: isi(p('Teks uji [uji galat] untuk adapter palsu.')) })
+  const panel = await bukaAsisten(page, id)
+  await panel.getByRole('button', { name: 'Buat saran meta' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'Claude' })).toHaveText('Claude sedang sibuk atau bermasalah (529, overloaded_error). Coba lagi beberapa menit lagi.')
+  await expect(panel.getByRole('button', { name: 'Buat saran meta' })).toBeEnabled()
+  await expect(page.getByLabel('Deck')).toBeEditable()
+  await periksaAxe(page, '.asisten')
+})
+
+test('anggaran habis: tombol AI nonaktif dengan alasannya, cek pola dan cek klaim tetap bisa dipakai', async ({ page }) => {
+  const id = await drafBaru(page, ISI_ARTIKEL)
+  expect((await page.request.post('/api/globals/asisten-ai', { data: { anggaranBulanan: 0 } })).status()).toBe(200)
+  try {
+    const panel = await bukaAsisten(page, id)
+    await expect(panel).toContainText('Anggaran AI bulan ini sudah habis. Tombol AI aktif lagi awal bulan depan, atau setelah admin menaikkan anggaran.')
+    await expect(panel.getByRole('button', { name: 'Buat saran meta' })).toBeDisabled()
+    await panel.getByRole('button', { name: 'Cek pola tulisan' }).click()
+    await expect(panel.getByRole('status').filter({ hasText: 'kalimat' })).toHaveText('Tidak ada tanda di 5 kalimat.')
+    await periksaAxe(page, '.asisten')
+  } finally {
+    await page.request.post('/api/globals/asisten-ai', { data: { anggaranBulanan: 10 } })
+  }
+})
+
+test('cek pola dan cek klaim di browser: tanda per kalimat dengan letak dan alasan, klaim tanpa sumber di atas', async ({ page }) => {
+  const id = await drafBaru(page, {
+    ...ISI_ARTIKEL,
+    isi: isi(
+      p('Di era digital ini, gaji dibayar lewat bank \u2014 cepat dan aman. Tak hanya itu, slip gaji juga digital.'),
+      p('Menurut penelitian, 70 persen karyawan tidak membaca slip gaji.'),
+      h2('Kesimpulan'),
+      p('Semoga bermanfaat.'),
+    ),
+  })
+  const panel = await bukaAsisten(page, id)
+  await panel.getByRole('button', { name: 'Cek pola tulisan' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'tanda di' })).toHaveText('5 tanda di 8 kalimat.')
+  const pola = panel.getByRole('list').filter({ hasText: 'Frasa klise' })
+  await expect(pola.getByRole('listitem')).toHaveCount(5)
+  await expect(pola.getByRole('listitem').first()).toContainText('Paragraf 1')
+  await expect(pola.getByRole('listitem').first()).toContainText('"Di era digital ini": Pembuka klise yang sering muncul di tulisan AI. Langsung ke jawabannya.')
+
+  await panel.getByRole('button', { name: 'Cek klaim' }).click()
+  await expect(panel.getByRole('status').filter({ hasText: 'klaim perlu dicek' })).toHaveText('1 dari 1 klaim perlu dicek. Blok Sumber masih kosong.')
+  await expect(panel.getByRole('list').filter({ hasText: '70 persen' }).getByRole('listitem')).toContainText('Tanpa sumber')
+  await periksaAxe(page, '.asisten')
+})
+
+for (const { lebar, tinggi } of UKURAN_LAYAR) {
+  test(`sidebar Asisten AI ${lebar}px dengan hasil: tanpa geser horizontal dan lolos axe`, async ({ page }) => {
+    await page.setViewportSize({ width: lebar, height: tinggi })
+    const id = await drafBaru(page, ISI_ARTIKEL)
+    const panel = await bukaAsisten(page, id)
+    await panel.getByRole('button', { name: 'Buat saran meta' }).click()
+    await expect(panel.getByRole('button', { name: 'Tambahkan ke FAQ' })).toBeVisible()
+    await panel.getByRole('button', { name: 'Cek klaim' }).click()
+    await expect(panel.getByRole('status').filter({ hasText: 'klaim' })).toHaveText('Tidak ada angka atau klaim beratribusi.')
+    await periksaTanpaGeserHorizontal(page)
+    await periksaAxe(page, '.asisten')
+  })
+}

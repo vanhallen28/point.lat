@@ -1,0 +1,178 @@
+// Sidebar Asisten AI di editor artikel. Memakai variabel tema Payload supaya ikut mode terang dan gelap
+// admin. Teks sekunder memakai elevation-650 (lolos kontras di kedua tema, sama dengan dashboard SEO);
+// keadaan tidak hanya ditandai warna, selalu ada teksnya. CSS admin Payload menghapus outline, jadi cincin
+// fokus ditulis sendiri. Target sentuh tombol minimal 44 px (spesifikasi §14).
+
+.asisten {
+  margin: calc(var(--base) * 0.5) 0 calc(var(--base) * 1.5);
+  padding: var(--base);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+
+  h3 {
+    margin: 0 0 calc(var(--base) * 0.5);
+    font-size: 18px;
+  }
+
+  h4 {
+    margin: 0 0 calc(var(--base) * 0.25);
+    font-size: 15px;
+  }
+
+  p,
+  ul,
+  ol,
+  dl,
+  blockquote {
+    margin: 0;
+  }
+
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--theme-text);
+    outline-offset: 2px;
+  }
+}
+
+.asisten__anggaran,
+.asisten__keterangan,
+.asisten__catatan,
+.asisten__redup {
+  color: var(--theme-elevation-650);
+}
+
+.asisten__catatan {
+  font-size: 13px;
+}
+
+ul.asisten__catatan {
+  padding-left: calc(var(--base) * 1.1);
+}
+
+.asisten__pesan {
+  margin-top: calc(var(--base) * 0.5);
+  padding: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+  border-left: 4px solid;
+  border-radius: 10px;
+  color: var(--theme-text);
+}
+
+.asisten__pesan--peringatan {
+  border-color: var(--theme-warning-650);
+  background: var(--theme-warning-100);
+}
+
+.asisten__pesan--galat {
+  border-color: var(--theme-error-500);
+  background: var(--theme-error-100);
+}
+
+// Teks untuk pembaca layar saja (region status tetap ada di DOM supaya perubahan diumumkan).
+.asisten__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.asisten__ringkasan {
+  margin-top: calc(var(--base) * 0.5);
+  font-weight: 600;
+}
+
+.asisten-bagian {
+  display: grid;
+  gap: calc(var(--base) * 0.5);
+  margin-top: var(--base);
+  padding-top: var(--base);
+  border-top: 1px solid var(--theme-elevation-150);
+}
+
+.asisten__tombol {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 calc(var(--base) * 0.75);
+  border: 1px solid var(--theme-elevation-800);
+  border-radius: 14px;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--theme-elevation-100);
+  }
+
+  // Tombol nonaktif tidak wajib memenuhi kontras (WCAG 1.4.3); alasannya selalu tertulis di atas.
+  &:disabled {
+    border-color: var(--theme-elevation-250);
+    color: var(--theme-elevation-500);
+    cursor: not-allowed;
+  }
+}
+
+.asisten__tombol--kecil {
+  padding: 0 calc(var(--base) * 0.5);
+  font-size: 13px;
+}
+
+.asisten-hasil,
+.asisten-temuan {
+  display: grid;
+  gap: calc(var(--base) * 0.75);
+}
+
+.asisten-saran {
+  display: grid;
+  gap: calc(var(--base) * 0.25);
+  padding: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+  border-radius: 10px;
+  background: var(--theme-elevation-50);
+
+  ul {
+    padding-left: calc(var(--base) * 1.1);
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0 0 calc(var(--base) * 0.25);
+  }
+}
+
+.asisten-saran__label,
+.asisten-temuan__jenis {
+  font-weight: 700;
+}
+
+.asisten-saran__aksi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--base) * 0.5);
+}
+
+.asisten-temuan {
+  padding-left: calc(var(--base) * 1.1);
+
+  blockquote {
+    padding-left: calc(var(--base) * 0.5);
+    border-left: 3px solid var(--theme-elevation-250);
+    font-style: italic;
+  }
+}
+
+.asisten-rincian summary {
+  min-height: 44px;
+  padding: calc(var(--base) * 0.5) 0;
+  cursor: pointer;
+  font-weight: 600;
+}

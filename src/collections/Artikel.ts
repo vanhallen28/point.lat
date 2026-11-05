@@ -159,6 +159,11 @@ export const Artikel: CollectionConfig = {
     { name: 'terbitPada', type: 'date', admin: { position: 'sidebar', readOnly: true } },
     { name: 'diperbaruiBesar', type: 'date', label: 'Diperbarui', admin: { position: 'sidebar', readOnly: true } },
     {
+      name: 'asistenAi',
+      type: 'ui',
+      admin: { position: 'sidebar', components: { Field: '@/modules/ai/admin/AsistenAi#AsistenAi' } },
+    },
+    {
       name: 'statusIndeks',
       type: 'ui',
       label: 'Status indeks',

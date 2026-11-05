@@ -45,6 +45,8 @@ export default defineConfig({
       CLOUDINARY_API_SECRET: 'e2e',
       // Mesin Indexing tanpa jaringan: kabar dikirim ke adapter palsu dan tercatat di log dengan adapter `palsu`.
       INDEXER_ADAPTER: 'palsu',
+      // Asisten AI tanpa jaringan: jawaban contoh dari adapter palsu, anggaran dan log tetap tercatat.
+      AI_ADAPTER: 'palsu',
     },
   },
 })
