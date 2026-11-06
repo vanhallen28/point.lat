@@ -3,6 +3,7 @@ import { cache } from 'react'
 
 import { HalamanTool } from '@/components/tools/HalamanTool'
 import { pathFor } from '@/lib/paths'
+import { muatIklan } from '@/modules/iklan'
 import { muatSitus, muatTool, susunKalkulator, tanganiTidakAda } from '@/modules/konten'
 import { metadata, metadataTidakDitemukan } from '@/modules/seo'
 
@@ -30,5 +31,5 @@ export default async function Tool({ params }: Props) {
   const { kalkulator, contoh } = susunKalkulator(tool, new Date())
   for (const peringatan of kalkulator.peringatan) console.warn(`[hitung] ${tool.toolId}: ${peringatan}`)
   if (kalkulator.pesan) console.error(`[hitung] ${tool.toolId}: ${kalkulator.pesan}`)
-  return <HalamanTool tool={tool} kalkulator={kalkulator} contoh={contoh} situs={await muatSitus()} />
+  return <HalamanTool tool={tool} kalkulator={kalkulator} contoh={contoh} situs={await muatSitus()} iklan={await muatIklan()} />
 }

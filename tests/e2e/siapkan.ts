@@ -332,6 +332,9 @@ await payload.updateGlobal({
     slot: [
       { idSlot: 'artikel-tengah', posisi: 'artikel-tengah', setelahParagraf: 3, ukuran: 'persegi', unit: '1111111111', aktif: true },
       { idSlot: 'artikel-akhir', posisi: 'artikel-akhir', ukuran: 'persegi-besar', unit: '2222222222', aktif: true },
+      { idSlot: 'rubrik', posisi: 'rubrik', ukuran: 'persegi', unit: '3333333333', aktif: true },
+      { idSlot: 'tools', posisi: 'tools', ukuran: 'persegi', unit: '4444444444', aktif: true },
+      { idSlot: 'beranda-samping', posisi: 'beranda', ukuran: 'banner', unit: '5555555555', aktif: true },
     ],
     adsTxtTambahan: ADS_TXT_E2E,
   },
@@ -353,8 +356,9 @@ await payload.updateGlobal({
       { blockType: 'mozaikPilihan', artikel: [panduan.id, belajar.id, sehat.id, tekno.id] },
       { blockType: 'stripVideo', judul: 'Intinya dalam 45 detik' },
       { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 4 },
-      { blockType: 'slotIklan', idSlot: 'beranda-samping' },
       { blockType: 'newsletterBlok' },
+      // Setelah newsletter: slot di antara tulisan terbaru dan newsletter akan memisahkan kolom samping newsletter.
+      { blockType: 'slotIklan', idSlot: 'beranda-samping' },
     ],
   },
 })

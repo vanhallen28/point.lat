@@ -1,3 +1,5 @@
+import { pilihSlot } from '@/modules/iklan/aturan'
+import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import type { Artikel, Beranda, Newsletter, Video } from '@/payload-types'
 
 import { kartuArtikel } from './artikel'
@@ -42,6 +44,8 @@ export type SumberBeranda = {
   video: KartuVideo[]
   tools: ItemTools[]
   newsletter: DataNewsletter | null
+  /** Global iklan: blok Slot iklan hanya menjadi bagian bila slotnya aktif (`pilihSlot`). */
+  iklan?: PengaturanIklan | null
 }
 
 type Blok = NonNullable<Beranda['tataLetak']>[number]
@@ -82,7 +86,8 @@ function kartuStrip(relasi: (number | Video)[] | null | undefined): KartuVideo[]
  *   ikut. Bila belum cukup: tulisan terbaru di luar mozaik dengan judul `JUDUL_TERBARU`.
  * - Newsletter hanya bila global `newsletter` aktif; bila tepat setelah tulisan terbaru, ia menjadi
  *   kolom samping blok itu (seperti mockup).
- * - Slot iklan belum dirender (Rencana 8) supaya tidak ada ruang kosong.
+ * - Slot iklan hanya bila ID slotnya aktif di global iklan dengan posisi beranda; selain itu dilewati,
+ *   jadi blok slot yang tidak dipakai tidak memisahkan tulisan terbaru dari newsletter.
  * - Blok yang isinya kosong dilewati.
  */
 export function susunBeranda(tataLetak: Blok[], sumber: SumberBeranda): BagianBeranda[] {
@@ -135,8 +140,11 @@ export function susunBeranda(tataLetak: Blok[], sumber: SumberBeranda): BagianBe
         else bagian.push({ jenis: 'newsletter', id, newsletter })
         break
       }
-      case 'slotIklan':
+      case 'slotIklan': {
+        const slot = pilihSlot(sumber.iklan, 'beranda', blok.idSlot)
+        if (slot) bagian.push({ jenis: 'iklan', id, slot })
         break
+      }
     }
   }
   if (!adaHero) bagian.unshift({ jenis: 'hero', id: 'hero-bawaan', ...HERO_BAWAAN })

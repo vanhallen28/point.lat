@@ -2,11 +2,14 @@ import { ChipPilar } from '@/components/dasar/ChipPilar'
 import { Ikon } from '@/components/dasar/Ikon'
 import { JsonLd } from '@/components/dasar/JsonLd'
 import { RemahRoti } from '@/components/dasar/RemahRoti'
+import { SlotIklan } from '@/components/iklan/SlotIklan'
 import { BlokSumber } from '@/components/artikel/BlokSumber'
 import { Catatan } from '@/components/artikel/Catatan'
 import { Faq } from '@/components/artikel/Faq'
 import { IsiArtikel } from '@/components/isi/IsiArtikel'
 import type { Hasil, Kalkulator as DataKalkulator } from '@/modules/hitung'
+import { pilihSlot } from '@/modules/iklan/aturan'
+import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import { tanggalIndonesia } from '@/modules/konten/artikel'
 import type { DataTool } from '@/modules/konten/tipe'
 import { jsonLd, remahRoti } from '@/modules/seo/jsonld'
@@ -23,9 +26,22 @@ export const ID_KALKULATOR = 'kalkulator'
  * Halaman `/tools/{slug}` (spesifikasi §4): kalkulator di atas lipatan dengan hasil besar, lalu artikel
  * penjelasan rumus, angka aturan yang dipakai, catatan pilar, sumber aturan, dan FAQ. JSON-LD
  * WebApplication dari modul SEO. Kalkulator menghitung di browser; tanpa JavaScript, form dan hasil
- * contoh dari server tetap tampil.
+ * contoh dari server tetap tampil. Slot iklan tools (spesifikasi §11) setelah penjelasan rumus: di luar
+ * kalkulator dan tidak berdempetan dengan tombolnya.
  */
-export function HalamanTool({ tool, kalkulator, contoh, situs }: { tool: DataTool; kalkulator: DataKalkulator; contoh: Hasil | null; situs: Situs }) {
+export function HalamanTool({
+  tool,
+  kalkulator,
+  contoh,
+  situs,
+  iklan = null,
+}: {
+  tool: DataTool
+  kalkulator: DataKalkulator
+  contoh: Hasil | null
+  situs: Situs
+  iklan?: PengaturanIklan | null
+}) {
   const masukan = { jenis: 'tools', doc: tool.seo } as const
   const pesan = kalkulator.pesan ?? (contoh && !contoh.ok ? contoh.pesan : null)
   return (
@@ -69,6 +85,7 @@ export function HalamanTool({ tool, kalkulator, contoh, situs }: { tool: DataToo
 
       <div className={gaya.badan}>
         <IsiArtikel isi={tool.penjelasan} cloudName={situs.cloudName} />
+        <SlotIklan slot={pilihSlot(iklan, 'tools')} />
         <AturanTool dasar={kalkulator.dasar} />
         <Catatan teks={tool.pilar?.disclaimer ?? null} />
         <BlokSumber sumber={tool.sumber} />

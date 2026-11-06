@@ -158,10 +158,10 @@ export const muatCari = unstable_cache(async (kueri: string) => cariArtikel(awai
 /**
  * Beranda. Tag `beranda` dibuang saat global beranda atau newsletter disimpan dan saat artikel, pilar,
  * video, atau tools terbit (`tagRevalidasi`); `media` untuk poster video; `analitik` setiap sinkron
- * Search Analytics ("Paling dicari pekan ini").
+ * Search Analytics ("Paling dicari pekan ini"); `iklan` saat global iklan disimpan (blok Slot iklan).
  */
 export const muatBeranda = unstable_cache(async () => ambilBeranda(await payload()), ['konten', 'beranda'], {
-  tags: [TAG.beranda, TAG.media, TAG.analitik],
+  tags: [TAG.beranda, TAG.media, TAG.analitik, TAG.iklan],
   revalidate: SEJAM,
 })
 

@@ -84,7 +84,7 @@ export const BlokSlotIklan: Block = {
       name: 'idSlot',
       type: 'text',
       required: true,
-      admin: { description: 'ID slot dari pengaturan iklan (Rencana 8).' },
+      admin: { description: 'ID slot di global Iklan dengan posisi Beranda. Slot yang tidak aktif tidak ditampilkan.' },
     },
   ],
 }

@@ -277,3 +277,58 @@ test('menarik persetujuan: Hanya yang perlu setelah Izinkan semua menghapus cook
   expect(catatan.skrip).toHaveLength(1)
   expect(await iklanTiruan(page)).toBeNull()
 })
+
+test('iklan rubrik setelah daftar tulisan, iklan tools setelah penjelasan dan di luar kalkulator, iklan beranda di tempat blok Slot iklan', async ({ page }) => {
+  await sudahMemilih(page.context(), 'semua')
+  await cegatIklan(page)
+  const kotak = async (lokasi: ReturnType<Page['locator']>) => (await lokasi.boundingBox())!
+
+  await page.goto('/uang-karier')
+  const rubrik = page.locator('[data-slot-iklan="rubrik"]')
+  await expect(rubrik).toBeVisible()
+  const tulisan = await kotak(page.getByRole('region', { name: 'Tulisan terbaru' }))
+  expect((await kotak(rubrik)).y).toBeGreaterThan(tulisan.y + tulisan.height)
+
+  await page.goto('/tools/gaji-bersih')
+  const tools = page.locator('[data-slot-iklan="tools"]')
+  await expect(tools).toBeVisible()
+  await expect(page.locator('#kalkulator [data-slot-iklan]')).toHaveCount(0)
+  const kalkulator = await kotak(page.locator('#kalkulator'))
+  expect((await kotak(tools)).y).toBeGreaterThan(kalkulator.y + kalkulator.height)
+
+  await page.goto('/')
+  const beranda = page.locator('[data-slot-iklan="beranda-samping"]')
+  await expect(beranda).toBeVisible()
+  expect(await kotak(beranda.locator('[data-kotak-iklan]'))).toMatchObject({ width: 320, height: 100 })
+  const populer = await kotak(page.getByRole('region', { name: 'Paling dicari pekan ini' }))
+  const newsletter = await kotak(page.getByRole('complementary', { name: 'Newsletter' }))
+  expect((await kotak(beranda)).y).toBeGreaterThan(Math.max(populer.y + populer.height, newsletter.y + newsletter.height))
+})
+
+test('jarak slot iklan beranda sama dengan jarak antarbagian lain (56 px) di 375 dan 1440 px', async ({ page }) => {
+  await sudahMemilih(page.context(), 'semua')
+  await cegatIklan(page)
+  for (const lebar of [375, 1440]) {
+    await page.setViewportSize({ width: lebar, height: 900 })
+    await page.goto('/')
+    // Bagian sebelumnya: tulisan terbaru dengan newsletter di kolom sampingnya (di bawahnya di layar sempit).
+    const populer = (await page.getByRole('region', { name: 'Paling dicari pekan ini' }).boundingBox())!
+    const newsletter = (await page.getByRole('complementary', { name: 'Newsletter' }).boundingBox())!
+    const bawah = Math.max(populer.y + populer.height, newsletter.y + newsletter.height)
+    const iklan = (await page.locator('[data-slot-iklan="beranda-samping"]').boundingBox())!
+    expect(Math.round(iklan.y - bawah), `${lebar}px`).toBe(56)
+  }
+})
+
+for (const path of ['/', '/uang-karier', `/${SLUG.panduan}`, '/tools/gaji-bersih']) {
+  test(`halaman ${path} dengan iklan terisi di 375 px lolos axe dan tanpa geser horizontal`, async ({ page }) => {
+    await sudahMemilih(page.context(), 'semua')
+    await cegatIklan(page)
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto(path)
+    await gulirSampaiBawah(page)
+    await expect(page.locator('[data-slot-iklan] ins[data-ad-status="filled"]').first()).toBeAttached()
+    await periksaTanpaGeserHorizontal(page)
+    await periksaAxe(page)
+  })
+}

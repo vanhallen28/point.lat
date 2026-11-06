@@ -1,5 +1,6 @@
 import type { TipeArtikel, ToolId, WarnaPilar } from '@/lib/konstanta'
 import type { ParameterTersimpan, TeksIsian } from '@/modules/hitung'
+import type { SlotSiap } from '@/modules/iklan/tipe'
 import type { IsiDokumen } from '@/modules/seo/lexical'
 import type { ArtikelSeo, HalamanSeo, PenulisSeo, PilarSeo, SubkategoriSeo, ToolsSeo, VideoSeo } from '@/modules/seo/tipe'
 import type { Video } from '@/payload-types'
@@ -159,3 +160,4 @@ export type BagianBeranda =
   | { jenis: 'video'; id: string; judul: string; video: KartuVideo[] }
   | { jenis: 'terbaru'; id: string; judul: string; artikel: KartuArtikel[]; newsletter: DataNewsletter | null }
   | { jenis: 'newsletter'; id: string; newsletter: DataNewsletter }
+  | { jenis: 'iklan'; id: string; slot: SlotSiap }

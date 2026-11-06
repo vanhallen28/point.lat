@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import { daftarPopuler, HERO_BAWAAN, JUDUL_POPULER, JUDUL_TERBARU, susunBeranda, susunNewsletter, type SumberBeranda } from '@/modules/konten/beranda'
 import type { KartuArtikel, KartuVideo } from '@/modules/konten/tipe'
 import type { Artikel, Beranda, Media, Pilar, Video } from '@/payload-types'
@@ -52,7 +53,7 @@ describe('susunNewsletter', () => {
 })
 
 describe('susunBeranda', () => {
-  it('urutan editor dipertahankan; mozaik tanpa draf, dengan tools; video cadangan terbaru; iklan belum dirender', () => {
+  it('urutan editor dipertahankan; mozaik tanpa draf, dengan tools; video cadangan terbaru; slot iklan tanpa pengaturan iklan dilewati', () => {
     const bagian = susunBeranda([blok.hero, blok.mozaik, blok.video, blok.palingDibaca, blok.newsletter, blok.iklan], sumber)
     expect(bagian.map((b) => b.jenis)).toEqual(['hero', 'mozaik', 'video', 'terbaru'])
     expect(bagian[0]).toEqual({ jenis: 'hero', id: 'h', judul: 'Intinya dulu.', subjudul: 'Uang, karier, dan kesehatan.', placeholder: 'misal: cara hitung THR' })
@@ -87,6 +88,24 @@ describe('susunBeranda', () => {
     const bagian = susunBeranda([blok.hero, { ...blok.newsletter, judul: 'Langganan intinya' }], sumber)
     expect(bagian[1]).toEqual({ jenis: 'newsletter', id: 'n', newsletter: { ...newsletter, judul: 'Langganan intinya' } })
     expect(susunBeranda([blok.hero, blok.newsletter], { ...sumber, newsletter: null })).toHaveLength(1)
+  })
+
+  it('slot iklan hanya bila ID slotnya aktif di global iklan; slot yang dilewati tidak memisahkan tulisan terbaru dari newsletter', () => {
+    const iklan: PengaturanIklan = {
+      aktif: true,
+      penyedia: 'adsense',
+      idPenerbit: 'ca-pub-0000000000000000',
+      modeUji: false,
+      adsTxtTambahan: null,
+      slot: [{ id: 'beranda-samping', posisi: 'beranda', ukuran: 'banner', unit: '5555555555', aktif: true }],
+    }
+    const tata = [blok.hero, blok.palingDibaca, blok.iklan, blok.newsletter]
+    const bagian = susunBeranda(tata, { ...sumber, iklan })
+    expect(bagian.map((b) => b.jenis)).toEqual(['hero', 'terbaru', 'iklan', 'newsletter'])
+    expect(bagian[2]).toMatchObject({ jenis: 'iklan', id: 'i', slot: { id: 'beranda-samping', lebar: 320, tinggi: 100, unit: '5555555555' } })
+    const mati = susunBeranda(tata, { ...sumber, iklan: { ...iklan, slot: [{ ...iklan.slot[0], aktif: false }] } })
+    expect(mati.map((b) => b.jenis)).toEqual(['hero', 'terbaru'])
+    expect(mati[1]).toMatchObject({ jenis: 'terbaru', newsletter })
   })
 
   it('tanpa hero: hero bawaan di atas; hero kedua dibuang; blok kosong dilewati', () => {

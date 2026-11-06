@@ -3,6 +3,7 @@ import type { Payload, Where } from 'payload'
 import type { Artikel } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
 import { sumberParameter } from '@/modules/hitung'
+import { ambilIklan } from '@/modules/iklan/data'
 
 import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
 import { MAKS_TERBARU_BERANDA, MAKS_VIDEO_BERANDA, susunBeranda, susunNewsletter } from './beranda'
@@ -388,6 +389,7 @@ export async function ambilBeranda(payload: Payload): Promise<BagianBeranda[]> {
     video: await kartuVideoTerbit(payload, [], MAKS_VIDEO_BERANDA),
     tools: (await ambilTools(payload)).flatMap((k) => k.tools),
     newsletter: susunNewsletter(newsletter),
+    iklan: await ambilIklan(payload),
   })
 }
 

@@ -1,8 +1,11 @@
 import { JsonLd } from '@/components/dasar/JsonLd'
 import { RemahRoti } from '@/components/dasar/RemahRoti'
 import { Tautan } from '@/components/dasar/Tautan'
+import { SlotIklan } from '@/components/iklan/SlotIklan'
 import { IsiArtikel } from '@/components/isi/IsiArtikel'
 import { DaftarKartu } from '@/components/kartu/KartuArtikel'
+import { pilihSlot } from '@/modules/iklan/aturan'
+import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import type { DataRubrik } from '@/modules/konten/tipe'
 import { jsonLd, remahRoti } from '@/modules/seo/jsonld'
 import type { Situs } from '@/modules/seo/tipe'
@@ -11,9 +14,10 @@ import gaya from './Rubrik.module.css'
 
 /**
  * Halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`: kepala berwarna pilar (nama selalu
- * tertulis), navigasi subkategori, intro pilar dari CMS, lalu kartu tulisan terbaru.
+ * tertulis), navigasi subkategori, intro pilar dari CMS, lalu kartu tulisan terbaru. Slot iklan rubrik
+ * (spesifikasi §11) setelah daftar tulisan, jauh dari navigasi subkategori.
  */
-export function HalamanRubrik({ rubrik, situs }: { rubrik: DataRubrik; situs: Situs }) {
+export function HalamanRubrik({ rubrik, situs, iklan = null }: { rubrik: DataRubrik; situs: Situs; iklan?: PengaturanIklan | null }) {
   const subkategori = rubrik.seo.jenis === 'subkategori'
   return (
     <div className={`kontainer ${gaya.halaman}`}>
@@ -48,6 +52,7 @@ export function HalamanRubrik({ rubrik, situs }: { rubrik: DataRubrik; situs: Si
           <p className={gaya.kosong}>Belum ada tulisan di rubrik ini. Tulisan baru tampil di sini setelah terbit.</p>
         )}
       </section>
+      <SlotIklan slot={pilihSlot(iklan, 'rubrik')} />
     </div>
   )
 }

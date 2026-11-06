@@ -1,4 +1,5 @@
 import { JsonLd } from '@/components/dasar/JsonLd'
+import { SlotIklan } from '@/components/iklan/SlotIklan'
 import type { BagianBeranda } from '@/modules/konten/tipe'
 import { jsonLd } from '@/modules/seo/jsonld'
 import type { Situs } from '@/modules/seo/tipe'
@@ -13,7 +14,8 @@ import { TerbaruBeranda } from './TerbaruBeranda'
 /**
  * Beranda "Kartu Intinya": bagian dirender sesuai urutan editor. Setiap bagian membawa kontainernya
  * sendiri (strip video selebar layar) dan jarak atas yang sama, jadi urutan apa pun tidak membuat
- * celah ganda.
+ * celah ganda. Slot iklan memakai kelas jarak yang sama dan tidak menempati ruang sebelum pengunjung
+ * memilih Izinkan semua.
  */
 export function Beranda({ bagian, situs }: { bagian: BagianBeranda[]; situs: Situs }) {
   return (
@@ -35,6 +37,8 @@ export function Beranda({ bagian, situs }: { bagian: BagianBeranda[]; situs: Sit
                 <KotakNewsletter newsletter={b.newsletter} id={b.id} lepas />
               </div>
             )
+          case 'iklan':
+            return <SlotIklan key={b.id} slot={b.slot} className={`kontainer ${gaya.bagian}`} />
         }
       })}
     </>

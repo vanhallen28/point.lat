@@ -49,7 +49,7 @@ export default async function Halaman({ params }: Props) {
     case 'artikel':
       return <HalamanArtikel artikel={hasil.artikel} situs={await muatSitus()} iklan={await muatIklan()} />
     case 'rubrik':
-      return <HalamanRubrik rubrik={hasil.rubrik} situs={await muatSitus()} />
+      return <HalamanRubrik rubrik={hasil.rubrik} situs={await muatSitus()} iklan={await muatIklan()} />
     case 'halaman':
       return <HalamanStatis halaman={hasil.halaman} situs={await muatSitus()} />
     default:
