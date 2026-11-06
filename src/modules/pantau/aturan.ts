@@ -1,4 +1,4 @@
-import { besokPasifik, HARI, JAM } from '@/modules/indexer/aturan'
+import { besokPasifik, HARI, JAM, MENIT } from '@/modules/indexer/aturan'
 
 import type {
   BarisAnalitik,
@@ -186,6 +186,29 @@ export type HasilTugas = 'berhasil' | 'dilewati' | 'gagal' | 'kuota-habis'
 export function jadwalTugas(hasil: HasilTugas, sekarang: Date): Date {
   if (hasil === 'gagal') return new Date(sekarang.getTime() + JAM)
   return besokPasifik(sekarang)
+}
+
+/**
+ * Jeda minimal antara dua pindai tautan yang diminta manual ("Pindai ulang sekarang"), dihitung dari mulai
+ * pindai terakhir (manual atau cron). Satu pindai membaca semua konten terbit dan memeriksa sampai 10 tautan
+ * luar, jadi klik berulang dibatasi tanpa menghalangi pemeriksaan ulang setelah tautan diperbaiki.
+ */
+export const JEDA_PINDAI_MANUAL_MS = 10 * MENIT
+
+export type BatasPindai = { boleh: true } | { boleh: false; alasan: 'berjalan' | 'jeda'; bolehLagi: Date }
+
+/**
+ * Apakah "Pindai ulang sekarang" boleh dijalankan: tidak sedang berjalan (sewa tugas masih berlaku), dan
+ * pindai terakhir dimulai lebih dari `JEDA_PINDAI_MANUAL_MS` lalu. `tugas`: baris `tugas-seo` jenis `tautan`.
+ */
+export function batasPindaiManual(
+  tugas: { status?: string | null; mulai?: string | null; berikutnya?: string | null } | null,
+  sekarang: Date,
+): BatasPindai {
+  const berikutnya = tugas?.berikutnya ? new Date(tugas.berikutnya) : null
+  if (tugas?.status === 'berjalan' && berikutnya && berikutnya > sekarang) return { boleh: false, alasan: 'berjalan', bolehLagi: berikutnya }
+  const jeda = tugas?.mulai ? new Date(tugas.mulai).getTime() + JEDA_PINDAI_MANUAL_MS : 0
+  return jeda > sekarang.getTime() ? { boleh: false, alasan: 'jeda', bolehLagi: new Date(jeda) } : { boleh: true }
 }
 
 /**

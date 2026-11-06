@@ -45,7 +45,7 @@ export async function DashboardSeo({ initPageResult, params, searchParams }: Adm
             <BagianSearchConsole analitik={data.analitik} tugas={data.tugas} />
             <BagianStatusIndeks statusIndeks={data.statusIndeks} />
             <BagianLog log={data.log} />
-            <BagianTautan tautan={data.tautan} tugas={data.tugas} />
+            <BagianTautan tautan={data.tautan} tugas={data.tugas} pindai={data.pindai} />
             <BagianYatim yatim={data.yatim} tugas={data.tugas} />
             <Bagian404 log404={data.log404} />
           </div>

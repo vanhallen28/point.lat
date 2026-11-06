@@ -4,6 +4,7 @@ import type { DataDashboard, InfoTugas, TautanBermasalah } from '../dashboard'
 import { teksJumlah, teksPersen, teksPosisi, teksRingkas, teksTanggal, teksWaktu } from '../format'
 import { LABEL_STATUS_TUGAS, LABEL_TUGAS, type JenisTugas } from '../tipe'
 import { GrafikKlik } from './GrafikKlik'
+import { TombolPindaiUlang } from './TombolPindaiUlang'
 
 /** Status tugas harian: kapan terakhir berjalan dan kapan berikutnya; gagal tampil sebagai kotak galat. */
 function StatusTugas({ jenis, info }: { jenis: JenisTugas; info: InfoTugas | null }) {
@@ -193,11 +194,16 @@ const LABEL_TAUTAN: Record<TautanBermasalah['jenis'], string> = {
   'luar-cek': 'Perlu dicek manual',
 }
 
-export function BagianTautan({ tautan, tugas }: Pick<DataDashboard, 'tautan' | 'tugas'>) {
+/**
+ * Tautan rusak dan alamat lama dari pindai harian, dengan tombol "Pindai ulang sekarang" (Rencana 8B) untuk
+ * memeriksa lagi setelah tautan diperbaiki; hasilnya juga memperbarui Halaman yatim.
+ */
+export function BagianTautan({ tautan, tugas, pindai }: Pick<DataDashboard, 'tautan' | 'tugas' | 'pindai'>) {
   return (
     <section className="pantau-bagian pantau-bagian--lebar" aria-labelledby="pantau-tautan">
       <h2 id="pantau-tautan">Tautan rusak</h2>
       <StatusTugas jenis="tautan" info={tugas.tautan} />
+      <TombolPindaiUlang batas={pindai} />
       {tautan.length > 0 ? (
         <ul className="pantau-daftar">
           {tautan.map((t) => (

@@ -346,3 +346,50 @@ html[data-theme='dark'] .pantau {
     font-size: 24px;
   }
 }
+
+// Tombol "Pindai ulang sekarang" (Rencana 8B). Keadaan berjalan dan dibatasi memakai aria-disabled supaya fokus
+// keyboard tetap di tombol; pesannya di role="status".
+.pantau-aksi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--base) * 0.5) calc(var(--base) * 0.75);
+  margin: 0 0 calc(var(--base) * 0.75);
+}
+
+.pantau-aksi__tombol {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--theme-elevation-800);
+  border-radius: 999px;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--theme-elevation-100);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-text);
+    outline-offset: 2px;
+  }
+
+  &[aria-disabled='true'] {
+    border-color: var(--theme-elevation-400);
+    color: var(--theme-elevation-650);
+    cursor: not-allowed;
+  }
+}
+
+.pantau-aksi__pesan {
+  margin: 0;
+  flex: 1 1 16rem;
+  color: var(--theme-text);
+
+  &:empty {
+    display: none;
+  }
+}

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  batasPindaiManual,
   geserTanggal,
   hariSitus,
   hrefDari,
+  JEDA_PINDAI_MANUAL_MS,
   jadwalCekTautan,
   jadwalTugas,
   pathDariUrl,
@@ -103,6 +105,24 @@ describe('jadwal tugas harian', () => {
     expect(jadwalTugas('dilewati', sekarang).toISOString()).toBe('2026-11-05T08:00:00.000Z')
     expect(jadwalTugas('kuota-habis', sekarang).toISOString()).toBe('2026-11-05T08:00:00.000Z')
     expect(jadwalTugas('gagal', sekarang).toISOString()).toBe('2026-11-05T04:00:00.000Z')
+  })
+
+  it('"Pindai ulang sekarang": boleh bila tidak sedang berjalan dan pindai terakhir dimulai lebih dari 10 menit lalu', () => {
+    expect(JEDA_PINDAI_MANUAL_MS).toBe(10 * 60_000)
+    expect(batasPindaiManual(null, sekarang)).toEqual({ boleh: true })
+    expect(batasPindaiManual({ status: 'berhasil', mulai: '2026-11-05T02:50:00.000Z', berikutnya: '2026-11-05T08:00:00.000Z' }, sekarang)).toEqual({ boleh: true })
+    expect(batasPindaiManual({ status: 'berhasil', mulai: '2026-11-05T02:55:00.000Z', berikutnya: '2026-11-05T08:00:00.000Z' }, sekarang)).toEqual({
+      boleh: false,
+      alasan: 'jeda',
+      bolehLagi: new Date('2026-11-05T03:05:00.000Z'),
+    })
+    // Sedang berjalan selama sewa berlaku; sewa yang habis (proses berhenti) tidak menahan.
+    expect(batasPindaiManual({ status: 'berjalan', mulai: '2026-11-05T02:58:00.000Z', berikutnya: '2026-11-05T03:13:00.000Z' }, sekarang)).toEqual({
+      boleh: false,
+      alasan: 'berjalan',
+      bolehLagi: new Date('2026-11-05T03:13:00.000Z'),
+    })
+    expect(batasPindaiManual({ status: 'berjalan', mulai: '2026-11-05T02:40:00.000Z', berikutnya: '2026-11-05T02:55:00.000Z' }, sekarang)).toEqual({ boleh: true })
   })
 
   it('tautan luar dicek ulang seminggu sekali, atau besok bila hasilnya belum pasti', () => {

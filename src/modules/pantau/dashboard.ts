@@ -4,7 +4,7 @@ import { urlAdmin } from '@/lib/admin'
 import { HARI } from '@/modules/indexer/aturan'
 import { LABEL_LANGKAH, LABEL_STATUS_INDEKS, LABEL_STATUS_LOG, STATUS_INDEKS, type StatusIndeks, type StatusLog } from '@/modules/indexer/tipe'
 
-import { geserTanggal, ringkasSitus, tanggalPasifik, type RingkasanSitus } from './aturan'
+import { batasPindaiManual, geserTanggal, ringkasSitus, tanggalPasifik, type RingkasanSitus } from './aturan'
 import type { KoleksiSumber, Sumber } from './tautan'
 import { JENIS_TUGAS, type JenisTugas, type RingkasanHalaman, type StatusTugas } from './tipe'
 
@@ -14,7 +14,7 @@ export const MAKS_LOG_DASHBOARD = 8
 export const MAKS_404_DASHBOARD = 10
 export const MAKS_TEMUAN_DASHBOARD = 50
 
-export type InfoTugas = { status: StatusTugas | null; pesan: string | null; selesai: string | null; berikutnya: string }
+export type InfoTugas = { status: StatusTugas | null; pesan: string | null; mulai: string | null; selesai: string | null; berikutnya: string }
 
 export type TautanSumber = { judul: string; href: string }
 
@@ -28,6 +28,8 @@ export type TautanBermasalah = {
 
 export type DataDashboard = {
   tugas: Record<JenisTugas, InfoTugas | null>
+  /** Tombol "Pindai ulang sekarang": boleh, atau kenapa belum dan kapan boleh lagi (ISO). */
+  pindai: { boleh: true } | { boleh: false; alasan: 'berjalan' | 'jeda'; bolehLagi: string }
   analitik: { sampai: string | null; situs: RingkasanSitus | null; halaman: RingkasanHalaman[]; jumlahHalaman: number }
   statusIndeks: { status: StatusIndeks; label: string; jumlah: number }[]
   log: {
@@ -59,7 +61,7 @@ export async function ambilDashboard(payload: Payload, sekarang = new Date()): P
   const tugas = Object.fromEntries(
     JENIS_TUGAS.map((jenis) => {
       const d = tugasDocs.find((t) => t.jenis === jenis)
-      return [jenis, d ? { status: d.status ?? null, pesan: d.pesan ?? null, selesai: d.selesai ?? null, berikutnya: d.berikutnya } : null]
+      return [jenis, d ? { status: d.status ?? null, pesan: d.pesan ?? null, mulai: d.mulai ?? null, selesai: d.selesai ?? null, berikutnya: d.berikutnya } : null]
     }),
   ) as Record<JenisTugas, InfoTugas | null>
 
@@ -124,8 +126,11 @@ export async function ambilDashboard(payload: Payload, sekarang = new Date()): P
     select: { dari: true },
   })
 
+  const pindai = batasPindaiManual(tugas.tautan, sekarang)
+
   return {
     tugas,
+    pindai: pindai.boleh ? pindai : { ...pindai, bolehLagi: pindai.bolehLagi.toISOString() },
     analitik: {
       sampai,
       situs: sampai ? ringkasSitus(hari.map(({ tanggal, klik, impresi, ctr, posisi }) => ({ tanggal, klik, impresi, ctr, posisi })), sampai) : null,

@@ -1,10 +1,13 @@
 import { createElement as h } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Bagian404, BagianSearchConsole, BagianTautan, BagianYatim } from '@/modules/pantau/admin/BagianDashboard'
 import { ringkasSitus } from '@/modules/pantau/aturan'
 import type { DataDashboard, InfoTugas } from '@/modules/pantau/dashboard'
+
+// Tombol Pindai ulang sekarang (komponen klien) memakai router App Router untuk menyegarkan dashboard.
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: () => {} }) }))
 
 /** Teks yang terlihat: tag dibuang, spasi biasa dirapikan (spasi tak putus dari `Intl` dipertahankan). */
 const teks = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/[ \t\r\n]+/g, ' ').trim()
@@ -13,6 +16,7 @@ const KOSONG: DataDashboard['analitik'] = { sampai: null, situs: null, halaman: 
 const info = (status: InfoTugas['status'], pesan: string): InfoTugas => ({
   status,
   pesan,
+  mulai: '2026-11-05T02:59:00.000Z',
   selesai: '2026-11-05T03:00:00.000Z',
   berikutnya: '2026-11-05T04:00:00.000Z',
 })
@@ -62,14 +66,29 @@ describe('keadaan dashboard SEO', () => {
   it('tautan rusak, halaman yatim, dan 404: daftar dengan tautan perbaikan, atau keadaan kosong yang jelas', () => {
     const t = tugas(null, info('berhasil', '12 tautan dipindai.'))
     const rusak = renderToStaticMarkup(
-      h(BagianTautan, { tautan: [{ jenis: 'rusak', tujuan: '/tidak-ada', pesan: 'Tidak ada halaman.', sumber: [{ judul: 'Cara hitung THR', href: '/admin/collections/artikel/5' }] }], tugas: t }),
+      h(BagianTautan, {
+        tautan: [{ jenis: 'rusak', tujuan: '/tidak-ada', pesan: 'Tidak ada halaman.', sumber: [{ judul: 'Cara hitung THR', href: '/admin/collections/artikel/5' }] }],
+        tugas: t,
+        pindai: { boleh: true },
+      }),
     )
     expect(teks(rusak)).toContain('Rusak /tidak-ada Tidak ada halaman. Ada di Cara hitung THR')
-    expect(teks(renderToStaticMarkup(h(BagianTautan, { tautan: [], tugas: t })))).toContain('Tidak ada tautan rusak di konten terbit.')
+    expect(teks(renderToStaticMarkup(h(BagianTautan, { tautan: [], tugas: t, pindai: { boleh: true } })))).toContain('Tidak ada tautan rusak di konten terbit.')
     expect(teks(renderToStaticMarkup(h(BagianYatim, { yatim: [], tugas: tugas(null) })))).toContain('Belum dipindai. Pindai tautan berjalan otomatis sekali sehari.')
     expect(teks(renderToStaticMarkup(h(BagianYatim, { yatim: [], tugas: t })))).toContain('Semua artikel dan halaman terbit sudah punya tautan masuk.')
     const log404 = renderToStaticMarkup(h(Bagian404, { log404: [{ path: '/jalan-lama', jumlah: 3, terakhir: null, redirect: null }] }))
     expect(log404).toContain('<a href="/admin/collections/redirect/create?dari=%2Fjalan-lama" aria-label="Buat redirect untuk /jalan-lama">Buat redirect</a>')
     expect(teks(renderToStaticMarkup(h(Bagian404, { log404: [] })))).toContain('Belum ada kunjungan ke halaman yang tidak ada.')
+  })
+
+  it('tombol "Pindai ulang sekarang": siap, atau dibatasi dengan alasan dan waktu boleh lagi yang dibacakan role="status"', () => {
+    const t = tugas(null, info('berhasil', '12 tautan dipindai.'))
+    const siap = renderToStaticMarkup(h(BagianTautan, { tautan: [], tugas: t, pindai: { boleh: true } }))
+    expect(siap).toMatch(/<button type="button" class="pantau-aksi__tombol" aria-disabled="false">Pindai ulang sekarang<\/button><p role="status" class="pantau-aksi__pesan"><\/p>/)
+    const jeda = renderToStaticMarkup(h(BagianTautan, { tautan: [], tugas: t, pindai: { boleh: false, alasan: 'jeda', bolehLagi: '2026-11-05T03:09:00.000Z' } }))
+    expect(jeda).toContain('aria-disabled="true"')
+    expect(teks(jeda)).toContain('Pindai tautan baru saja dijalankan. Bisa dipindai lagi mulai 5 Nov 2026, 10.09 WIB.')
+    const berjalan = renderToStaticMarkup(h(BagianTautan, { tautan: [], tugas: t, pindai: { boleh: false, alasan: 'berjalan', bolehLagi: '2026-11-05T03:14:00.000Z' } }))
+    expect(teks(berjalan)).toContain('Pindai tautan sedang berjalan. Hasilnya tampil di sini setelah selesai.')
   })
 })

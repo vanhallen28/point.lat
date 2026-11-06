@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import type { Payload } from 'payload'
 
 import { ambilPengaturanIndexing } from '@/modules/indexer/antrean'
@@ -5,9 +6,10 @@ import type { PengaturanIndexing } from '@/modules/indexer/tipe'
 
 import { adapterPantau, type AdapterPantau } from './adapter'
 import { hapusDataLama, sinkronAnalitik } from './analitik'
-import { jadwalTugas, type HasilTugas } from './aturan'
+import { batasPindaiManual, jadwalTugas, JEDA_PINDAI_MANUAL_MS, type HasilTugas } from './aturan'
+import { teksWaktu } from './format'
 import { periksaTautanLuar, pindaiTautan } from './pindai'
-import { klaimTugas, selesaikanTugas } from './tugas'
+import { klaimTugas, majukanTugas, selesaikanTugas } from './tugas'
 import { JENIS_TUGAS, type JenisTugas, type StatusTugas } from './tipe'
 
 /**
@@ -86,6 +88,54 @@ export async function jalankanPantau(
     if (dicek) ringkasan.tautanDicek = dicek
   }
   return ringkasan
+}
+
+/** Jawaban "Pindai ulang sekarang"; `pesan` siap tampil di dashboard. */
+export type HasilMintaPindai =
+  | { status: 'antre'; diminta: string; pesan: string }
+  | { status: 'dibatasi'; alasan: 'berjalan' | 'jeda'; bolehLagi: string; pesan: string }
+
+/** Pesan untuk pindai yang belum boleh dijalankan lagi. */
+export function pesanBatasPindai(alasan: 'berjalan' | 'jeda', bolehLagi: Date): string {
+  return alasan === 'berjalan'
+    ? 'Pindai tautan sedang berjalan. Hasilnya tampil di sini setelah selesai.'
+    : `Pindai tautan baru saja dijalankan. Bisa dipindai lagi mulai ${teksWaktu(bolehLagi.toISOString())}.`
+}
+
+/**
+ * Tombol "Pindai ulang sekarang" di dashboard SEO (Rencana 8B): memajukan tugas pindai tautan ke sekarang
+ * supaya dijalankan setelah respons (`jalankanPantauSetelahRespons`), bukan di dalam permintaan admin.
+ * Ditolak selama pindai sedang berjalan atau dimulai kurang dari 10 menit lalu.
+ */
+export async function mintaPindai(payload: Payload, opsi: { sekarang?: Date } = {}): Promise<HasilMintaPindai> {
+  const sekarang = opsi.sekarang ?? new Date()
+  if (await majukanTugas(payload, 'tautan', sekarang, JEDA_PINDAI_MANUAL_MS)) {
+    return { status: 'antre', diminta: sekarang.toISOString(), pesan: 'Pindai tautan dijalankan sekarang.' }
+  }
+  const { docs } = await payload.find({ collection: 'tugas-seo', where: { jenis: { equals: 'tautan' } }, limit: 1, depth: 0 })
+  const batas = batasPindaiManual(docs[0] ?? null, sekarang)
+  const alasan = batas.boleh ? 'berjalan' : batas.alasan
+  const bolehLagi = batas.boleh ? new Date(sekarang.getTime() + JEDA_PINDAI_MANUAL_MS) : batas.bolehLagi
+  return { status: 'dibatasi', alasan, bolehLagi: bolehLagi.toISOString(), pesan: pesanBatasPindai(alasan, bolehLagi) }
+}
+
+/**
+ * Menjalankan tugas Pantau SEO setelah respons terkirim (`after()` Next), seperti `jalankanSetelahRespons`
+ * Mesin Indexing. Di luar permintaan Next (tes, skrip) galat "outside a request scope" diabaikan dan tugas
+ * menunggu cron; galat tugas dicatat ke log server.
+ */
+export function jalankanPantauSetelahRespons(payload: Payload, tugas: readonly JenisTugas[]): void {
+  try {
+    after(async () => {
+      try {
+        await jalankanPantau(payload, { tugas })
+      } catch (galat) {
+        payload.logger.error({ err: galat, msg: 'Pantau SEO gagal dijalankan setelah permintaan admin.' })
+      }
+    })
+  } catch (galat) {
+    if (!String((galat as Error)?.message).includes('outside a request scope')) throw galat
+  }
 }
 
 export { adapterPantau, pakaiAdapterPantau, type AdapterPantau, type HasilAnalitik } from './adapter'

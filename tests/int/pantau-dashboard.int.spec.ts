@@ -20,6 +20,7 @@ describe('data dashboard SEO', () => {
     await kosongkan(payload)
     expect(await ambilDashboard(payload, T0)).toEqual({
       tugas: { analitik: null, tautan: null },
+      pindai: { boleh: true },
       analitik: { sampai: null, situs: null, halaman: [], jumlahHalaman: 0 },
       statusIndeks: [],
       log: { gagal7Hari: 0, terbaru: [] },
@@ -78,7 +79,7 @@ describe('data dashboard SEO', () => {
 
     const data = await ambilDashboard(payload, T0)
     expect(data.tugas).toEqual({
-      analitik: { status: 'berhasil', pesan: 'Data sampai 2026-11-02.', selesai: T0.toISOString(), berikutnya: '2026-11-05T08:00:00.000Z' },
+      analitik: { status: 'berhasil', pesan: 'Data sampai 2026-11-02.', mulai: null, selesai: T0.toISOString(), berikutnya: '2026-11-05T08:00:00.000Z' },
       tautan: null,
     })
     expect(data.analitik).toMatchObject({ sampai: '2026-11-02', jumlahHalaman: 22, situs: { klik: 60, impresi: 4000, ctr: 0.015, posisi: 6 } })

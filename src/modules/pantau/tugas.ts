@@ -44,3 +44,23 @@ export async function selesaikanTugas(
     depth: 0,
   })
 }
+
+/**
+ * Memajukan tugas ke `sekarang` atas permintaan admin ("Pindai ulang sekarang"): `berikutnya` diisi `sekarang`
+ * hanya bila tugas tidak sedang berjalan (sewa masih berlaku) dan mulai terakhirnya lebih dari `jedaMs` lalu.
+ * Satu `UPDATE ... RETURNING`; tugasnya sendiri tetap diklaim atomik oleh `klaimTugas`, jadi dua permintaan
+ * bersamaan tidak menjalankan pindai dua kali. `false` bila ditolak.
+ */
+export async function majukanTugas(payload: Payload, jenis: JenisTugas, sekarang: Date, jedaMs: number): Promise<boolean> {
+  const db = payload.db.drizzle
+  await db.execute(sql`
+    insert into tugas_seo (jenis, berikutnya, versi) values (${jenis}, ${sekarang.toISOString()}, 0)
+    on conflict (jenis) do nothing`)
+  const { rows } = await db.execute(sql`
+    update tugas_seo set berikutnya = ${sekarang.toISOString()}, updated_at = now()
+    where jenis = ${jenis}
+      and not (status = 'berjalan' and berikutnya > ${sekarang.toISOString()})
+      and (mulai is null or mulai <= ${new Date(sekarang.getTime() - jedaMs).toISOString()})
+    returning id`)
+  return rows.length > 0
+}
