@@ -1,0 +1,6 @@
+// Deskripsi field bawaan Payload (`admin.description`) memakai `--theme-elevation-400`, yang gagal kontras
+// WCAG AA di tema terang. Aturan ini di luar `@layer payload-default`, jadi berlaku di semua form admin
+// (Rencana 8A); tema gelap ikut karena Payload membalik skala elevation.
+.field-description {
+  color: var(--theme-elevation-650);
+}

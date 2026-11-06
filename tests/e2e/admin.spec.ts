@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { cegatCloudinary } from './bantu'
+import { cegatCloudinary, periksaAxe } from './bantu'
 import { ADMIN_E2E, SLUG } from './data'
 
 /**
@@ -39,3 +39,26 @@ test('admin berbahasa Indonesia walau browser meminta bahasa Inggris: menu, daft
   expect(luar).toEqual([])
   await konteks.close()
 })
+
+/**
+ * Deskripsi field bawaan Payload (`admin.description`) memakai `--theme-elevation-400` yang gagal kontras
+ * WCAG AA di tema terang. Satu aturan di `custom.scss` berlaku untuk semua form admin; diperiksa axe di
+ * form artikel dan dua global yang banyak memakai deskripsi, di kedua tema.
+ */
+for (const tema of ['light', 'dark'] as const) {
+  test(`deskripsi field bawaan Payload lolos kontras di tema ${tema === 'light' ? 'terang' : 'gelap'}: form artikel, Asisten AI, dan Pengaturan SEO`, async ({ browser }) => {
+    const konteks = await browser.newContext()
+    await konteks.addCookies([{ name: 'payload-theme', value: tema, domain: 'localhost', path: '/' }])
+    const page = await konteks.newPage()
+    await cegatCloudinary(page)
+    await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+    const { docs } = await (await page.request.get(`/api/artikel?where[slug][equals]=${SLUG.panduan}&depth=0`)).json()
+    for (const path of [`/admin/collections/artikel/${docs[0].id}`, '/admin/globals/asisten-ai', '/admin/globals/pengaturan-seo']) {
+      await page.goto(path)
+      await expect(page.locator('html')).toHaveAttribute('data-theme', tema)
+      await expect(page.locator('.field-description').first()).toBeVisible()
+      await periksaAxe(page, '.field-description')
+    }
+    await konteks.close()
+  })
+}
