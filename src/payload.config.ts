@@ -37,11 +37,15 @@ import { PengaturanSEO } from './globals/PengaturanSEO'
 import { BAHASA_ADMIN } from './lib/bahasa-admin'
 import { opsiPool, pushSkema } from './lib/database'
 import { endpointJalankanJob } from './modules/indexer/endpoint'
+import { jagaDatabase, tolakEnvSalah } from './modules/lingkungan'
 import { klienMedia } from './modules/media'
 import { mediaCloudinary } from './modules/media/plugin'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+// Deploy Vercel dengan env yang salah berhenti di sini: sebelum migrasi, build, atau fungsi menyentuh database.
+tolakEnvSalah()
 
 export default buildConfig({
   admin: {
@@ -104,6 +108,8 @@ export default buildConfig({
     pool: opsiPool(),
     push: pushSkema(),
   }),
+  // Deploy produksi dan pratinjau menandai databasenya; database milik lingkungan lain menghentikan proses.
+  onInit: (payload) => jagaDatabase(payload),
   sharp,
   plugins: [mediaCloudinary({ klien: klienMedia })],
 })
