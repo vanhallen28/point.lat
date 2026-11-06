@@ -33,6 +33,7 @@ import { Footer } from './globals/Footer'
 import { Header } from './globals/Header'
 import { Newsletter } from './globals/Newsletter'
 import { PengaturanSEO } from './globals/PengaturanSEO'
+import { BAHASA_ADMIN } from './lib/bahasa-admin'
 import { endpointJalankanJob } from './modules/indexer/endpoint'
 import { klienMedia } from './modules/media'
 import { mediaCloudinary } from './modules/media/plugin'
@@ -43,6 +44,10 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: Pengguna.slug,
+    // Avatar bawaan Payload memanggil Gravatar dengan hash email admin (pihak ketiga); ikon bawaan cukup.
+    avatar: 'default',
+    // Tanggal di admin seperti tulisan Indonesia (6 November 2026, 08.21), bukan bawaan "November ke-6 2026, 8:21 AM".
+    dateFormat: 'd MMMM yyyy, HH.mm',
     importMap: { baseDir: path.resolve(dirname) },
     components: {
       // Dashboard SEO (spesifikasi §8) di /admin/seo, dengan tautan di atas menu admin.
@@ -87,6 +92,8 @@ export default buildConfig({
   // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
   endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),
+  // Admin hanya berbahasa Indonesia (keputusan pemilik, Rencana 8A).
+  i18n: BAHASA_ADMIN,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
   db: postgresAdapter({

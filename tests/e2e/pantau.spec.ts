@@ -13,8 +13,9 @@ test('log 404: "Buat redirect" membuka form redirect dengan path terisi; setelah
   await page.getByRole('link', { name: `Buat redirect untuk ${path}` }).click()
   await expect(page).toHaveURL(/\/admin\/collections\/redirect\/create\?dari=/)
   await expect(page.getByLabel('Dari')).toHaveValue(path)
-  await page.getByLabel('Ke').fill('/tentang')
-  await page.getByRole('button', { name: 'Save' }).click()
+  // `exact`: tautan "Keluar" di menu admin juga berlabel diawali "Ke".
+  await page.getByLabel('Ke', { exact: true }).fill('/tentang')
+  await page.getByRole('button', { name: 'Simpan' }).click()
   await expect(page).toHaveURL(/\/admin\/collections\/redirect\/\d+/)
 
   await page.goto(daftar)
@@ -35,10 +36,10 @@ test('dashboard SEO dari menu admin: performa Google, halaman teratas, status in
   expect((await page.request.get('/api/jobs/run')).status()).toBe(200)
   await page.goto('/admin')
   // Server merender menu admin terbuka; saat hidrasi (kelas nav--nav-hydrated) Payload menutupnya di layar 1440 px
-  // ke bawah. Tombol Open Menu baru diklik setelah keadaan itu tetap, supaya klik tidak hilang sebelum hidrasi.
+  // ke bawah. Tombol Buka Menu baru diklik setelah keadaan itu tetap, supaya klik tidak hilang sebelum hidrasi.
   const nav = page.locator('.nav')
   await expect(nav).toHaveClass(/nav--nav-hydrated/)
-  if (!(await nav.getAttribute('class'))?.includes('nav--nav-open')) await page.getByRole('button', { name: 'Open Menu' }).click()
+  if (!(await nav.getAttribute('class'))?.includes('nav--nav-open')) await page.getByRole('button', { name: 'Buka Menu' }).click()
   await expect(nav).toHaveClass(/nav--nav-open/)
   await page.getByRole('link', { name: 'Dashboard SEO' }).click()
   await expect(page).toHaveURL(/\/admin\/seo$/)

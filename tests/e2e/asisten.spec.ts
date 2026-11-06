@@ -67,7 +67,7 @@ test('artikel yang memakai draf AI: tombol terbit nonaktif sampai ketiga butir r
   const terbit = page.locator('#action-save')
   await expect(terbit).toBeDisabled()
   await periksaTanpaGeserHorizontal(page)
-  await expect(terbit).toHaveAccessibleName('Publish changes. Artikel ini memakai draf AI. Centang ketiga butir Review sebelum terbit di sidebar dulu.')
+  await expect(terbit).toHaveAccessibleName('Publikasikan perubahan. Artikel ini memakai draf AI. Centang ketiga butir Review sebelum terbit di sidebar dulu.')
   await expect(page.getByRole('checkbox', { name: 'Memakai draf AI' })).toBeDisabled()
   // Payload baru merender isi grup saat grup terlihat di layar (RenderIfInViewport).
   await page.locator('#field-reviewAi').scrollIntoViewIfNeeded()
@@ -81,7 +81,7 @@ test('artikel yang memakai draf AI: tombol terbit nonaktif sampai ketiga butir r
   await expect(terbit).toBeDisabled()
   await page.getByRole('checkbox', { name: 'Insight atau pengalaman penulis sudah ditambahkan', exact: true }).check()
   await expect(terbit).toBeEnabled()
-  await expect(terbit).toHaveAccessibleName('Publish changes')
+  await expect(terbit).toHaveAccessibleName('Publikasikan perubahan')
 })
 
 test('artikel tanpa draf AI: checklist review tidak tampil dan tombol terbit aktif', async ({ page }) => {

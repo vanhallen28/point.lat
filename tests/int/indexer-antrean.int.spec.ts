@@ -82,8 +82,8 @@ describe('kabari: antrean, log revalidasi, dan status indeks', () => {
     const editor = await payload.create({ collection: 'pengguna', data: pengguna() })
     expect(editor.peran).toBe('editor')
     for (const collection of ['log-indexing', 'antrean-indexing', 'status-indeks'] as const) {
-      await expect(payload.find({ collection, overrideAccess: false, user: { ...editor, collection: 'pengguna' } })).rejects.toThrow('You are not allowed to perform this action.')
-      await expect(payload.find({ collection, overrideAccess: false })).rejects.toThrow('You are not allowed to perform this action.')
+      await expect(payload.find({ collection, overrideAccess: false, user: { ...editor, collection: 'pengguna' } })).rejects.toThrow('Anda tidak diizinkan melakukan tindakan ini.')
+      await expect(payload.find({ collection, overrideAccess: false })).rejects.toThrow('Anda tidak diizinkan melakukan tindakan ini.')
     }
   })
 })
