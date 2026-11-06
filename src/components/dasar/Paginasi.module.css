@@ -1,0 +1,87 @@
+/*
+ * Navigasi halaman daftar tulisan. Layar sempit: "Sebelumnya" dan "Berikutnya" berbagi satu baris selebar
+ * kontainer, nomor halaman di baris berikutnya. Mulai 768 px: arah di kiri, nomor di kanan, satu baris.
+ */
+.paginasi {
+  display: grid;
+  gap: var(--ruang-3);
+}
+
+.posisi {
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+}
+
+.baris {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ruang-3) var(--ruang-4);
+}
+
+.arah,
+.nomor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruang-2);
+  padding: 0;
+  list-style: none;
+}
+
+.arah {
+  flex: 1 1 100%;
+}
+
+.arah li {
+  flex: 1 1 0;
+}
+
+.arah .tombol {
+  width: 100%;
+  gap: var(--ruang-1);
+  padding: 0 var(--ruang-4);
+}
+
+.tombol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--sentuh-min);
+  min-height: var(--sentuh-min);
+  padding: 0 var(--ruang-3);
+  border: var(--garis-tipis) solid var(--garis);
+  border-radius: var(--radius-pil);
+  font-size: var(--teks-kecil);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.tombol:hover {
+  text-decoration: underline;
+}
+
+.tombol:active {
+  transform: scale(0.97);
+}
+
+.tombol[aria-current='page'] {
+  background: var(--tombol);
+  color: var(--tombol-teks);
+}
+
+.jeda {
+  min-width: var(--ruang-6);
+  color: var(--teks-sekunder);
+  text-align: center;
+}
+
+@media (min-width: 48rem) {
+  .arah,
+  .arah li {
+    flex: none;
+  }
+}

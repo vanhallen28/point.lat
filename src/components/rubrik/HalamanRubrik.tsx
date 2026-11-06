@@ -1,4 +1,5 @@
 import { JsonLd } from '@/components/dasar/JsonLd'
+import { Paginasi } from '@/components/dasar/Paginasi'
 import { RemahRoti } from '@/components/dasar/RemahRoti'
 import { Tautan } from '@/components/dasar/Tautan'
 import { SlotIklan } from '@/components/iklan/SlotIklan'
@@ -14,8 +15,9 @@ import gaya from './Rubrik.module.css'
 
 /**
  * Halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`: kepala berwarna pilar (nama selalu
- * tertulis), navigasi subkategori, intro pilar dari CMS, lalu kartu tulisan terbaru. Slot iklan rubrik
- * (spesifikasi §11) setelah daftar tulisan, jauh dari navigasi subkategori.
+ * tertulis), navigasi subkategori, intro pilar dari CMS, lalu kartu tulisan terbaru dan navigasi halaman
+ * tulisan (`/halaman/{n}`, judul bagian "Tulisan lebih lama" mulai halaman 2). Slot iklan rubrik
+ * (spesifikasi §11) setelah daftar tulisan dan navigasinya, jauh dari navigasi subkategori.
  */
 export function HalamanRubrik({ rubrik, situs, iklan = null }: { rubrik: DataRubrik; situs: Situs; iklan?: PengaturanIklan | null }) {
   const subkategori = rubrik.seo.jenis === 'subkategori'
@@ -44,13 +46,14 @@ export function HalamanRubrik({ rubrik, situs, iklan = null }: { rubrik: DataRub
       {rubrik.intro && <IsiArtikel isi={rubrik.intro} cloudName={situs.cloudName} />}
       <section aria-labelledby="tulisan-rubrik" className={gaya.tulisan}>
         <h2 id="tulisan-rubrik" className={gaya.subjudul}>
-          Tulisan terbaru
+          {rubrik.paginasi.nomor > 1 ? 'Tulisan lebih lama' : 'Tulisan terbaru'}
         </h2>
         {rubrik.artikel.length > 0 ? (
           <DaftarKartu kartu={rubrik.artikel} />
         ) : (
           <p className={gaya.kosong}>Belum ada tulisan di rubrik ini. Tulisan baru tampil di sini setelah terbit.</p>
         )}
+        <Paginasi paginasi={rubrik.paginasi} />
       </section>
       <SlotIklan slot={pilihSlot(iklan, 'rubrik')} />
     </div>

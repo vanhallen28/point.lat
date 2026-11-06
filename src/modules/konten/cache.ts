@@ -101,11 +101,12 @@ export const muatPopuler = unstable_cache(async (jumlah: number) => ambilPopuler
 })
 
 /**
- * Halaman rubrik pilar dan subkategori. Intro pilar bisa menautkan dokumen apa pun, jadi tagnya sama
- * dengan halaman artikel.
+ * Halaman rubrik pilar dan subkategori, halaman ke-`nomor` tulisannya. Intro pilar bisa menautkan dokumen
+ * apa pun, jadi tagnya sama dengan halaman artikel; tag `artikel` juga menggeser semua halaman tulisan
+ * saat ada tulisan terbit atau dihapus.
  */
 export const muatRubrik = unstable_cache(
-  async (pilarSlug: string, subSlug: string | null) => ambilRubrik(await payload(), pilarSlug, subSlug),
+  async (pilarSlug: string, subSlug: string | null, nomor: number) => ambilRubrik(await payload(), pilarSlug, subSlug, nomor),
   ['konten', 'rubrik'],
   { tags: TAG_ARTIKEL, revalidate: SEJAM },
 )

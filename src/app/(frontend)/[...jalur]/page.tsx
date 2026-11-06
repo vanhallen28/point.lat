@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { permanentRedirect } from 'next/navigation'
 import { cache } from 'react'
 
 import { HalamanArtikel } from '@/components/artikel/HalamanArtikel'
@@ -12,8 +13,9 @@ type Props = { params: Promise<{ jalur: string[] }> }
 
 /**
  * Semua path publik yang tidak ditangani rute yang lebih spesifik: artikel `/{slug}`, rubrik
- * `/{pilar}` dan `/{pilar}/{subkategori}`, halaman statis `/{slug}`. Halaman dirender saat pertama diminta lalu disimpan
- * (ISR); tag cache data membuangnya saat konten berubah. Path tanpa dokumen diteruskan ke
+ * `/{pilar}` dan `/{pilar}/{subkategori}` beserta halaman tulisan berikutnya (`/halaman/{n}`), halaman statis
+ * `/{slug}`. Halaman dirender saat pertama diminta lalu disimpan (ISR); tag cache data membuangnya saat
+ * konten berubah. `/halaman/1` dialihkan permanen ke alamat rubrik. Path tanpa dokumen diteruskan ke
  * `tanganiTidakAda` (redirect dari CMS atau 404), hasilnya juga disimpan.
  */
 export function generateStaticParams() {
@@ -52,6 +54,8 @@ export default async function Halaman({ params }: Props) {
       return <HalamanRubrik rubrik={hasil.rubrik} situs={await muatSitus()} iklan={await muatIklan()} />
     case 'halaman':
       return <HalamanStatis halaman={hasil.halaman} situs={await muatSitus()} />
+    case 'alihkan':
+      return permanentRedirect(hasil.ke)
     default:
       return tanganiTidakAda(pathDariSegmen(jalur))
   }

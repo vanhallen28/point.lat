@@ -19,6 +19,7 @@ import {
   KLIK_CONTOH,
   KUNCI_INDEXNOW,
   p,
+  PAGINASI_E2E,
   PENERBIT_E2E,
   SLUG,
   SLUG_HALAMAN,
@@ -92,6 +93,31 @@ await payload.update({
 })
 
 const dasar = { _status: 'published' as const, penulis: redaksi.id, gambarUtama: slip.id }
+
+// Tulisan lama untuk paginasi, dibuat sebelum tulisan lain dan bertanggal terbit 2025: daftar artikel admin halaman
+// pertama, tulisan terbaru, news sitemap, dan rubrik Uang & Karier tetap sama seperti sebelum Rencana 8B.
+const persiapan = await payload.create({
+  collection: 'subkategori',
+  data: { nama: PAGINASI_E2E.namaSub, slug: PAGINASI_E2E.sub, pilar: pilar[PAGINASI_E2E.pilar], deskripsi: 'Latihan soal dan strategi ujian masuk kuliah.' },
+})
+for (let i = 1; i <= PAGINASI_E2E.jumlah; i++) {
+  const nomor = String(i).padStart(2, '0')
+  await payload.create({
+    collection: 'artikel',
+    data: {
+      ...dasar,
+      judul: `Latihan soal penalaran umum ${nomor}`,
+      slug: `latihan-soal-penalaran-umum-${nomor}`,
+      tipe: 'panduan',
+      pilar: pilar[PAGINASI_E2E.pilar],
+      subkategori: persiapan.id,
+      terbitPada: new Date(Date.UTC(2025, 0, i)).toISOString(),
+      deck: `Paket latihan ke-${i}: sepuluh soal penalaran umum beserta pembahasannya.`,
+      intinya: [{ poin: 'Kerjakan dalam 15 menit tanpa kalkulator.' }, { poin: 'Cocokkan jawaban dengan pembahasan di akhir.' }],
+      isi: isi(p('Baca setiap soal sampai selesai sebelum memilih jawaban.')),
+    },
+  })
+}
 
 // Video vertikal: file MP4 kecil lewat klien palsu (1080x1920, 30 detik). Tanpa poster unggahan,
 // kartu memakai frame video dari Cloudinary.

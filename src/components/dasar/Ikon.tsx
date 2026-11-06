@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /*
  * Ikon stroke dari Lucide 1.68.0 (https://lucide.dev), disalin sebagai path supaya tanpa dependensi
  * dan tanpa JavaScript klien. Lisensi: ISC, Copyright (c) 2026 Lucide Icons and Contributors;
- * arrow-right, arrow-up-right, calendar, chevron-down, chevron-right, clock, info, plus, dan x berasal dari Feather
+ * arrow-right, arrow-up-right, calendar, chevron-down, chevron-left, chevron-right, clock, info, plus, dan x berasal dari Feather
  * (MIT, Copyright (c) 2013-present Cole Bemis). Teks lisensi lengkap: paket `lucide-static`.
  */
 const PATH = {
@@ -42,6 +42,7 @@ const PATH = {
     </>
   ),
   'chevron-down': <path d="m6 9 6 6 6-6" />,
+  'chevron-left': <path d="m15 18-6-6 6-6" />,
   'chevron-right': <path d="m9 18 6-6-6-6" />,
   clock: (
     <>
