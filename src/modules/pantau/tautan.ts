@@ -1,3 +1,4 @@
+import { pisahHalaman } from '@/modules/konten/paginasi'
 import { tautanIsi, type IsiDokumen } from '@/modules/seo/lexical'
 
 import { hrefDari } from './aturan'
@@ -129,6 +130,15 @@ export const PESAN_TEMUAN = {
 const kunciSumber = (s: Sumber) => `${s.koleksi}:${s.id ?? ''}`
 
 /**
+ * Halaman bernomor sebuah daftar (`/belajar/halaman/2`) ada bila daftarnya ada. Nomornya tidak diperiksa karena
+ * jumlah halaman berubah setiap ada tulisan baru, dan tautan ke sana bukan tautan masuk (daftar otomatis).
+ */
+function halamanDaftar(path: string, peta: PetaSitus): boolean {
+  const hasil = pisahHalaman(path.split('/').filter(Boolean))
+  return Boolean(hasil?.tertulis && hasil.jalur.length > 0 && peta.path.has(`/${hasil.jalur.join('/')}`))
+}
+
+/**
  * Mencocokkan tautan dengan peta situs. Tautan ke dokumen yang belum terbit dan path tanpa halaman
  * adalah `rusak`; path dengan redirect 301 adalah `dialihkan` (tujuannya tetap dihitung sebagai tautan
  * masuk). Sasaran tanpa tautan masuk dari sumber lain (tautan ke dirinya sendiri tidak dihitung) adalah
@@ -158,6 +168,7 @@ export function nilaiTautan(tautan: Tautan[], peta: PetaSitus, sasaran: Sasaran[
       tandaiMasuk(tujuan.path, sumber)
       continue
     }
+    if (halamanDaftar(tujuan.path, peta)) continue
     const redirect = peta.redirect.get(tujuan.path)
     if (redirect?.kode === '301' && redirect.ke) {
       catat({ jenis: 'dialihkan', tujuan: tujuan.path, pesan: PESAN_TEMUAN.dialihkan(redirect.ke), sumber })

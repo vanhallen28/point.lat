@@ -70,14 +70,17 @@ export type VideoSeo = Dasar & {
 
 export type HalamanSeo = Dasar & { judul: string }
 
-/** Halaman yang SEO-nya dibangun modul ini. `statis` untuk halaman indeks tanpa dokumen (`/tools`, `/cari`). */
+/**
+ * Halaman yang SEO-nya dibangun modul ini. `statis` untuk halaman indeks tanpa dokumen (`/tools`, `/cari`).
+ * `halaman`: nomor halaman daftar berhalaman (rubrik dan profil penulis), bawaan 1.
+ */
 export type MasukanSeo =
   | { jenis: 'artikel'; doc: ArtikelSeo }
-  | { jenis: 'pilar'; doc: PilarSeo }
-  | { jenis: 'subkategori'; doc: SubkategoriSeo }
+  | { jenis: 'pilar'; doc: PilarSeo; halaman?: number }
+  | { jenis: 'subkategori'; doc: SubkategoriSeo; halaman?: number }
   | { jenis: 'tools'; doc: ToolsSeo }
   | { jenis: 'video'; doc: VideoSeo }
-  | { jenis: 'penulis'; doc: PenulisSeo }
+  | { jenis: 'penulis'; doc: PenulisSeo; halaman?: number }
   | { jenis: 'halaman'; doc: HalamanSeo }
   | { jenis: 'beranda' }
   | { jenis: 'statis'; judul: string; path: string; deskripsi?: string | null; noindex?: boolean }

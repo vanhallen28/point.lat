@@ -1,6 +1,6 @@
 import { judulHalaman } from '@/lib/seo-dasar'
 import type { WarnaPilar } from '@/lib/konstanta'
-import { pathFor } from '@/lib/paths'
+import { pathFor, pathHalaman } from '@/lib/paths'
 import { urlOg } from '@/modules/media/og'
 import { bangunUrl, UKURAN_OG } from '@/modules/media/url'
 
@@ -20,7 +20,12 @@ export function urlAbsolut(situs: Pick<PengaturanSitus, 'urlSitus'>, path: strin
   return new URL(path, situs.urlSitus).toString()
 }
 
-/** Path publik dokumen, selalu lewat `pathFor()`. */
+/** Nomor halaman daftar berhalaman (rubrik dan profil penulis); 1 untuk halaman lain. */
+export function nomorHalaman(masukan: MasukanSeo): number {
+  return 'halaman' in masukan && masukan.halaman && masukan.halaman > 1 ? masukan.halaman : 1
+}
+
+/** Path publik dokumen, selalu lewat `pathFor()`; halaman ke-2 dan seterusnya lewat `pathHalaman()`. */
 export function pathDokumen(masukan: MasukanSeo): string {
   switch (masukan.jenis) {
     case 'beranda':
@@ -30,13 +35,12 @@ export function pathDokumen(masukan: MasukanSeo): string {
     case 'artikel':
       return pathFor({ jenis: 'artikel', slug: masukan.doc.slug ?? '', tipe: masukan.doc.tipe })
     case 'subkategori':
-      return pathFor({
-        jenis: 'subkategori',
-        slug: masukan.doc.slug ?? '',
-        pilarSlug: ambil(masukan.doc.pilar)?.slug ?? '',
-      })
+      return pathHalaman(
+        pathFor({ jenis: 'subkategori', slug: masukan.doc.slug ?? '', pilarSlug: ambil(masukan.doc.pilar)?.slug ?? '' }),
+        nomorHalaman(masukan),
+      )
     default:
-      return pathFor({ jenis: masukan.jenis, slug: masukan.doc.slug ?? '' })
+      return pathHalaman(pathFor({ jenis: masukan.jenis, slug: masukan.doc.slug ?? '' }), nomorHalaman(masukan))
   }
 }
 
@@ -52,12 +56,15 @@ export function judulDokumen(masukan: MasukanSeo, situs: PengaturanSitus): strin
 
 /**
  * Judul `<title>` yang tampil di Google. Judul SEO dipakai apa adanya (editor mengatur judul lengkap);
- * judul biasa dibungkus pola judul situs (`%s · point.`). Beranda memakai judul default.
+ * judul biasa dibungkus pola judul situs (`%s · point.`). Beranda memakai judul default. Halaman ke-2 dan
+ * seterusnya sebuah daftar diberi akhiran ", halaman N" supaya setiap halaman punya judul sendiri.
  */
 export function judulSeo(masukan: MasukanSeo, situs: PengaturanSitus): string {
   if (masukan.jenis === 'beranda') return judulDokumen(masukan, situs)
-  if (masukan.jenis !== 'statis' && masukan.doc.seo?.judulSEO?.trim()) return judulDokumen(masukan, situs)
-  return judulHalaman(situs.polaJudul, judulDokumen(masukan, situs))
+  const nomor = nomorHalaman(masukan)
+  const judul = `${judulDokumen(masukan, situs)}${nomor > 1 ? `, halaman ${nomor}` : ''}`
+  if (masukan.jenis !== 'statis' && masukan.doc.seo?.judulSEO?.trim()) return judul
+  return judulHalaman(situs.polaJudul, judul)
 }
 
 function deskripsiCadangan(masukan: MasukanSeo, situs: PengaturanSitus): string | null | undefined {

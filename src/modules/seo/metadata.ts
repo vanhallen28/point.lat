@@ -9,6 +9,7 @@ import {
   gambarOgDokumen,
   judulSeo,
   noindexDokumen,
+  nomorHalaman,
   pathDokumen,
   urlAbsolut,
 } from './dokumen'
@@ -17,9 +18,13 @@ import type { MasukanSeo, PengaturanSitus, Situs } from './tipe'
 /** Path RSS, dirujuk dari beranda lewat `<link rel="alternate" type="application/rss+xml">`. */
 export const PATH_FEED = '/feed.xml'
 
-/** Canonical: isian editor bila ada, selain itu URL absolut dokumen sendiri. */
+/**
+ * Canonical: isian editor bila ada, selain itu URL absolut dokumen sendiri. Halaman ke-2 dan seterusnya
+ * sebuah daftar selalu menunjuk dirinya sendiri (panduan paginasi Google: jangan jadikan halaman pertama
+ * canonical seluruh urutan), jadi isian editor hanya berlaku untuk halaman 1.
+ */
 export function canonicalDokumen(masukan: MasukanSeo, situs: Pick<PengaturanSitus, 'urlSitus'>): string {
-  const isian = masukan.jenis === 'beranda' || masukan.jenis === 'statis' ? null : masukan.doc.seo?.canonical?.trim()
+  const isian = masukan.jenis === 'beranda' || masukan.jenis === 'statis' || nomorHalaman(masukan) > 1 ? null : masukan.doc.seo?.canonical?.trim()
   return isian || urlAbsolut(situs, pathDokumen(masukan))
 }
 

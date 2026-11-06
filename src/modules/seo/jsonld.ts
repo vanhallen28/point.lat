@@ -2,7 +2,7 @@ import type { ToolId } from '@/lib/konstanta'
 import { pathFor } from '@/lib/paths'
 import { bangunUrl } from '@/modules/media/url'
 
-import { ambil, deskripsiDokumen, pathDokumen, urlAbsolut } from './dokumen'
+import { ambil, deskripsiDokumen, nomorHalaman, pathDokumen, urlAbsolut } from './dokumen'
 import { canonicalDokumen } from './metadata'
 import type { ArtikelSeo, MasukanSeo, PenulisSeo, Situs, ToolsSeo, VideoSeo } from './tipe'
 
@@ -43,9 +43,16 @@ export function durasiIso(detik: number): string {
 
 /**
  * Remah roti dari beranda sampai dokumen. Dipakai untuk schema BreadcrumbList dan untuk tampilan
- * di halaman (Rencana 4), jadi keduanya selalu sama.
+ * di halaman (Rencana 4), jadi keduanya selalu sama. Halaman ke-2 dan seterusnya sebuah daftar menambah
+ * "Halaman N" setelah daftarnya (halaman 1).
  */
 export function remahRoti(masukan: MasukanSeo): RemahRoti[] {
+  const nomor = nomorHalaman(masukan)
+  if (nomor === 1) return remahDokumen(masukan)
+  return [...remahDokumen({ ...masukan, halaman: 1 } as MasukanSeo), { nama: `Halaman ${nomor}`, path: pathDokumen(masukan) }]
+}
+
+function remahDokumen(masukan: MasukanSeo): RemahRoti[] {
   const beranda: RemahRoti = { nama: 'Beranda', path: '/' }
   switch (masukan.jenis) {
     case 'beranda':
@@ -255,6 +262,8 @@ export function jsonLd(masukan: MasukanSeo, situs: Situs): JsonLd {
       case 'video':
         return nodeVideo(masukan.doc, masukan, situs)
       case 'penulis': {
+        // ProfilePage hanya di halaman 1 profil; halaman berikutnya hanya daftar tulisan.
+        if (nomorHalaman(masukan) > 1) return []
         const url = canonicalDokumen(masukan, situs)
         return [{ '@type': 'ProfilePage', '@id': url, url, inLanguage: BAHASA, mainEntity: orang(masukan.doc, situs) }]
       }
