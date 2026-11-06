@@ -64,6 +64,8 @@ Di organisasi Supabase berpaket Pro: **New project**, nama `point-lat`, region *
 
 **Hasil yang diharapkan:** proyek aktif; Settings, Infrastructure menampilkan region Singapura dan versi Postgres. Bila versi utamanya bukan 17, ubah `PG_MAJOR` di `.github/workflows/backup.yml` (runbook pemulihan A5).
 
+Biarkan zona waktu database tetap UTC (bawaan Supabase; jangan jalankan `alter database ... set timezone`). Data awal menulis tanggal berlaku parameter kalkulator tanpa jam (misalnya `2026-03-01`), dan Postgres membacanya menurut zona waktu database, jadi zona lain menggeser tanggal itu.
+
 ### C2. Wajibkan SSL dan unduh sertifikat CA
 
 Database Settings, bagian SSL Configuration: nyalakan **Enforce SSL on incoming connections** (database restart singkat), lalu **Download certificate**. Simpan file itu sebagai `~/point-lat-ca-produksi.crt`.

@@ -97,8 +97,11 @@ describe('pindai tautan dan pemeriksa tautan luar', () => {
 
     expect(await periksaTautanLuar(payload, palsu, T0)).toBe(10)
     expect([...palsu.dibuka].sort()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(url).sort())
-    const { docs } = await payload.find({ collection: 'tautan-luar', where: { url: { in: [0, 1, 2, 3, 10].map(url) } }, sort: 'url', depth: 0 })
-    expect(docs.map((d) => [d.url, d.status, d.kodeHttp, d.berikutnya])).toEqual([
+    const { docs } = await payload.find({ collection: 'tautan-luar', where: { url: { in: [0, 1, 2, 3, 10].map(url) } }, depth: 0 })
+    // Diurutkan di sini (urutan kode karakter), bukan lewat `sort` database: collation lokal C.UTF-8 menaruh
+    // `cek-1.` sebelum `cek-10`, collation en_US.utf8 service Postgres CI sebaliknya.
+    const baris = docs.map((d) => [d.url, d.status, d.kodeHttp, d.berikutnya]).sort((a, b) => (String(a[0]) < String(b[0]) ? -1 : 1))
+    expect(baris).toEqual([
       [url(0), 'rusak', 404, '2026-11-12T03:00:00.000Z'],
       [url(1), 'tidak-pasti', 403, '2026-11-06T03:00:00.000Z'],
       [url(10), 'belum', null, menit(-2).toISOString()],
