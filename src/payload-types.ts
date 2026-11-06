@@ -136,6 +136,7 @@ export interface Config {
     'pengaturan-seo': PengaturanSeo;
     newsletter: Newsletter;
     'asisten-ai': AsistenAi;
+    iklan: Iklan;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -144,6 +145,7 @@ export interface Config {
     'pengaturan-seo': PengaturanSeoSelect<false> | PengaturanSeoSelect<true>;
     newsletter: NewsletterSelect<false> | NewsletterSelect<true>;
     'asisten-ai': AsistenAiSelect<false> | AsistenAiSelect<true>;
+    iklan: IklanSelect<false> | IklanSelect<true>;
   };
   locale: null;
   widgets: {
@@ -2204,6 +2206,31 @@ export interface AsistenAi {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "iklan".
+ */
+export interface Iklan {
+  id: number;
+  aktif?: boolean | null;
+  penyedia: 'adsense';
+  idPenerbit?: string | null;
+  modeUji?: boolean | null;
+  slot?:
+    | {
+        idSlot: string;
+        posisi: 'artikel-tengah' | 'artikel-akhir' | 'rubrik' | 'tools' | 'beranda';
+        setelahParagraf?: number | null;
+        ukuran: 'persegi' | 'persegi-besar' | 'banner';
+        unit: string;
+        aktif?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  adsTxtTambahan?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -2408,6 +2435,31 @@ export interface AsistenAiSelect<T extends boolean = true> {
         id?: T;
       };
   frasaKlise?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "iklan_select".
+ */
+export interface IklanSelect<T extends boolean = true> {
+  aktif?: T;
+  penyedia?: T;
+  idPenerbit?: T;
+  modeUji?: T;
+  slot?:
+    | T
+    | {
+        idSlot?: T;
+        posisi?: T;
+        setelahParagraf?: T;
+        ukuran?: T;
+        unit?: T;
+        aktif?: T;
+        id?: T;
+      };
+  adsTxtTambahan?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

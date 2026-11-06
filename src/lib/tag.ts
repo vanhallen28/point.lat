@@ -11,6 +11,7 @@
  * - `redirect`: tabel redirect yang dibaca halaman saat path tidak cocok dengan dokumen.
  * - `parameter-tools`: angka aturan kalkulator yang dibaca halaman `/tools/{slug}`.
  * - `analitik`: klik Search Console per halaman ("Paling dicari pekan ini"), dibuang setiap sinkron harian.
+ * - `iklan`: global iklan (slot, banner persetujuan, `ads.txt`) yang dibaca layout dan halaman berslot iklan.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const
@@ -26,6 +27,7 @@ export const TAG = {
   redirect: 'redirect',
   parameterTools: 'parameter-tools',
   analitik: 'analitik',
+  iklan: 'iklan',
   koleksi: (koleksi: KoleksiPublik) => koleksi,
   dokumen: (koleksi: KoleksiPublik, id: number | string) => `${koleksi}:${id}`,
   pilar: (slug: string) => `pilar:${slug}`,

@@ -1,0 +1,32 @@
+// Komponen global Iklan. Variabel tema Payload supaya ikut mode terang dan gelap; teks memakai warna teks
+// utama (kontras penuh).
+.iklan-petunjuk,
+.iklan-adstxt {
+  margin: 0 0 calc(var(--base) * 1.25);
+  padding: calc(var(--base) * 0.75);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 14px;
+  color: var(--theme-text);
+  font-size: 14px;
+  line-height: 1.5;
+
+  p {
+    margin: 0 0 calc(var(--base) * 0.5);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: calc(var(--base) * 1.1);
+  }
+
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+  }
+}
+
+.iklan-adstxt__judul {
+  font-weight: 700;
+}

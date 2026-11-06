@@ -14,6 +14,7 @@ describe('TAG', () => {
     expect([TAG.header, TAG.footer]).toEqual(['header', 'footer'])
     expect(TAG.koleksi('penulis')).toBe('penulis')
     expect(TAG.parameterTools).toBe('parameter-tools')
+    expect(TAG.iklan).toBe('iklan')
   })
 })
 

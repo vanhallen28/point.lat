@@ -174,3 +174,6 @@ export const revalidasiNewsletter = revalidasiGlobal([TAG.beranda])
 /** Header dan footer dirender layout di semua halaman publik. */
 export const revalidasiHeader = revalidasiGlobal([TAG.header])
 export const revalidasiFooter = revalidasiGlobal([TAG.footer])
+
+/** Global iklan dibaca layout (banner persetujuan), halaman berslot iklan, beranda, dan `/ads.txt`. */
+export const revalidasiIklan = revalidasiGlobal([TAG.iklan])

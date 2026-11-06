@@ -7,7 +7,25 @@ import type { Halaman } from '@/payload-types'
 import { klienPalsu } from '@/modules/media/palsu'
 import { seed } from '@/seed/seed'
 
-import { ADMIN_E2E, blok, gambar, h2, HARI_CONTOH, isi, JUDUL_PANDUAN, KLIK_CONTOH, KUNCI_INDEXNOW, p, SLUG, SLUG_HALAMAN, SLUG_SUB, SLUG_VIDEO, tautanKe } from './data'
+import {
+  ADMIN_E2E,
+  ADS_TXT_E2E,
+  blok,
+  gambar,
+  h2,
+  HARI_CONTOH,
+  isi,
+  JUDUL_PANDUAN,
+  KLIK_CONTOH,
+  KUNCI_INDEXNOW,
+  p,
+  PENERBIT_E2E,
+  SLUG,
+  SLUG_HALAMAN,
+  SLUG_SUB,
+  SLUG_VIDEO,
+  tautanKe,
+} from './data'
 
 /**
  * Mengisi database E2E sebelum server dibangun dan dinyalakan (`webServer` di playwright.config.ts).
@@ -301,6 +319,11 @@ const tekno = await payload.create({
 await payload.updateGlobal({ slug: 'pengaturan-seo', data: { indexing: { kunciIndexNow: KUNCI_INDEXNOW } } })
 // Asisten AI menyala dengan anggaran bawaan, apa pun yang diubah tes sebelumnya (E2E kedua memakai database yang sama).
 await payload.updateGlobal({ slug: 'asisten-ai', data: { aktif: true, anggaranBulanan: 10 } })
+// Iklan dengan ID penerbit tiruan, apa pun yang diubah tes sebelumnya (E2E kedua memakai database yang sama).
+await payload.updateGlobal({
+  slug: 'iklan',
+  data: { aktif: false, penyedia: 'adsense', idPenerbit: PENERBIT_E2E, modeUji: true, slot: [], adsTxtTambahan: ADS_TXT_E2E },
+})
 await payload.updateGlobal({
   slug: 'newsletter',
   data: { aktif: true, penyedia: 'kit', urlForm: 'https://point.kit.com/intinya', judul: 'Intinya, tiap Senin.', deskripsi: 'Lima tulisan terbaik pekan ini, langsung ke email.' },

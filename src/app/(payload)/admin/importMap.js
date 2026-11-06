@@ -31,6 +31,8 @@ import { SelBuatRedirect as SelBuatRedirect_9f3e78885105faed9af81223ca0b8add } f
 import { StatusPemasangan as StatusPemasangan_7ab8988ab3c4bd2002e46c3028045fe1 } from '@/modules/indexer/admin/StatusPemasangan'
 import { PeringatanIndexingApi as PeringatanIndexingApi_cd1d217625ae1ec1a579e2d338353373 } from '@/modules/indexer/admin/PeringatanIndexingApi'
 import { StatusAsisten as StatusAsisten_7621f075c4066db15be983a968ce2810 } from '@/modules/ai/admin/StatusAsisten'
+import { PetunjukIklan as PetunjukIklan_73216f3b5bcb8c15cde103f2f2bd501b } from '@/modules/iklan/admin/PetunjukIklan'
+import { PratinjauAdsTxt as PratinjauAdsTxt_6660d3dfc4227ef2df8fc14d3d2924d5 } from '@/modules/iklan/admin/PratinjauAdsTxt'
 import { KartuDashboard as KartuDashboard_cc0c5d3e41a57177079ebce1a7e24440 } from '@/modules/pantau/admin/KartuDashboard'
 import { TautanDashboard as TautanDashboard_602fdd66638e420951e3882f7a73a410 } from '@/modules/pantau/admin/TautanDashboard'
 import { UnggahLangsung as UnggahLangsung_8ba60c89e617a83169d52d9ef286cf69 } from '@/modules/media/UnggahLangsung'
@@ -72,6 +74,8 @@ export const importMap = {
   "@/modules/indexer/admin/StatusPemasangan#StatusPemasangan": StatusPemasangan_7ab8988ab3c4bd2002e46c3028045fe1,
   "@/modules/indexer/admin/PeringatanIndexingApi#PeringatanIndexingApi": PeringatanIndexingApi_cd1d217625ae1ec1a579e2d338353373,
   "@/modules/ai/admin/StatusAsisten#StatusAsisten": StatusAsisten_7621f075c4066db15be983a968ce2810,
+  "@/modules/iklan/admin/PetunjukIklan#PetunjukIklan": PetunjukIklan_73216f3b5bcb8c15cde103f2f2bd501b,
+  "@/modules/iklan/admin/PratinjauAdsTxt#PratinjauAdsTxt": PratinjauAdsTxt_6660d3dfc4227ef2df8fc14d3d2924d5,
   "@/modules/pantau/admin/KartuDashboard#KartuDashboard": KartuDashboard_cc0c5d3e41a57177079ebce1a7e24440,
   "@/modules/pantau/admin/TautanDashboard#TautanDashboard": TautanDashboard_602fdd66638e420951e3882f7a73a410,
   "@/modules/media/UnggahLangsung#UnggahLangsung": UnggahLangsung_8ba60c89e617a83169d52d9ef286cf69,

@@ -61,6 +61,12 @@ export const HARI_CONTOH = Array.from({ length: 28 }, (_, i) => {
   return { tanggal, klik, impresi: klik * 150, ctr: 1 / 150, posisi: 8 - i / 10 }
 })
 
+/** ID penerbit AdSense tiruan yang jelas palsu (global Iklan database E2E); tes tidak pernah memanggil Google. */
+export const PENERBIT_E2E = 'ca-pub-0000000000000000'
+
+/** Baris ads.txt tambahan di global Iklan database E2E (domain `.test` tidak pernah ada). */
+export const ADS_TXT_E2E = 'contoh-iklan.test, 12345, RESELLER'
+
 /** Kunci IndexNow di pengaturan SEO database E2E, dilayani di `/{kunci}.txt`. */
 export const KUNCI_INDEXNOW = 'e2e-kunci-indexnow-2026'
 

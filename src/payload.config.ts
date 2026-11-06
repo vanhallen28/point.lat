@@ -31,6 +31,7 @@ import { AsistenAi } from './globals/AsistenAi'
 import { Beranda } from './globals/Beranda'
 import { Footer } from './globals/Footer'
 import { Header } from './globals/Header'
+import { Iklan } from './globals/Iklan'
 import { Newsletter } from './globals/Newsletter'
 import { PengaturanSEO } from './globals/PengaturanSEO'
 import { BAHASA_ADMIN } from './lib/bahasa-admin'
@@ -88,7 +89,7 @@ export default buildConfig({
     LogAi,
     PemakaianAi,
   ],
-  globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter, AsistenAi],
+  globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter, AsistenAi, Iklan],
   // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
   endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),
