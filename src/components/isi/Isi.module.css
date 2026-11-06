@@ -39,6 +39,12 @@
   margin-top: 0;
 }
 
+/* Slot iklan di tengah isi (`SlotIklan`): jarak lebih lebar dari antarparagraf supaya iklan jelas terpisah
+   dari isi. Margin vertikal berdempet dengan margin paragraf di sekitarnya. */
+.prosa > [data-slot-iklan] {
+  margin-block: var(--ruang-8);
+}
+
 .prosa a {
   text-decoration: underline;
   text-decoration-thickness: var(--garis-tipis);

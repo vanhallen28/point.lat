@@ -28,7 +28,17 @@ const HALAMAN_ANGGARAN = [
 /** JS milik point. di luar kerangka Next/React (spesifikasi §12): kalkulator dan modul hitung. */
 const ANGGARAN_KALKULATOR = 25 * 1024
 
-/** Byte JS halaman di konteks baru (tanpa cache browser dari halaman sebelumnya). */
+/**
+ * JS milik point. yang dimuat tata letak di setiap halaman: banner persetujuan cookie, pemuat iklan, animasi
+ * masuk kartu, dan penanda menu aktif (satu chunk). Bersama JS kalkulator tetap di bawah 25 KB (spesifikasi §12).
+ */
+const ANGGARAN_TATA_LETAK = 8 * 1024
+
+/**
+ * Byte JS halaman di konteks baru (tanpa cache browser dari halaman sebelumnya). Hanya skrip dari situs
+ * sendiri: skrip penyedia iklan tidak dihitung anggaran (spesifikasi §12), dan tanpa persetujuan memang
+ * tidak dimuat.
+ */
 async function byteJs(browser: Browser, path: string): Promise<number> {
   const konteks = await browser.newContext()
   const page = await konteks.newPage()
@@ -37,7 +47,7 @@ async function byteJs(browser: Browser, path: string): Promise<number> {
   const byte = await page.evaluate(() =>
     performance
       .getEntriesByType('resource')
-      .filter((e) => (e as PerformanceResourceTiming).initiatorType === 'script')
+      .filter((e) => (e as PerformanceResourceTiming).initiatorType === 'script' && e.name.startsWith(location.origin))
       .reduce((jumlah, e) => jumlah + (e as PerformanceResourceTiming).encodedBodySize, 0),
   )
   await konteks.close()
@@ -105,6 +115,35 @@ test('JavaScript kalkulator (komponen dan modul hitung) di bawah 25 KB di atas J
     test.info().annotations.push({ type: `JS kalkulator ${path}`, description: `${(tambahan / 1024).toFixed(1)} KiB` })
     expect(tambahan, path).toBeLessThan(ANGGARAN_KALKULATOR)
   }
+})
+
+/**
+ * Byte terkompresi chunk JS yang memuat banner persetujuan cookie. Nama chunk berubah setiap build, jadi chunk
+ * dicari dari isinya (id judul banner).
+ */
+async function byteTataLetak(browser: Browser): Promise<number> {
+  const konteks = await browser.newContext()
+  const page = await konteks.newPage()
+  await cegatCloudinary(page)
+  const isi: Promise<[string, string]>[] = []
+  page.on('response', (r) => {
+    if (r.request().resourceType() === 'script') isi.push(r.text().then((teks) => [r.url(), teks]))
+  })
+  await page.goto(`/${SLUG.panduan}`)
+  await page.waitForLoadState('networkidle')
+  const url = (await Promise.all(isi)).filter(([, teks]) => teks.includes('persetujuan-judul')).map(([u]) => u)
+  expect(url).toHaveLength(1)
+  const byte = await page.evaluate((u) => (performance.getEntriesByName(u)[0] as PerformanceResourceTiming).encodedBodySize, url[0])
+  await konteks.close()
+  return byte
+}
+
+test('JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan bersama JS kalkulator di bawah 25 KB', async ({ browser }) => {
+  const tataLetak = await byteTataLetak(browser)
+  const kalkulator = (await byteJs(browser, '/tools/gaji-bersih')) - (await byteJs(browser, `/${SLUG.panduan}`))
+  test.info().annotations.push({ type: 'JS tata letak', description: `${(tataLetak / 1024).toFixed(1)} KiB` })
+  expect(tataLetak).toBeLessThan(ANGGARAN_TATA_LETAK)
+  expect(tataLetak + kalkulator).toBeLessThan(ANGGARAN_KALKULATOR)
 })
 
 test('reveal judul beranda tanpa JavaScript tambahan: JS beranda tidak melebihi JS artikel', async ({ browser }) => {

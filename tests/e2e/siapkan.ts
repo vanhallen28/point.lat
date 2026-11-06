@@ -324,7 +324,17 @@ await payload.updateGlobal({ slug: 'asisten-ai', data: { aktif: true, anggaranBu
 // tes yang memilihnya mencegat domain Google, jadi tidak ada permintaan jaringan.
 await payload.updateGlobal({
   slug: 'iklan',
-  data: { aktif: true, penyedia: 'adsense', idPenerbit: PENERBIT_E2E, modeUji: true, slot: [], adsTxtTambahan: ADS_TXT_E2E },
+  data: {
+    aktif: true,
+    penyedia: 'adsense',
+    idPenerbit: PENERBIT_E2E,
+    modeUji: true,
+    slot: [
+      { idSlot: 'artikel-tengah', posisi: 'artikel-tengah', setelahParagraf: 3, ukuran: 'persegi', unit: '1111111111', aktif: true },
+      { idSlot: 'artikel-akhir', posisi: 'artikel-akhir', ukuran: 'persegi-besar', unit: '2222222222', aktif: true },
+    ],
+    adsTxtTambahan: ADS_TXT_E2E,
+  },
 })
 await payload.updateGlobal({
   slug: 'newsletter',

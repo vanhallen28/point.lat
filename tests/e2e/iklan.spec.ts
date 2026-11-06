@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
-import { cegatCloudinary, periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
+import { cegatCloudinary, cegatIklan, periksaAxe, periksaTanpaGeserHorizontal } from './bantu'
 import { ADMIN_E2E, ADS_TXT_E2E, PENERBIT_E2E, SLUG, UKURAN_LAYAR } from './data'
 
 const DITOLAK = { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' }
@@ -11,11 +11,40 @@ async function sudahMemilih(konteks: BrowserContext, pilihan: 'perlu' | 'semua')
   await konteks.addCookies([{ name: 'persetujuan', value: `1.${pilihan}.${new Date().toISOString().slice(0, 10)}`, domain: 'localhost', path: '/' }])
 }
 
+/** Menggulir sampai bawah halaman setahap demi setahap, supaya setiap slot sempat hampir terlihat. */
+const gulirSampaiBawah = (page: Page) =>
+  page.evaluate(async () => {
+    for (let y = 0; y <= document.documentElement.scrollHeight; y += 300) {
+      window.scrollTo(0, y)
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+    }
+  })
+
+/** Jumlah layout shift sejak halaman dimuat, tanpa pergeseran sesaat setelah klik atau tombol (definisi CLS). */
+const cls = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<number>((selesai) => {
+        let jumlah = 0
+        new PerformanceObserver((daftar) => {
+          for (const e of daftar.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) if (!e.hadRecentInput) jumlah += e.value
+        }).observe({ type: 'layout-shift', buffered: true })
+        requestAnimationFrame(() => requestAnimationFrame(() => selesai(jumlah)))
+      }),
+  )
+
+/** Catatan skrip AdSense tiruan: isi `dataLayer` saat skrip dimuat dan jumlah unit yang diisi. */
+const iklanTiruan = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __iklanTiruan?: { dimuat: number; diisi: number; dataLayer: unknown[] } }).__iklanTiruan ?? null)
+
 /** Perintah `gtag()` di `dataLayer` (objek `arguments`) sebagai array. */
 const dataLayer = (page: Page) => page.evaluate(() => ((window as unknown as { dataLayer?: ArrayLike<unknown>[] }).dataLayer ?? []).map((a) => Array.from(a)))
 
 test.beforeEach(async ({ page }) => {
   await cegatCloudinary(page)
+  // Setelah Izinkan semua, halaman berslot iklan memuat skrip AdSense: selalu dicegat, tidak pernah ke jaringan.
+  // Tes yang memeriksa permintaannya memanggil `cegatIklan` lagi (rute terakhir didahulukan).
+  await cegatIklan(page)
 })
 
 test('admin global Iklan: petunjuk terbaca dan pratinjau ads.txt mengikuti isian sebelum disimpan', async ({ page }) => {
@@ -140,3 +169,111 @@ for (const { lebar, tinggi } of UKURAN_LAYAR) {
     await periksaAxe(page)
   })
 }
+
+test('sebelum memilih dan dengan Hanya yang perlu: tanpa permintaan skrip iklan dan slot tidak menempati ruang', async ({ page }) => {
+  const catatan = await cegatIklan(page)
+  await page.goto(`/${SLUG.panduan}`)
+  const slot = page.locator('[data-slot-iklan]')
+  await expect(slot).toHaveCount(2)
+  await gulirSampaiBawah(page)
+  await page.waitForLoadState('networkidle')
+  for (const s of await slot.all()) await expect(s).toBeHidden()
+  await page.getByRole('region', { name: 'Cookie dan iklan' }).getByRole('button', { name: 'Hanya yang perlu' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-persetujuan', 'perlu')
+  await gulirSampaiBawah(page)
+  await page.waitForLoadState('networkidle')
+  for (const s of await slot.all()) await expect(s).toBeHidden()
+  expect(catatan).toEqual({ skrip: [], lain: [] })
+  expect(await iklanTiruan(page)).toBeNull()
+})
+
+test('Izinkan semua: Consent Mode diatur sebelum skrip iklan, skrip dimuat sekali saat slot hampir terlihat, dan ukuran wadah dipesan sebelum iklan terisi', async ({ page }) => {
+  const catatan = await cegatIklan(page)
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto(`/${SLUG.panduan}`)
+  await page.getByRole('region', { name: 'Cookie dan iklan' }).getByRole('button', { name: 'Izinkan semua' }).click()
+  const akhir = page.locator('[data-slot-iklan="artikel-akhir"]')
+  await expect(akhir).toBeVisible()
+  await expect(akhir.getByText('Iklan', { exact: true })).toBeVisible()
+  const kotak = akhir.locator('[data-kotak-iklan]')
+  expect(await kotak.boundingBox()).toMatchObject({ width: 336, height: 280 })
+  await expect(kotak.locator('ins')).toHaveCount(0)
+
+  await akhir.scrollIntoViewIfNeeded()
+  const ins = kotak.locator('ins.adsbygoogle')
+  await expect(ins).toHaveAttribute('data-ad-status', 'filled')
+  await expect(ins).toHaveAttribute('data-ad-client', PENERBIT_E2E)
+  await expect(ins).toHaveAttribute('data-ad-slot', '2222222222')
+  await expect(ins).toHaveAttribute('data-adtest', 'on')
+  expect(await kotak.boundingBox()).toMatchObject({ width: 336, height: 280 })
+  await gulirSampaiBawah(page)
+  await expect(page.locator('ins[data-ad-status="filled"]')).toHaveCount(2)
+  expect(catatan).toEqual({ skrip: [`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${PENERBIT_E2E}`], lain: [] })
+  expect((await iklanTiruan(page))?.dataLayer).toEqual([
+    ['consent', 'default', DITOLAK],
+    ['consent', 'update', IKLAN_DIIZINKAN],
+  ])
+})
+
+test('tidak ada iklan di kotak Intinya atau di atas H1; iklan tengah setelah paragraf ketiga dan iklan akhir sebelum sumber', async ({ page }) => {
+  await sudahMemilih(page.context(), 'semua')
+  await cegatIklan(page)
+  await page.goto(`/${SLUG.panduan}`)
+  await expect(page.locator('[data-slot-iklan]')).toHaveCount(2)
+  await expect(page.getByRole('region', { name: 'Intinya' }).locator('[data-slot-iklan]')).toHaveCount(0)
+  const h1 = (await page.getByRole('heading', { level: 1 }).boundingBox())!
+  const intinya = (await page.getByRole('region', { name: 'Intinya' }).boundingBox())!
+  for (const slot of await page.locator('[data-slot-iklan]').all()) {
+    expect((await slot.boundingBox())!.y).toBeGreaterThan(Math.max(h1.y + h1.height, intinya.y + intinya.height))
+  }
+  const tengah = page.locator('[data-slot-iklan="artikel-tengah"]')
+  expect(await tengah.evaluate((el) => el.previousElementSibling?.textContent)).toMatch(/^Kategori TER ditentukan status PTKP/)
+  // Jarak 32 px dari isi di atas dan di bawahnya, lebih lebar dari jarak antarparagraf.
+  const jarak = await tengah.evaluate((el) => {
+    const s = el.getBoundingClientRect()
+    return [s.top - el.previousElementSibling!.getBoundingClientRect().bottom, el.nextElementSibling!.getBoundingClientRect().top - s.bottom]
+  })
+  expect(jarak.map(Math.round)).toEqual([32, 32])
+  const akhir = (await page.locator('[data-slot-iklan="artikel-akhir"]').boundingBox())!
+  expect(akhir.y).toBeLessThan((await page.getByRole('region', { name: 'Sumber' }).boundingBox())!.y)
+})
+
+test('CLS 0 di halaman berslot iklan: sebelum memilih, setelah Izinkan semua, dan saat kembali dengan pilihan tersimpan', async ({ page }) => {
+  await cegatIklan(page)
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto(`/${SLUG.panduan}`)
+  await gulirSampaiBawah(page)
+  expect(await cls(page)).toBe(0)
+
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.getByRole('region', { name: 'Cookie dan iklan' }).getByRole('button', { name: 'Izinkan semua' }).click()
+  await gulirSampaiBawah(page)
+  await expect(page.locator('ins[data-ad-status="filled"]')).toHaveCount(2)
+  expect(await cls(page)).toBe(0)
+
+  await page.reload()
+  await gulirSampaiBawah(page)
+  await expect(page.locator('ins[data-ad-status="filled"]')).toHaveCount(2)
+  expect(await cls(page)).toBe(0)
+})
+
+test('menarik persetujuan: Hanya yang perlu setelah Izinkan semua menghapus cookie iklan, memuat ulang halaman, dan iklan tidak dimuat lagi', async ({ page }) => {
+  await sudahMemilih(page.context(), 'semua')
+  const catatan = await cegatIklan(page)
+  await page.goto(`/${SLUG.panduan}`)
+  await gulirSampaiBawah(page)
+  await expect(page.locator('ins[data-ad-status="filled"]')).toHaveCount(2)
+  expect((await page.context().cookies()).map((k) => k.name)).toEqual(expect.arrayContaining(['__gads', '__gpi']))
+
+  await page.getByRole('button', { name: 'Pengaturan cookie' }).click()
+  await Promise.all([page.waitForEvent('load'), page.getByRole('region', { name: 'Cookie dan iklan' }).getByRole('button', { name: 'Hanya yang perlu' }).click()])
+  await expect(page.locator('html')).toHaveAttribute('data-persetujuan', 'perlu')
+  const sisa = (await page.context().cookies()).map((k) => k.name)
+  expect(sisa).not.toContain('__gads')
+  expect(sisa).not.toContain('__gpi')
+  await gulirSampaiBawah(page)
+  await page.waitForLoadState('networkidle')
+  for (const s of await page.locator('[data-slot-iklan]').all()) await expect(s).toBeHidden()
+  expect(catatan.skrip).toHaveLength(1)
+  expect(await iklanTiruan(page)).toBeNull()
+})

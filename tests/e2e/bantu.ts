@@ -18,6 +18,49 @@ export async function cegatCloudinary(page: Page): Promise<void> {
   )
 }
 
+/**
+ * Skrip AdSense tiruan, dilayani tes untuk `pagead2.googlesyndication.com` (tes tidak boleh memanggil
+ * jaringan). Mencatat berapa kali dimuat, isi `dataLayer` saat dimuat (Consent Mode harus sudah diatur),
+ * menulis cookie `__gads` dan `__gpi` seperti AdSense, dan mengisi setiap `<ins class="adsbygoogle">` dengan
+ * kotak hijau seukuran unit. Permintaan lain ke domain iklan Google ditolak dan dicatat.
+ */
+const SKRIP_ADSENSE_TIRUAN = `(function () {
+  var c = (window.__iklanTiruan = window.__iklanTiruan || { dimuat: 0, diisi: 0, dataLayer: [] })
+  c.dimuat++
+  c.dataLayer = (window.dataLayer || []).map(function (a) { return Array.prototype.slice.call(a) })
+  document.cookie = '__gads=tiruan; Path=/; SameSite=Lax'
+  document.cookie = '__gpi=tiruan; Path=/; SameSite=Lax'
+  function isi() {
+    document.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(function (ins) {
+      ins.setAttribute('data-adsbygoogle-status', 'done')
+      ins.setAttribute('data-ad-status', 'filled')
+      ins.innerHTML = '<div data-iklan-tiruan style="width:100%;height:100%;background:#1f7a4d"></div>'
+      c.diisi++
+    })
+  }
+  var antre = window.adsbygoogle || []
+  window.adsbygoogle = { loaded: true, push: isi }
+  if (antre.length) isi()
+})()`
+
+export type CatatanIklan = { skrip: string[]; lain: string[] }
+
+export async function cegatIklan(page: Page): Promise<CatatanIklan> {
+  const catatan: CatatanIklan = { skrip: [], lain: [] }
+  for (const pola of ['https://*.googlesyndication.com/**', 'https://*.doubleclick.net/**', 'https://*.google.com/**', 'https://*.googletagmanager.com/**']) {
+    await page.route(pola, (route) => {
+      catatan.lain.push(route.request().url())
+      return route.abort()
+    })
+  }
+  // Didaftarkan terakhir supaya didahulukan Playwright (rute yang cocok dijalankan dari yang terakhir didaftarkan).
+  await page.route('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js*', (route) => {
+    catatan.skrip.push(route.request().url())
+    return route.fulfill({ status: 200, contentType: 'text/javascript', body: SKRIP_ADSENSE_TIRUAN })
+  })
+  return catatan
+}
+
 /** `bagian`: selector yang diperiksa saja, misalnya komponen kustom di admin Payload. Tanpa itu: seluruh halaman. */
 export async function periksaAxe(page: Page, ...bagian: string[]): Promise<void> {
   let axe = new AxeBuilder({ page }).withTags(TAG_WCAG)

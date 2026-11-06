@@ -4,12 +4,15 @@ import { ChipPilar } from '@/components/dasar/ChipPilar'
 import { Ikon } from '@/components/dasar/Ikon'
 import { JsonLd } from '@/components/dasar/JsonLd'
 import { RemahRoti } from '@/components/dasar/RemahRoti'
+import { SlotIklan } from '@/components/iklan/SlotIklan'
 import { Tautan } from '@/components/dasar/Tautan'
 import { Keterangan, UKURAN_KOLOM_ISI } from '@/components/isi/GambarIsi'
 import { IsiArtikel } from '@/components/isi/IsiArtikel'
 import { DaftarKartu } from '@/components/kartu/KartuArtikel'
 import { JudulBersama } from '@/components/motion/JudulBersama'
 import { LABEL_TIPE_ARTIKEL } from '@/lib/konstanta'
+import { pilihSlot, sisipkanIklanTengah } from '@/modules/iklan/aturan'
+import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import { tanggalIndonesia } from '@/modules/konten/artikel'
 import type { DataArtikel } from '@/modules/konten/tipe'
 import { propsGambar } from '@/modules/media/props'
@@ -28,8 +31,11 @@ import { ProfilPenulis } from './ProfilPenulis'
  * Halaman artikel (keempat tipe, termasuk glosarium) dengan urutan dari spesifikasi §4: kicker
  * pilar, H1, deck, byline, kotak Intinya, daftar isi, isi, sumber, FAQ, artikel terkait, profil
  * penulis. Breadcrumb dan JSON-LD dibangun modul SEO dari dokumen yang sama.
+ *
+ * Iklan (spesifikasi §11) hanya di dua tempat: di tengah isi setelah paragraf ke-N (`sisipkanIklanTengah`)
+ * dan setelah isi, sebelum catatan, sumber, dan FAQ. Tidak pernah di atas H1 atau di dalam kotak Intinya.
  */
-export function HalamanArtikel({ artikel, situs }: { artikel: DataArtikel; situs: Situs }) {
+export function HalamanArtikel({ artikel, situs, iklan = null }: { artikel: DataArtikel; situs: Situs; iklan?: PengaturanIklan | null }) {
   const masukan = { jenis: 'artikel', doc: artikel.seo } as const
   const gambar = propsGambar(artikel.gambar, 'hero', { cloudName: situs.cloudName, lebar: 1440 })
   return (
@@ -78,7 +84,8 @@ export function HalamanArtikel({ artikel, situs }: { artikel: DataArtikel; situs
               <Keterangan media={artikel.gambar} />
             </figure>
           )}
-          <IsiArtikel isi={artikel.isi} cloudName={situs.cloudName} />
+          <IsiArtikel isi={sisipkanIklanTengah(artikel.isi, pilihSlot(iklan, 'artikel-tengah'))} cloudName={situs.cloudName} />
+          <SlotIklan slot={pilihSlot(iklan, 'artikel-akhir')} />
           <Catatan teks={artikel.pilar?.disclaimer ?? null} />
           <BlokSumber sumber={artikel.sumber} />
           <Faq faq={artikel.faq} />

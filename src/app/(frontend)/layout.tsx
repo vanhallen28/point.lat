@@ -5,6 +5,7 @@ import '@/styles/tokens.css'
 import '@/styles/dasar.css'
 
 import { PanelPersetujuan } from '@/components/iklan/PanelPersetujuan'
+import { PemuatIklan } from '@/components/iklan/PemuatIklan'
 import { SkripPersetujuan } from '@/components/iklan/SkripPersetujuan'
 import { PemicuMasuk } from '@/components/motion/PemicuMasuk'
 import { Footer } from '@/components/tata-letak/Footer'
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 }
 
 /**
- * Banner persetujuan cookie hanya bila iklan dinyalakan dengan ID penerbit yang valid: tanpa iklan, situs
+ * Banner persetujuan cookie dan pemuat iklan hanya bila iklan dinyalakan dengan ID penerbit yang valid: tanpa iklan, situs
  * hanya memakai yang perlu. Pilihan pengunjung dibaca skrip awal di browser, jadi halaman tetap ISR;
  * `suppressHydrationWarning` karena skrip itu menulis atribut `<html>` sebelum React hidrasi.
  */
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main id="isi">{children}</main>
         <Footer data={footer} persetujuan={persetujuan} />
         <PemicuMasuk />
+        {persetujuan && <PemuatIklan />}
       </body>
     </html>
   )

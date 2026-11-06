@@ -4,6 +4,7 @@ import { cache } from 'react'
 import { HalamanArtikel } from '@/components/artikel/HalamanArtikel'
 import { HalamanStatis } from '@/components/halaman/HalamanStatis'
 import { HalamanRubrik } from '@/components/rubrik/HalamanRubrik'
+import { muatIklan } from '@/modules/iklan'
 import { muatJalur, muatSitus, pathDariSegmen, tanganiTidakAda } from '@/modules/konten'
 import { metadata, metadataTidakDitemukan } from '@/modules/seo'
 
@@ -46,7 +47,7 @@ export default async function Halaman({ params }: Props) {
   const hasil = await cari(jalur)
   switch (hasil?.jenis) {
     case 'artikel':
-      return <HalamanArtikel artikel={hasil.artikel} situs={await muatSitus()} />
+      return <HalamanArtikel artikel={hasil.artikel} situs={await muatSitus()} iklan={await muatIklan()} />
     case 'rubrik':
       return <HalamanRubrik rubrik={hasil.rubrik} situs={await muatSitus()} />
     case 'halaman':

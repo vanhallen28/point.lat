@@ -4,6 +4,9 @@ import { RichText, type JSXConverter, type JSXConvertersFunction } from '@payloa
 import type { ReactNode } from 'react'
 
 import { Tautan } from '@/components/dasar/Tautan'
+import { SlotIklan } from '@/components/iklan/SlotIklan'
+import { NODE_IKLAN } from '@/modules/iklan/aturan'
+import type { SlotSiap } from '@/modules/iklan/tipe'
 import { mediaTampil } from '@/modules/konten/artikel'
 import { hrefDokumen } from '@/modules/konten/isi'
 import type { IsiDokumen } from '@/modules/seo/lexical'
@@ -66,6 +69,8 @@ function konverter(cloudName: string): JSXConvertersFunction {
       embedTool: ({ node }: { node: { fields: BlokEmbedTool } }) => <KartuTool tool={node.fields.tool} />,
       embedVideo: ({ node }: { node: { fields: BlokEmbedVideo } }) => <VideoSemat video={node.fields.video} cloudName={cloudName} />,
     },
+    // Iklan tengah artikel: node yang disisipkan `sisipkanIklanTengah`, bukan bagian dari isi tersimpan.
+    [NODE_IKLAN]: ({ node }) => <SlotIklan slot={(node as unknown as { slot: SlotSiap }).slot} />,
     // Node yang tidak dikenal tidak dirender (bawaan Payload menulis "unknown node").
     unknown: () => null,
   })

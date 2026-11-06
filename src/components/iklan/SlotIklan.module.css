@@ -1,0 +1,45 @@
+/*
+ * Slot iklan (spesifikasi §11). Tidak menempati ruang sampai pengunjung memilih Izinkan semua; sesudahnya
+ * kotak berukuran tetap dipesan sejak paint pertama. Slot yang lebih lebar dari layar (di bawah 375 px)
+ * disembunyikan: unit tersembunyi tidak pernah diminta (Bantuan AdSense), dan iklan tidak terpotong.
+ */
+.slot {
+  display: none;
+  justify-items: center;
+  gap: var(--ruang-2);
+}
+
+:global(html[data-persetujuan='semua']) .slot {
+  display: grid;
+}
+
+@media (max-width: 22.99rem) {
+  :global(html[data-persetujuan='semua']) .slot[data-lebar='336'] {
+    display: none;
+  }
+}
+
+@media (max-width: 21.99rem) {
+  :global(html[data-persetujuan='semua']) .slot[data-lebar='320'] {
+    display: none;
+  }
+}
+
+@media (max-width: 20.74rem) {
+  :global(html[data-persetujuan='semua']) .slot[data-lebar='300'] {
+    display: none;
+  }
+}
+
+.label {
+  color: var(--teks-sekunder);
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.kotak {
+  background: var(--permukaan);
+}
