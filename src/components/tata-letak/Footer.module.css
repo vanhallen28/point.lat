@@ -38,8 +38,35 @@
   text-decoration: underline;
 }
 
+.bawah {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--ruang-5);
+}
+
 .hakCipta {
   color: var(--teks-sekunder);
+}
+
+/* Membuka lagi banner persetujuan cookie; hanya bila JavaScript berjalan (skrip awal menulis atribut ini). */
+.pengaturan {
+  display: none;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: var(--garis-tipis);
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+:global(html[data-persetujuan]) .pengaturan {
+  display: inline-flex;
 }
 
 @media (min-width: 64rem) {
@@ -53,7 +80,7 @@
     justify-self: center;
   }
 
-  .hakCipta {
+  .bawah {
     grid-column: 1 / -1;
   }
 }

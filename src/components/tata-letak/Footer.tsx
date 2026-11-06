@@ -1,10 +1,15 @@
 import { Logo } from '@/components/dasar/Logo'
 import { Tautan } from '@/components/dasar/Tautan'
+import { ATRIBUT_BUKA } from '@/modules/iklan/persetujuan'
 import type { DataFooter } from '@/modules/konten/tipe'
 
 import gaya from './Footer.module.css'
 
-export function Footer({ data }: { data: DataFooter }) {
+/**
+ * `persetujuan`: banner persetujuan cookie aktif (iklan dinyalakan), jadi footer memuat tombol "Pengaturan
+ * cookie" yang membukanya lagi. Tombol itu tampil hanya bila JavaScript berjalan (CSS dari atribut `<html>`).
+ */
+export function Footer({ data, persetujuan = false }: { data: DataFooter; persetujuan?: boolean }) {
   const sosial = data.whatsapp ? [...data.sosial, { label: 'Saluran WhatsApp', href: data.whatsapp }] : data.sosial
   return (
     <footer className={gaya.footer}>
@@ -33,7 +38,14 @@ export function Footer({ data }: { data: DataFooter }) {
             ))}
           </ul>
         )}
-        <p className={gaya.hakCipta}>{data.hakCipta}</p>
+        <div className={gaya.bawah}>
+          <p className={gaya.hakCipta}>{data.hakCipta}</p>
+          {persetujuan && (
+            <button type="button" className={gaya.pengaturan} {...{ [ATRIBUT_BUKA]: '' }}>
+              Pengaturan cookie
+            </button>
+          )}
+        </div>
       </div>
     </footer>
   )

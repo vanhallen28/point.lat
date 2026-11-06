@@ -1,0 +1,88 @@
+/*
+ * Banner persetujuan cookie (spesifikasi §11). Tersembunyi sampai skrip awal di <head> menandai
+ * `<html data-persetujuan="belum">` (belum memilih) atau banner dibuka lagi (`data-panel-persetujuan`).
+ * Tanpa JavaScript tidak tampil, karena tanpa JavaScript iklan juga tidak dimuat. Di dalam alur halaman,
+ * di atas header: tidak menutupi isi di layar mana pun.
+ */
+.panel {
+  display: none;
+  border-bottom: var(--garis-tebal) solid var(--garis);
+  background: var(--permukaan);
+}
+
+:global(html[data-persetujuan='belum']) .panel,
+:global(html[data-panel-persetujuan]) .panel {
+  display: block;
+}
+
+.panel:focus-visible {
+  outline-offset: calc(var(--fokus-tebal) * -2);
+}
+
+.isi {
+  display: grid;
+  gap: var(--ruang-4);
+  padding-block: var(--ruang-5);
+  font-size: var(--teks-kecil);
+  line-height: 1.5;
+}
+
+.teks {
+  display: grid;
+  gap: var(--ruang-2);
+  max-width: 72ch;
+}
+
+.judul {
+  font-size: var(--teks-isi);
+  font-weight: 800;
+}
+
+.teks a {
+  font-weight: 700;
+}
+
+.sekarang {
+  font-weight: 700;
+}
+
+/* Dua pilihan sejajar dan setara: lebar, warna, dan urutan tab sama bobotnya. */
+.pilihan {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ruang-3);
+}
+
+.tombol {
+  min-height: var(--sentuh-min);
+  padding: var(--ruang-2) var(--ruang-4);
+  border: 0;
+  border-radius: var(--radius-kontrol);
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.tombol:hover {
+  text-decoration: underline;
+}
+
+.tombol:active {
+  transform: scale(0.98);
+}
+
+@media (min-width: 64rem) {
+  .isi {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--ruang-10);
+  }
+
+  /* Lebar tetap yang sama untuk kedua tombol: kolom `auto` membuat tombol selebar teksnya masing-masing. */
+  .pilihan {
+    grid-template-columns: repeat(2, 11rem);
+  }
+}

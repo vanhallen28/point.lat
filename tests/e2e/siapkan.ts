@@ -319,10 +319,12 @@ const tekno = await payload.create({
 await payload.updateGlobal({ slug: 'pengaturan-seo', data: { indexing: { kunciIndexNow: KUNCI_INDEXNOW } } })
 // Asisten AI menyala dengan anggaran bawaan, apa pun yang diubah tes sebelumnya (E2E kedua memakai database yang sama).
 await payload.updateGlobal({ slug: 'asisten-ai', data: { aktif: true, anggaranBulanan: 10 } })
-// Iklan dengan ID penerbit tiruan, apa pun yang diubah tes sebelumnya (E2E kedua memakai database yang sama).
+// Iklan menyala dengan ID penerbit tiruan, apa pun yang diubah tes sebelumnya (E2E kedua memakai database yang
+// sama). Semua spec berjalan dengan banner persetujuan; skrip AdSense hanya dimuat setelah Izinkan semua, dan
+// tes yang memilihnya mencegat domain Google, jadi tidak ada permintaan jaringan.
 await payload.updateGlobal({
   slug: 'iklan',
-  data: { aktif: false, penyedia: 'adsense', idPenerbit: PENERBIT_E2E, modeUji: true, slot: [], adsTxtTambahan: ADS_TXT_E2E },
+  data: { aktif: true, penyedia: 'adsense', idPenerbit: PENERBIT_E2E, modeUji: true, slot: [], adsTxtTambahan: ADS_TXT_E2E },
 })
 await payload.updateGlobal({
   slug: 'newsletter',
