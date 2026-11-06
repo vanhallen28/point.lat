@@ -35,6 +35,7 @@ import { Iklan } from './globals/Iklan'
 import { Newsletter } from './globals/Newsletter'
 import { PengaturanSEO } from './globals/PengaturanSEO'
 import { BAHASA_ADMIN } from './lib/bahasa-admin'
+import { opsiPool, pushSkema } from './lib/database'
 import { endpointJalankanJob } from './modules/indexer/endpoint'
 import { klienMedia } from './modules/media'
 import { mediaCloudinary } from './modules/media/plugin'
@@ -97,8 +98,11 @@ export default buildConfig({
   i18n: BAHASA_ADMIN,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
+  // Lokal dan tes: push skema ke Postgres sendiri. Supabase (produksi, pratinjau): hanya migrasi
+  // (`src/migrations`, `pnpm migrate`), lewat pooler mode transaksi dengan pool kecil (`src/lib/database.ts`).
   db: postgresAdapter({
-    pool: { connectionString: process.env.DATABASE_URL || '' },
+    pool: opsiPool(),
+    push: pushSkema(),
   }),
   sharp,
   plugins: [mediaCloudinary({ klien: klienMedia })],
