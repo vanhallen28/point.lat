@@ -215,16 +215,16 @@ Validasi: kotak Intinya wajib sebelum terbit; alt gambar wajib; gambar utama ≥
 |---|---|
 | `/` | beranda |
 | `/{slug}` | artikel (semua tipe kecuali glosarium) |
-| `/{pilar}` dan `/{pilar}/{subkategori}` | halaman rubrik |
+| `/{pilar}` dan `/{pilar}/{subkategori}` | halaman rubrik; tulisan lebih lama di `/{pilar}/halaman/{n}` dan `/{pilar}/{subkategori}/halaman/{n}` (24 per halaman, `/halaman/1` dialihkan ke alamat rubrik) |
 | `/tools` dan `/tools/{slug}` | indeks tools dan kalkulator |
 | `/glosarium` dan `/glosarium/{slug}` | glosarium |
 | `/video` dan `/video/{slug}` | video |
-| `/penulis/{slug}` | profil penulis |
+| `/penulis/{slug}` | profil penulis; tulisan lebih lama di `/penulis/{slug}/halaman/{n}` |
 | `/cari` | pencarian (noindex) |
 | `/tentang`, `/kebijakan-redaksi`, `/pedoman-media-siber`, `/pasang-iklan`, `/kontak` | halaman statis |
 | `/sitemap.xml`, `/sitemap/{jenis}.xml`, `/news-sitemap.xml`, `/robots.txt`, `/feed.xml`, `/ads.txt`, `/{indexnow-key}.txt` | teknis |
 
-Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (divalidasi di CMS). Mengganti slug membuat redirect 301 otomatis, termasuk `/{pilar}/{subkategori}` saat slug subkategori berganti, subkategori pindah pilar, atau slug pilar berganti.
+Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (divalidasi di CMS), dan slug `halaman` dicadangkan untuk paginasi. Halaman paginasi punya judul (", halaman N") dan canonical sendiri, tetap diindeks, tetapi tidak masuk sitemap dan tidak dikabarkan Mesin Indexing; setiap artikel sudah ada di sitemap (panduan paginasi Google: jangan jadikan halaman 1 canonical seluruh urutan). Mengganti slug membuat redirect 301 otomatis, termasuk `/{pilar}/{subkategori}` saat slug subkategori berganti, subkategori pindah pilar, atau slug pilar berganti.
 
 ## 8. SEO
 
@@ -248,7 +248,7 @@ Slug pilar, subkategori, dan halaman tidak boleh bentrok dengan slug artikel (di
 - JSON-LD: `Article`/`NewsArticle` (explainer), `BreadcrumbList`, `Organization` (+ logo), `Person` (penulis), `VideoObject`, `WebSite`, `WebApplication` untuk tools. FAQ tetap ditulis sebagai isi; rich result FAQ (dihapus Google Mei 2026) dan HowTo (dihapus 2023) tidak diandalkan.
 - Halaman yatim (tanpa link masuk) dilaporkan di dashboard: artikel dan halaman terbit (tidak noindex) tanpa tautan dari isi dokumen terbit lain, relasi pilihan editor (artikel terkait, tools, video), menu header dan footer, atau pilihan beranda. Daftar otomatis (rubrik, tulisan terbaru, artikel terkait otomatis, sitemap) tidak dihitung karena isinya berganti. Dihitung pindai harian di cron.
 - Pengecek link rusak: tautan internal dicocokkan dengan database setiap hari (dokumen terbit, halaman indeks, redirect; tautan ke alamat lama yang dialihkan ikut dilaporkan); tautan ke situs lain dicek seminggu sekali (HEAD, GET bila HEAD ditolak, batas 10 detik, paling banyak 10 URL per jalan cron). 404 dan 410 atau domain hilang berarti rusak; kode lain dan batas waktu "perlu dicek manual".
-- Log 404 dengan tombol "buat redirect" (form redirect dengan path terisi).
+- Log 404 dengan tombol "buat redirect" (form redirect dengan path terisi). Beacon pencatatnya dibatasi tanpa menyimpan IP: isian paling besar 2 KB, hanya dari halaman situs sendiri, paling banyak 200 path baru per 24 jam; batas laju per IP lewat aturan rate limit Vercel Firewall.
 
 ### Mesin Indexing
 
@@ -260,7 +260,7 @@ Pemicu: `terbit`, `ubah-besar`, `hapus` (artikel, tools, video, halaman, pilar),
 | 2. Search Console | `sitemaps.submit` untuk sitemap index, maksimal sekali per 30 menit sejak kiriman berhasil terakhir (kabar di antaranya menunggu dan tergabung) |
 | 3. IndexNow | POST daftar URL ke `api.indexnow.org` dengan key dari CMS dan file `/{key}.txt`, satu POST untuk semua URL yang antre, maksimal sekali per 5 menit |
 | 4. Google Indexing API (opsional) | hanya jika saklar aktif; `URL_UPDATED`/`URL_DELETED`; berhenti saat kuota harian (dari CMS, default 200) tercapai; banner peringatan bahwa penggunaan untuk artikel di luar ketentuan Google |
-| 5. Cek status | URL Inspection API pada +6 jam, +24 jam, +3 hari, +7 hari, +14 hari, +30 hari (dua tahap terakhir keputusan pemilik 2026-11-05, karena domain baru sering belum dikenal Google lebih dari seminggu); berhenti saat Terindeks; cek di atas batas harian (CMS, bawaan 1.000 dari kuota Google 2.000 per properti) ditunda ke hari berikutnya |
+| 5. Cek status | URL Inspection API pada +6 jam, +24 jam, +3 hari, +7 hari, +14 hari, +30 hari (dua tahap terakhir keputusan pemilik 2026-11-05, karena domain baru sering belum dikenal Google lebih dari seminggu); berhenti saat Terindeks; cek di atas batas harian (CMS, bawaan 1.000 dari kuota Google 2.000 per properti) ditunda ke hari berikutnya. Tombol "Cek sekarang" di daftar Status indeks (hanya admin) memajukan cek satu URL lewat antrean, dibatasi kuota harian yang sama dan jeda 10 menit per URL |
 | 6. Log | setiap langkah ke `logIndexing` |
 
 Kegagalan: retry 3 kali dengan jeda 1, 5, 30 menit; setelah itu status Gagal di log (cek status: status indeks Error) dan peringatan di dashboard. Kuota Google habis (429): ditunda ke awal hari kuota berikutnya (tengah malam waktu Pasifik). Penghapusan dan batal terbit: URL keluar dari sitemap, halaman menjawab 404, atau 308 ke tujuan bila ada redirect (keputusan pemilik di Rencana 4A: redirect lewat `permanentRedirect()`, kode 410 di CMS menjawab 404), IndexNow tetap dikabari, dan `URL_DELETED` bila Indexing API aktif.
@@ -271,7 +271,7 @@ Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cl
 
 ### Dashboard SEO (di admin)
 
-View admin `/admin/seo` dengan tautan di atas menu, hanya untuk admin: klik, impresi, CTR, dan posisi 28 hari (kartu angka dan grafik klik harian dengan tabel angkanya), halaman teratas per URL (Search Analytics API `searchanalytics.query`, data final, disinkron sekali sehari; data Google baru final 2 sampai 3 hari kemudian); ringkasan status indeks; log indexing terbaru dan jumlah langkah gagal 7 hari; tautan rusak; halaman yatim; 404 teratas dengan tombol "buat redirect"; status setiap tugas harian. Tanpa data (akun layanan belum diatur, adapter palsu, domain baru) dan saat sinkron gagal, setiap bagian menjelaskan sebabnya. Fase 2: daftar "perlu diperbarui" berdasarkan penurunan klik.
+View admin `/admin/seo` dengan tautan di atas menu, hanya untuk admin: klik, impresi, CTR, dan posisi 28 hari (kartu angka dan grafik klik harian dengan tabel angkanya), halaman teratas per URL (Search Analytics API `searchanalytics.query`, data final, disinkron sekali sehari; data Google baru final 2 sampai 3 hari kemudian); ringkasan status indeks; log indexing terbaru dan jumlah langkah gagal 7 hari; tautan rusak; halaman yatim; 404 teratas dengan tombol "buat redirect"; status setiap tugas harian, dengan tombol "Pindai ulang sekarang" untuk pindai tautan (jeda 10 menit sejak pindai terakhir dimulai). Tanpa data (akun layanan belum diatur, adapter palsu, domain baru) dan saat sinkron gagal, setiap bagian menjelaskan sebabnya. Fase 2: daftar "perlu diperbarui" berdasarkan penurunan klik.
 
 ## 9. Media: Cloudinary
 

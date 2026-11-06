@@ -10,13 +10,18 @@ import { SLUG, SLUG_SUB, SLUG_VIDEO } from './data'
  */
 const ANGGARAN_JS = 160 * 1024
 
-/** Setiap jenis halaman publik: beranda, artikel, rubrik, halaman statis, penulis, video, tools, kalkulator, cari. */
+/**
+ * Setiap jenis halaman publik: beranda, artikel, rubrik, halaman statis, penulis, video, tools, kalkulator, cari,
+ * dan halaman berikutnya rubrik dan profil penulis (paginasi, rute penulis tersendiri).
+ */
 const HALAMAN_ANGGARAN = [
   '/',
   `/${SLUG.panduan}`,
   `/uang-karier/${SLUG_SUB.pajak}`,
   '/tentang',
   '/penulis/redaksi',
+  '/belajar/halaman/2',
+  '/penulis/redaksi/halaman/2',
   '/video',
   `/video/${SLUG_VIDEO.pph21}`,
   '/tools',
