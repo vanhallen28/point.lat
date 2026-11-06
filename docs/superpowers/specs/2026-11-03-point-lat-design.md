@@ -145,7 +145,7 @@ Vercel Cron ──► /api/jobs/run setiap 10 menit (header rahasia)
 | `seo` | `metadata(doc)`, `jsonLd(doc)`, `analisis(doc) → daftar cek` | aturan judul/meta, canonical, robots, schema per tipe, skor checklist | (tidak ada seam, fungsi murni) |
 | `hitung` | `hitung(toolId, input, tanggal) → hasil + rincian` | rumus per tool, pemilihan parameter sesuai tanggal berlaku | (fungsi murni, parameter dari CMS) |
 | `media` | `unggah(file) → {publicId, meta}`, `url(publicId, preset)` | tanda tangan upload, preset transformasi, OG image | `cloudinary` (adapter `@payloadcms/plugin-cloud-storage`), `palsu` untuk tes |
-| `iklan` | `<SlotIklan id="..."/>` | baca pengaturan slot, cek persetujuan, lazy-load saat terlihat, tinggi dipesan | penyedia iklan (AdSense) |
+| `iklan` | `pilihSlot(pengaturan, posisi, id?)` dan `<SlotIklan slot={...}/>` (pengaturan dari `muatIklan()`); `skripAwal()`, banner persetujuan, dan `PemuatIklan` di layout; `isiAdsTxt` untuk `/ads.txt` | syarat slot tampil, posisi dan ukuran tetap, iklan tengah artikel setelah paragraf ke-N, persetujuan di browser (cookie bertanggal dan berversi, Consent Mode v2), lazy-load setelah persetujuan dan saat slot hampir terlihat, ruang dipesan | penyedia iklan AdSense (`adsense.ts`; tes mencegat domainnya di browser) |
 | `ai` | `jalankan(payload, tugas, masukan, opsi)` untuk brief, draf per bagian, dan generator meta (endpoint `/api/artikel/asisten`); `periksaPola(blok)` dan `periksaKlaim(blok, sumber)` di browser | prompt, skema JSON, dan pemeriksa per tugas, batas 6 permintaan per menit per pengguna, cadangan anggaran bulanan atomik (US$, waktu Jakarta), log, pembersih em dash dan en dash | `asli` (Messages API lewat `fetch` dengan `ANTHROPIC_API_KEY`), `palsu` untuk tes, dev, dan pratinjau (dipilih `AI_ADAPTER`) |
 
 ### Struktur folder (rencana)
@@ -203,7 +203,7 @@ point-lat/
 | `footer` | tautan, teks hak cipta, tautan sosial, saluran WhatsApp |
 | `beranda` | urutan & isi blok homepage (hero, mozaik pilihan redaksi, strip video, paling dibaca, newsletter, slot iklan) |
 | `pengaturanSEO` | nama situs, judul default, pola judul, meta default, gambar OG default, organisasi (logo, sameAs), kode verifikasi, robots.txt; grup Mesin Indexing: status pemasangan (mode adapter, akun layanan Google, `CRON_SECRET`, kunci IndexNow; rahasia tidak ditampilkan), IndexNow key, properti Search Console, batas cek status per hari (bawaan 1.000), saklar Indexing API (mati) dengan peringatan, batas Indexing API (bawaan 200). Kredensial Google hanya di env server |
-| `iklan` | penyedia, ID penerbit, slot (id, ukuran, posisi, halaman, aktif), `ads.txt` |
+| `iklan` | aktif (bawaan mati), penyedia (AdSense), ID penerbit (`ca-pub-` 16 angka), mode uji (`data-adtest`), slot (ID, posisi yang sekaligus menentukan jenis halaman: artikel tengah setelah paragraf ke-N, artikel akhir, rubrik, tools, beranda; ukuran tetap 300 x 250, 336 x 280, atau 320 x 100; unit `data-ad-slot`; aktif; satu slot aktif per posisi kecuali beranda), baris `ads.txt` tambahan (baris AdSense dibuat otomatis dari ID penerbit) |
 | `asistenAI` | status pemasangan (mode adapter, kunci API terpasang atau belum, model per tugas dari env, pemakaian bulan ini), aktif, anggaran bulanan (US$, bawaan 10), harga per model (US$ per juta token), sumber resmi per pilar untuk brief, frasa klise tambahan untuk cek pola |
 | `newsletter` | penyedia, teks form, tautan arsip |
 
@@ -308,11 +308,14 @@ Pengaman:
 
 ## 11. Iklan & privasi
 
-- Slot dikelola dari global `iklan`; komponen `SlotIklan` memesan tinggi sesuai ukuran slot (CLS 0), memuat skrip penyedia setelah halaman interaktif dan slot terlihat.
-- Banner persetujuan cookie (UU PDP No. 27/2022): pilihan "Hanya yang perlu" dan "Izinkan semua". Iklan personalisasi hanya setelah persetujuan.
+- Slot dikelola dari global `iklan`; komponen `SlotIklan` memesan lebar dan tinggi sesuai ukuran tetap slot (CLS 0) dengan label "Iklan", dan skrip AdSense dimuat setelah halaman interaktif, setelah pengunjung memilih "Izinkan semua", dan saat slot hampir terlihat. Unit yang tidak terisi tetap berukuran sama (tidak diciutkan).
+- Posisi: artikel (setelah paragraf ke-N di tingkat atas isi, bila masih ada dua paragraf sesudahnya, dan setelah isi sebelum sumber dan FAQ), rubrik (setelah daftar tulisan), tools (setelah penjelasan, di luar kalkulator), dan beranda (blok Slot iklan).
+- Banner persetujuan cookie (UU PDP No. 27/2022) di atas header, di dalam alur halaman (tidak menutupi isi): pilihan "Hanya yang perlu" dan "Izinkan semua", setara dan sejajar, dengan tautan Kebijakan Privasi. "Hanya yang perlu" berarti iklan tidak dimuat sama sekali (iklan non-personalisasi AdSense tetap memakai cookie untuk pembatasan frekuensi). Pilihan disimpan di cookie pihak pertama berversi dan bertanggal selama 12 bulan, dibaca di browser (halaman tetap statis), dan bisa diubah atau ditarik lewat "Pengaturan cookie" di footer; menarik persetujuan menghapus cookie iklan di domain situs dan memuat ulang halaman.
+- Google Consent Mode v2: keempat sinyal ditolak sebelum skrip iklan apa pun; "Izinkan semua" membuka sinyal iklan (`ad_storage`, `ad_user_data`, `ad_personalization`), `analytics_storage` tetap ditolak selama situs tanpa alat analitik.
+- Pengunjung EEA, Inggris, dan Swiss: iklan personalisasi di sana mensyaratkan CMP bersertifikat Google (TCF); pemilik memakai pesan European regulations di AdSense, Privacy & messaging.
 - Tidak ada iklan di dalam kotak Intinya, di atas H1, atau di dalam kalkulator.
-- `ads.txt` dari CMS.
-- Halaman Kebijakan Privasi.
+- `ads.txt` dari CMS: baris AdSense dari ID penerbit dan baris tambahan, 404 bila kosong.
+- Halaman Kebijakan Privasi (teks hukum ditulis pemilik).
 
 ## 12. Performa
 
@@ -381,7 +384,7 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 5. Google Cloud: proyek, aktifkan Search Console API (dan Indexing API bila nanti dipakai), akun layanan dengan kunci JSON, tambahkan email akun layanan (`client_email`) sebagai Owner di Search Console.
 6. Env Vercel untuk Mesin Indexing: `INDEXER_ADAPTER=asli` (Production) dan `palsu` (Preview), `GOOGLE_SERVICE_ACCOUNT_JSON` berisi seluruh file kunci JSON (Production saja), `CRON_SECRET` acak minimal 16 karakter. Kunci IndexNow diisi di Pengaturan SEO; status pemasangan tampil di halaman yang sama.
 7. Kunci Claude API: env Vercel `AI_ADAPTER=asli` dan `ANTHROPIC_API_KEY` (Production), `AI_ADAPTER=palsu` (Preview). Anggaran bulanan, harga per model, dan sumber resmi per pilar di Pengaturan, Asisten AI.
-8. Akun AdSense (setelah konten cukup) dan penyedia newsletter.
+8. Akun AdSense (setelah konten cukup): ID penerbit dan unit iklan display berukuran tetap di global Iklan, pesan European regulations di Privacy & messaging, Kebijakan Privasi terbit sebelum iklan dinyalakan. Penyedia newsletter.
 
 ## 19. Risiko & mitigasi
 
