@@ -3,10 +3,19 @@ import type { NextConfig } from 'next'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { HEADER_KEAMANAN } from './src/lib/header-keamanan'
+
 const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  // Tanpa `X-Powered-By` (Next dan Payload): teknologi situs tidak diumumkan di setiap jawaban.
+  poweredByHeader: false,
+  // Header keamanan di semua jawaban (`src/lib/header-keamanan.ts`). Lewat konfigurasi, bukan dibaca atau
+  // ditulis saat render, jadi halaman publik tetap ISR.
+  async headers() {
+    return [{ source: '/:path*', headers: HEADER_KEAMANAN }]
+  },
   images: {
     // Semua gambar dikirim Cloudinary (f_auto,q_auto, lebar srcset lewat c_limit). Next tidak
     // mengoptimasi ulang, jadi tidak ada /_next/image dan tidak ada biaya Image Optimization Vercel.
