@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   awalHariPasifik,
   bandingkanVersi,
+  batasCekManual,
   besokPasifik,
   gabungBaris,
+  JEDA_CEK_MANUAL_MS,
   jadwalCek,
   jadwalUlang,
+  jedaCekManual,
   rencanaKabar,
   setelahPanggilan,
   statusDariInspeksi,
@@ -188,5 +191,25 @@ describe('setelahPanggilan: keadaan antrean setelah adapter menjawab', () => {
       log: 'gagal',
       berikut: { jadwal: t('2026-11-08T03:00:00.000Z'), percobaan: 0, tahap: 2 },
     })
+  })
+})
+
+describe('batasCekManual: tombol "Cek sekarang"', () => {
+  it('boleh selama kuota harian belum habis dan permintaan manual terakhir lebih dari 10 menit lalu', () => {
+    expect(JEDA_CEK_MANUAL_MS).toBe(10 * 60_000)
+    expect(batasCekManual({ terpakai: 0, kuota: 1000, dimintaPada: null }, SEKARANG)).toEqual({ boleh: true })
+    expect(batasCekManual({ terpakai: 999, kuota: 1000, dimintaPada: t('2026-11-05T02:50:00.000Z') }, SEKARANG)).toEqual({ boleh: true })
+  })
+
+  it('jeda 10 menit sejak permintaan terakhir; kuota habis berarti tunggu hari kuota berikutnya (tengah malam Pasifik)', () => {
+    expect(batasCekManual({ terpakai: 3, kuota: 1000, dimintaPada: t('2026-11-05T02:55:00.000Z') }, SEKARANG)).toEqual({
+      boleh: false,
+      alasan: 'jeda',
+      bolehLagi: t('2026-11-05T03:05:00.000Z'),
+    })
+    expect(batasCekManual({ terpakai: 1000, kuota: 1000, dimintaPada: null }, SEKARANG)).toEqual({ boleh: false, alasan: 'kuota', bolehLagi: besokPasifik(SEKARANG) })
+    expect(jedaCekManual('2026-11-05T02:55:00.000Z', SEKARANG)).toEqual(t('2026-11-05T03:05:00.000Z'))
+    expect(jedaCekManual(null, SEKARANG)).toBeNull()
+    expect(jedaCekManual('2026-11-05T02:50:00.000Z', SEKARANG)).toBeNull()
   })
 })

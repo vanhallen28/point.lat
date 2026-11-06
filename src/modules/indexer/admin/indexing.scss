@@ -97,3 +97,61 @@
     margin-bottom: calc(var(--base) * 0.5);
   }
 }
+
+// Tombol "Cek sekarang" di daftar Status indeks. Cincin fokus ditulis sendiri karena CSS admin Payload
+// menghapus outline; keadaan dibatasi dan berjalan memakai aria-disabled (fokus tetap di tombol).
+.indexing-cek {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  max-width: 22rem;
+}
+
+.indexing-cek__tombol {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--theme-elevation-800);
+  border-radius: 999px;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--theme-elevation-100);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-text);
+    outline-offset: 2px;
+  }
+
+  &[aria-disabled='true'] {
+    border-color: var(--theme-elevation-400);
+    color: var(--theme-elevation-650);
+    cursor: not-allowed;
+  }
+}
+
+.indexing-cek__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.indexing-cek__pesan {
+  margin: 0;
+  color: var(--theme-text);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: normal;
+
+  &:empty {
+    display: none;
+  }
+}

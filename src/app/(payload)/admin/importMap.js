@@ -28,6 +28,7 @@ import { AsistenAi as AsistenAi_f549d98d040d13d9d3bf25316ccfffb6 } from '@/modul
 import { SelStatusIndeks as SelStatusIndeks_4aa4889310bcd7c06181f91b15b42b75 } from '@/modules/indexer/admin/SelStatusIndeks'
 import { TombolTerbit as TombolTerbit_9e1969ad26b51056e39a25585c0ce380 } from '@/modules/ai/admin/TombolTerbit'
 import { SelBuatRedirect as SelBuatRedirect_9f3e78885105faed9af81223ca0b8add } from '@/modules/pantau/admin/SelBuatRedirect'
+import { SelCekSekarang as SelCekSekarang_3e84b2c775a134029982b761331d5f29 } from '@/modules/indexer/admin/SelCekSekarang'
 import { StatusPemasangan as StatusPemasangan_7ab8988ab3c4bd2002e46c3028045fe1 } from '@/modules/indexer/admin/StatusPemasangan'
 import { PeringatanIndexingApi as PeringatanIndexingApi_cd1d217625ae1ec1a579e2d338353373 } from '@/modules/indexer/admin/PeringatanIndexingApi'
 import { StatusAsisten as StatusAsisten_7621f075c4066db15be983a968ce2810 } from '@/modules/ai/admin/StatusAsisten'
@@ -71,6 +72,7 @@ export const importMap = {
   "@/modules/indexer/admin/SelStatusIndeks#SelStatusIndeks": SelStatusIndeks_4aa4889310bcd7c06181f91b15b42b75,
   "@/modules/ai/admin/TombolTerbit#TombolTerbit": TombolTerbit_9e1969ad26b51056e39a25585c0ce380,
   "@/modules/pantau/admin/SelBuatRedirect#SelBuatRedirect": SelBuatRedirect_9f3e78885105faed9af81223ca0b8add,
+  "@/modules/indexer/admin/SelCekSekarang#SelCekSekarang": SelCekSekarang_3e84b2c775a134029982b761331d5f29,
   "@/modules/indexer/admin/StatusPemasangan#StatusPemasangan": StatusPemasangan_7ab8988ab3c4bd2002e46c3028045fe1,
   "@/modules/indexer/admin/PeringatanIndexingApi#PeringatanIndexingApi": PeringatanIndexingApi_cd1d217625ae1ec1a579e2d338353373,
   "@/modules/ai/admin/StatusAsisten#StatusAsisten": StatusAsisten_7621f075c4066db15be983a968ce2810,

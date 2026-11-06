@@ -1,9 +1,11 @@
 import { timingSafeEqual } from 'crypto'
 import type { Endpoint, Payload } from 'payload'
 
+import { tolakSelainAdmin } from '@/lib/aksiAdmin'
 import { jalankanPantau, type AdapterPantau, type RingkasanPantau } from '@/modules/pantau'
 
-import { jalankanIndexer, type RingkasanJalan } from './jalan'
+import { mintaCekStatus } from './cek'
+import { jalankanIndexer, jalankanSetelahRespons, type RingkasanJalan } from './jalan'
 
 /**
  * Header dari Vercel Cron: `Authorization: Bearer <CRON_SECRET>` (dokumentasi Vercel "Securing cron
@@ -47,5 +49,27 @@ export const endpointJalankanJob: Endpoint = {
       return Response.json({ pesan: 'Butuh header Authorization: Bearer CRON_SECRET, atau masuk sebagai admin.' }, { status: 401 })
     }
     return Response.json(await jalankanJadwal(req.payload))
+  },
+}
+
+/** Path endpoint di bawah `/api/status-indeks`, dipanggil tombol "Cek sekarang" di daftar Status indeks. */
+export const PATH_CEK_SEKARANG = '/:id/cek'
+
+/**
+ * `POST /api/status-indeks/{id}/cek`: "Cek sekarang" (hanya admin, dari admin situs sendiri). Cek dimasukkan
+ * ke antrean lalu antrean dijalankan setelah respons terkirim (`after()`), jadi permintaan admin tidak
+ * menunggu Google. Jawaban 202 (antre), 429 (kuota harian habis atau jeda 10 menit), atau 404.
+ */
+export const endpointCekSekarang: Endpoint = {
+  path: PATH_CEK_SEKARANG,
+  method: 'post',
+  handler: async (req) => {
+    const tolak = tolakSelainAdmin(req)
+    if (tolak) return tolak
+    const id = Number(req.routeParams?.id)
+    if (!Number.isInteger(id) || id <= 0) return Response.json({ status: 'tidak-ada', pesan: 'Status indeks tidak dikenal.' }, { status: 404 })
+    const hasil = await mintaCekStatus(req.payload, id)
+    if (hasil.status === 'antre') jalankanSetelahRespons(req.payload)
+    return Response.json(hasil, { status: hasil.status === 'antre' ? 202 : hasil.status === 'dibatasi' ? 429 : 404 })
   },
 }

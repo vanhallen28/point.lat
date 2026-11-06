@@ -34,6 +34,13 @@ export const JADWAL_CEK_MS = [6 * JAM, 24 * JAM, 3 * HARI, 7 * HARI, 14 * HARI, 
 /** Jarak minimal antarpengiriman: sitemap paling sering 30 menit sekali, IndexNow 5 menit sekali. */
 export const JENDELA_KIRIM_MS = { sitemap: 30 * MENIT, indexnow: 5 * MENIT } as const
 
+/**
+ * Jeda minimal antara dua permintaan "Cek sekarang" untuk URL yang sama. Data indeks Google tidak berubah
+ * dalam hitungan menit, jadi jeda ini menjaga kuota URL Inspection (2.000 per hari per properti) dari klik
+ * berulang tanpa menghalangi pengecekan ulang setelah pemilik meminta pengindeksan di Search Console.
+ */
+export const JEDA_CEK_MANUAL_MS = 10 * MENIT
+
 /** Baris sitemap di antrean: satu untuk seluruh situs, yang dikirim adalah sitemap index. */
 export const PATH_SITEMAP = PATH_SITEMAP_INDEX
 
@@ -137,6 +144,29 @@ export function awalHariPasifik(t: Date): Date {
 /** Awal hari kuota berikutnya. Hari Pasifik panjangnya 23 sampai 25 jam, jadi +25 jam selalu jatuh di hari berikutnya. */
 export function besokPasifik(t: Date): Date {
   return awalHariPasifik(new Date(awalHariPasifik(t).getTime() + 25 * JAM))
+}
+
+export type BatasCek = { boleh: true } | { boleh: false; alasan: 'kuota' | 'jeda'; bolehLagi: Date }
+
+/** Kapan "Cek sekarang" boleh dipakai lagi untuk URL yang terakhir diminta dicek pada `dimintaPada`; `null` bila sudah boleh. */
+export function jedaCekManual(dimintaPada: Date | string | null | undefined, sekarang: Date = new Date()): Date | null {
+  if (!dimintaPada) return null
+  const boleh = new Date(dimintaPada).getTime() + JEDA_CEK_MANUAL_MS
+  return boleh > sekarang.getTime() ? new Date(boleh) : null
+}
+
+/**
+ * Apakah "Cek sekarang" boleh dijalankan: kuota cek harian (dari Pengaturan SEO) belum habis, dan permintaan
+ * manual terakhir untuk URL ini sudah lewat `JEDA_CEK_MANUAL_MS`. `terpakai`: panggilan cek status sejak awal
+ * hari kuota (tengah malam waktu Pasifik).
+ */
+export function batasCekManual(
+  a: { terpakai: number; kuota: number; dimintaPada: Date | null },
+  sekarang: Date,
+): BatasCek {
+  if (a.terpakai >= a.kuota) return { boleh: false, alasan: 'kuota', bolehLagi: besokPasifik(sekarang) }
+  const jeda = jedaCekManual(a.dimintaPada, sekarang)
+  return jeda ? { boleh: false, alasan: 'jeda', bolehLagi: jeda } : { boleh: true }
 }
 
 /**

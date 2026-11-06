@@ -65,6 +65,7 @@ async function catatKabar(payload: Payload, daftar: Kabar[], opsi: { req?: Paylo
 }
 
 export { jalankanIndexer, jalankanSetelahRespons, type RingkasanJalan } from './jalan'
+export { mintaCekStatus, type HasilMintaCek } from './cek'
 export { bandingkanVersi } from './aturan'
 export { adapterIndexer, pakaiAdapterIndexer, type AdapterIndexer } from './adapter'
 export { adapterPalsu, type AdapterPalsu } from './palsu'

@@ -889,6 +889,7 @@ export interface StatusIndek {
   dirayapiPada?: string | null;
   cekTerakhir?: string | null;
   cekBerikutnya?: string | null;
+  dimintaPada?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1767,6 +1768,7 @@ export interface StatusIndeksSelect<T extends boolean = true> {
   dirayapiPada?: T;
   cekTerakhir?: T;
   cekBerikutnya?: T;
+  dimintaPada?: T;
   updatedAt?: T;
   createdAt?: T;
 }

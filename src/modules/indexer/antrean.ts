@@ -3,7 +3,7 @@ import type { Payload, PayloadRequest, Where } from 'payload'
 
 import type { AntreanIndexing } from '@/payload-types'
 
-import { gabungBaris } from './aturan'
+import { gabungBaris, JADWAL_CEK_MS } from './aturan'
 import type {
   BarisAntrean,
   JenisKabar,
@@ -102,6 +102,33 @@ async function tambahBaris(payload: Payload, kunci: string, baris: BarisAntrean,
     on conflict (kunci) do nothing
     returning id`)
   return rows.length > 0
+}
+
+/**
+ * Memajukan cek status satu path ke `sekarang` (tombol "Cek sekarang"). Baris cek yang sudah antre dipakai
+ * dengan tahap dan dasar jadwalnya, jadi siklus +6 jam sampai +30 hari berlanjut setelahnya; tanpa baris
+ * (siklus selesai), baris baru dibuat tanpa tahap lanjutan sehingga hanya dicek sekali. Satu
+ * `INSERT ... ON CONFLICT (kunci) DO UPDATE`: dua permintaan bersamaan tidak membuat dua baris, dan versi naik
+ * supaya pelari yang sedang memegang baris lama tidak menimpa jadwal baru.
+ */
+export async function majukanCek(payload: Payload, path: string, sekarang: Date): Promise<void> {
+  await payload.db.drizzle.execute(sql`
+    insert into antrean_indexing (kunci, langkah, path, jenis, jadwal, percobaan, tahap, dasar, versi)
+    values (${kunciAntrean('cek-status', path)}, 'cek-status', ${path}, 'terbit', ${sekarang.toISOString()}, 0, ${JADWAL_CEK_MS.length}, null, 0)
+    on conflict (kunci) do update set jadwal = excluded.jadwal, versi = antrean_indexing.versi + 1, updated_at = now()`)
+}
+
+/**
+ * Mengklaim "Cek sekarang" untuk satu status indeks: `diminta_pada` diisi `sekarang` hanya bila permintaan
+ * manual sebelumnya sudah lewat `jedaMs`. Satu `UPDATE ... RETURNING`, jadi klik ganda atau dua admin
+ * bersamaan hanya menghasilkan satu cek. Mengembalikan path-nya, atau `null` bila masih dalam jeda.
+ */
+export async function klaimCekManual(payload: Payload, id: number, sekarang: Date, jedaMs: number): Promise<string | null> {
+  const { rows } = await payload.db.drizzle.execute(sql`
+    update status_indeks set diminta_pada = ${sekarang.toISOString()}, updated_at = now()
+    where id = ${id} and (diminta_pada is null or diminta_pada <= ${new Date(sekarang.getTime() - jedaMs).toISOString()})
+    returning path`)
+  return (rows[0] as { path?: string } | undefined)?.path ?? null
 }
 
 export async function batalkanBaris(payload: Payload, langkah: LangkahAntrean, path: string, req?: PayloadRequest): Promise<void> {
@@ -216,6 +243,7 @@ export type DataStatus = Partial<{
   dirayapiPada: string | null
   cekTerakhir: string | null
   cekBerikutnya: string | null
+  dimintaPada: string | null
 }>
 
 /** Menyimpan status indeks satu path (dibuat bila belum ada, dengan status Belum dicek). */
