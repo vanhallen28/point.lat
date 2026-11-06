@@ -1,6 +1,11 @@
+import { SEGMEN_HALAMAN } from './paths'
+
 const MAKS_PANJANG = 80
 
-/** Segmen tingkat atas yang dipakai rute sistem dan tidak boleh menjadi slug konten. */
+/**
+ * Segmen yang dipakai rute sistem dan tidak boleh menjadi slug konten: rute tingkat atas, dan segmen paginasi
+ * (`/{pilar}/halaman/2` tidak boleh tertukar dengan subkategori bernama `halaman`).
+ */
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'admin',
   'api',
@@ -17,6 +22,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'ads',
   'media',
   'next',
+  SEGMEN_HALAMAN,
 ])
 
 export function slugify(input: string): string {

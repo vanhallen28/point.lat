@@ -8,6 +8,14 @@ export type TargetPath =
 /** Halaman indeks yang tidak mewakili satu dokumen. */
 export const PATH_INDEKS = { cari: '/cari', glosarium: '/glosarium', tools: '/tools', video: '/video' } as const
 
+/** Segmen paginasi: halaman ke-n sebuah daftar ada di `{path}/halaman/{n}` (slug `halaman` dicadangkan). */
+export const SEGMEN_HALAMAN = 'halaman'
+
+/** Path halaman ke-`nomor` dari daftar di `dasar`. Halaman 1 adalah alamat daftar itu sendiri, tanpa akhiran. */
+export function pathHalaman(dasar: string, nomor: number): string {
+  return nomor > 1 ? `${dasar}/${SEGMEN_HALAMAN}/${nomor}` : dasar
+}
+
 /** Satu-satunya tempat path publik dirangkai. Dipakai redirect, SEO, sitemap, dan indexer. */
 export function pathFor(target: TargetPath): string {
   switch (target.jenis) {
