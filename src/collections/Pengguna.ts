@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdmin, isAdminField, isAdminOrSelf, isLoggedIn } from '@/access'
 import { tetapkanPeranAwal } from '@/hooks/tetapkanPeranAwal'
+import { tolakPasswordLemah } from '@/hooks/tolakPasswordLemah'
 
 export const Pengguna: CollectionConfig = {
   slug: 'pengguna',
@@ -19,6 +20,8 @@ export const Pengguna: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
+    // Deploy Vercel dan database Supabase: password minimal 15 karakter, bukan contoh .env.example (Rencana 8C).
+    beforeValidate: [tolakPasswordLemah],
     beforeChange: [tetapkanPeranAwal],
   },
   fields: [
