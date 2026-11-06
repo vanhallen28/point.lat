@@ -1,0 +1,49 @@
+# Backup mingguan database produksi (spesifikasi §15), di luar backup harian Supabase Pro (7 hari). pg_dump
+# lewat session pooler Supabase (IPv4), dienkripsi ke kunci publik GPG pemilik, lalu disimpan sebagai artifact
+# privat repo selama 90 hari. Rahasia hanya di GitHub Actions secrets: BACKUP_DATABASE_URL (role baca saja)
+# dan BACKUP_KUNCI_PUBLIK. Kunci rahasia untuk membuka cadangan disimpan pemilik di luar GitHub.
+name: Backup mingguan
+
+on:
+  schedule:
+    # Minggu 02.23 WIB (Sabtu 19.23 UTC): lalu lintas rendah, bukan awal jam (jadwal awal jam sering tertunda).
+    - cron: '23 19 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: pg_dump, enkripsi, simpan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # Versi utama Postgres proyek Supabase (Settings, Infrastructure). pg_dump harus sama atau lebih baru.
+      PG_MAJOR: '17'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Pasang klien PostgreSQL dari repositori resmi PostgreSQL
+        run: |
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}"
+      - name: Dump dan enkripsi
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_KUNCI_PUBLIK: ${{ secrets.BACKUP_KUNCI_PUBLIK }}
+          PG_BIN: /usr/lib/postgresql/${{ env.PG_MAJOR }}/bin
+        run: scripts/cadangkan-database.sh cadangan
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cadangan-database-${{ github.run_number }}
+          path: cadangan/
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: error
