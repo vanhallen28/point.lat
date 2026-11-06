@@ -88,6 +88,41 @@ for (const { lebar, tinggi } of UKURAN_LAYAR) {
   })
 }
 
+test('profil penulis berhalaman: profil lengkap di halaman 1, halaman berikutnya hanya daftar tulisan; /halaman/1 dialihkan, di luar jangkauan 404', async ({ page, request }) => {
+  await page.goto('/penulis/redaksi')
+  const nav = page.getByRole('navigation', { name: 'Halaman tulisan' })
+  await expect(nav).toContainText('Halaman 1 dari 3')
+  await expect(page.getByRole('list', { name: 'Keahlian' })).toBeVisible()
+  await nav.getByRole('link', { name: 'Berikutnya' }).click()
+  await expect(page).toHaveURL('/penulis/redaksi/halaman/2')
+  await expect(page).toHaveTitle('Redaksi point., halaman 2 · point.')
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://point.lat/penulis/redaksi/halaman/2')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Redaksi point.')
+  await expect(page.getByRole('list', { name: 'Keahlian' })).toHaveCount(0)
+  await expect(nav.getByRole('link', { name: 'Halaman 2', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('region', { name: 'Tulisan Redaksi point.' }).locator('ul').first().getByRole('link')).toHaveCount(24)
+  expect(await page.locator('script[type="application/ld+json"]').textContent()).not.toContain('ProfilePage')
+
+  const jawaban = await request.get('/penulis/redaksi/halaman/1', { maxRedirects: 0 })
+  expect(jawaban.status()).toBe(308)
+  expect(tujuan(jawaban.headers()['location'])).toEqual(['/penulis/redaksi'])
+  for (const path of ['/penulis/redaksi/halaman/4', '/penulis/redaksi/halaman/01', '/penulis/tidak-ada/halaman/2']) {
+    expect((await request.get(path)).status(), path).toBe(404)
+  }
+})
+
+for (const { lebar, tinggi } of UKURAN_LAYAR) {
+  test(`profil penulis halaman 2 dan 3 ${lebar}px tanpa geser horizontal dan lolos axe`, async ({ page }) => {
+    await page.setViewportSize({ width: lebar, height: tinggi })
+    for (const path of ['/penulis/redaksi/halaman/2', '/penulis/redaksi/halaman/3']) {
+      await page.goto(path)
+      await expect(page.getByRole('navigation', { name: 'Halaman tulisan' })).toBeVisible()
+      await periksaTanpaGeserHorizontal(page)
+      await periksaAxe(page)
+    }
+  })
+}
+
 test('rubrik halaman tengah dengan iklan terisi di 375 px: slot setelah navigasi halaman, lolos axe, tanpa geser horizontal', async ({ page }) => {
   await page.context().addCookies([{ name: 'persetujuan', value: `1.semua.${new Date().toISOString().slice(0, 10)}`, domain: 'localhost', path: '/' }])
   await cegatIklan(page)

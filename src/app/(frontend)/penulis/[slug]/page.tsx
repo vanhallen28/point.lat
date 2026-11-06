@@ -8,12 +8,12 @@ import { metadata, metadataTidakDitemukan } from '@/modules/seo'
 
 type Props = { params: Promise<{ slug: string }> }
 
-/** `/penulis/{slug}`: profil penulis (ISR). */
+/** `/penulis/{slug}`: profil penulis dan halaman 1 tulisannya (ISR); halaman berikutnya di `halaman/[nomor]`. */
 export function generateStaticParams() {
   return []
 }
 
-const cari = cache(async (slug: string) => muatPenulis(slug))
+const cari = cache(async (slug: string) => muatPenulis(slug, 1))
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const penulis = await cari((await params).slug)

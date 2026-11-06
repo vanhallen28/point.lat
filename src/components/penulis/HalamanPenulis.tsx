@@ -2,6 +2,7 @@ import Image from 'next/image'
 
 import { Ikon } from '@/components/dasar/Ikon'
 import { JsonLd } from '@/components/dasar/JsonLd'
+import { Paginasi } from '@/components/dasar/Paginasi'
 import { RemahRoti } from '@/components/dasar/RemahRoti'
 import { Tautan } from '@/components/dasar/Tautan'
 import { DaftarKartu } from '@/components/kartu/KartuArtikel'
@@ -14,10 +15,13 @@ import gaya from './Penulis.module.css'
 
 /**
  * Profil penulis `/penulis/{slug}`: foto, nama, bio, keahlian, tautan profesional (`rel="me"`), dan
- * tulisan terbarunya. JSON-LD ProfilePage + Person dari modul SEO.
+ * tulisan terbarunya, dengan navigasi halaman tulisan (`/halaman/{n}`). Bio, keahlian, dan tautan hanya di
+ * halaman 1; halaman berikutnya hanya foto, nama, dan daftar tulisan. JSON-LD ProfilePage + Person dari modul
+ * SEO (hanya halaman 1).
  */
 export function HalamanPenulis({ penulis, situs }: { penulis: DataPenulis; situs: Situs }) {
-  const masukan = { jenis: 'penulis', doc: penulis.seo } as const
+  const halaman = penulis.paginasi.nomor
+  const masukan = { jenis: 'penulis', doc: penulis.seo, halaman } as const
   const foto = propsGambar(penulis.foto, 'thumbnail', { cloudName: situs.cloudName, lebar: 320 })
   return (
     <div className={`kontainer ${gaya.halaman}`}>
@@ -28,15 +32,15 @@ export function HalamanPenulis({ penulis, situs }: { penulis: DataPenulis; situs
         <div className={gaya.identitas}>
           <p className={gaya.label}>Penulis</p>
           <h1 className={gaya.judul}>{penulis.nama}</h1>
-          {penulis.bio && <p className={gaya.bio}>{penulis.bio}</p>}
-          {penulis.keahlian.length > 0 && (
+          {halaman === 1 && penulis.bio && <p className={gaya.bio}>{penulis.bio}</p>}
+          {halaman === 1 && penulis.keahlian.length > 0 && (
             <ul aria-label="Keahlian" className={gaya.keahlian}>
               {penulis.keahlian.map((k) => (
                 <li key={k}>{k}</li>
               ))}
             </ul>
           )}
-          {penulis.tautan.length > 0 && (
+          {halaman === 1 && penulis.tautan.length > 0 && (
             <ul aria-label={`Tautan ${penulis.nama}`} className={gaya.tautan}>
               {penulis.tautan.map((t) => (
                 <li key={t.href}>
@@ -59,6 +63,7 @@ export function HalamanPenulis({ penulis, situs }: { penulis: DataPenulis; situs
         ) : (
           <p className={gaya.kosong}>Belum ada tulisan yang terbit. Tulisan baru tampil di sini setelah terbit.</p>
         )}
+        <Paginasi paginasi={penulis.paginasi} />
       </section>
     </div>
   )

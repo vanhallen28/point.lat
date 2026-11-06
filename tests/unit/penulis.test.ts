@@ -61,6 +61,20 @@ describe('HalamanPenulis', () => {
     expect(html).toContain('"@type":"ProfilePage"')
   })
 
+  it('halaman 2: foto dan nama saja (tanpa bio, keahlian, tautan, dan ProfilePage), navigasi halaman, remah roti "Halaman 2"', () => {
+    const penulis = susunPenulis(rani, [kartu], { nomor: 2, total: 30 })!
+    const html = renderToStaticMarkup(h(HalamanPenulis, { penulis, situs }))
+    expect(html).toMatch(/<h1 class="[^"]*">Rani Wulandari<\/h1>/)
+    expect(html).toContain('<img')
+    expect(html).not.toContain('Menulis soal pajak dan gaji.')
+    expect(html).not.toContain('aria-label="Keahlian"')
+    expect(html).not.toContain('rel="me noopener"')
+    expect(html).not.toContain('"@type":"ProfilePage"')
+    expect(html).toMatch(/<nav aria-label="Halaman tulisan"[\s\S]*<\/nav><\/section>/)
+    expect(html).toMatch(/<span aria-current="page" class="[^"]*">Halaman 2<\/span>/)
+    expect(susunPenulis(rani, [], { nomor: 3, total: 30 })).toBeNull()
+  })
+
   it('penulis tanpa tulisan terbit', () => {
     const html = renderToStaticMarkup(h(HalamanPenulis, { penulis: susunPenulis({ ...rani, foto: null, tautan: [] }, [])!, situs }))
     expect(html).toContain('Belum ada tulisan yang terbit. Tulisan baru tampil di sini setelah terbit.')

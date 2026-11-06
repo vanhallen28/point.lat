@@ -117,8 +117,8 @@ export const muatHalaman = unstable_cache(async (slug: string) => ambilHalaman(a
   revalidate: SEJAM,
 })
 
-/** Profil penulis: foto (media), kartu tulisan (artikel dan pilar), dan data penulis sendiri. */
-export const muatPenulis = unstable_cache(async (slug: string) => ambilPenulis(await payload(), slug), ['konten', 'penulis'], {
+/** Profil penulis dan halaman ke-`nomor` tulisannya: foto (media), kartu tulisan (artikel dan pilar), dan data penulis sendiri. */
+export const muatPenulis = unstable_cache(async (slug: string, nomor: number) => ambilPenulis(await payload(), slug, nomor), ['konten', 'penulis'], {
   tags: [TAG.koleksi('penulis'), TAG.koleksi('artikel'), TAG.koleksi('pilar'), TAG.media],
   revalidate: SEJAM,
 })
