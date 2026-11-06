@@ -134,7 +134,7 @@ Vercel Cron ──► /api/jobs/run setiap 10 menit (header rahasia)
 
 **Penjadwal:** Vercel Cron (paket Pro, interval minimal per menit) memanggil endpoint job runner Payload setiap 10 menit untuk pekerjaan berulang: retry indexing, cek status, sinkron Search Analytics harian, cek link rusak mingguan. Saat publikasi, job pertama langsung dijalankan lewat `after()` Next.js supaya tidak menunggu jadwal. Paket Hobby tidak dipakai karena cron-nya hanya sekali sehari dan paket itu untuk penggunaan non-komersial.
 
-**Koneksi database:** Supabase pooler (mode transaksi) untuk serverless, `max` koneksi kecil per instance.
+**Koneksi database:** Supabase pooler Supavisor mode transaksi (port 6543, IPv4) untuk fungsi Vercel di `sin1` (dekat Supabase Singapura), pool 5 koneksi per instance, koneksi menganggur ditutup 5 detik, TLS terverifikasi dengan sertifikat CA Supabase (`DATABASE_CA`). Skema produksi dan pratinjau hanya lewat migrasi Payload (`src/migrations`) yang dijalankan build Vercel sebelum `next build`; push skema hanya ke database lokal. Data API Supabase dimatikan dan hak `anon` dan `authenticated` atas skema `public` dicabut migrasi. Deploy produksi dan pratinjau menandai databasenya dan menolak database milik lingkungan lain; pratinjau memakai proyek Supabase sendiri. (Rencana 8C)
 
 ### Modul (antarmuka kecil, implementasi dalam)
 
@@ -328,7 +328,7 @@ Pengaman:
 | Font | 1 file variable Archivo subset, `font-display: swap`, preload satu file |
 | Gambar hero | prioritas tinggi, ukuran tepat, AVIF/WebP |
 
-Lighthouse CI menolak build bila skor Performance HP < 90 di halaman contoh (beranda, artikel, tools).
+Lighthouse CI menolak build bila skor Performance HP < 90 di halaman contoh (beranda, artikel, tools). Dijalankan Rencana 8C di job E2E GitHub Actions (`lighthouserc.json`): beranda, artikel, rubrik, dan tools, median 3 kali, data E2E tanpa gambar Cloudinary dan iklan; skor < 90, CLS > 0,1, atau TBT > 200 ms menggagalkan CI, LCP > 2,5 dtk diperingatkan (LCP halaman pertama kunjungan adalah teks banner persetujuan; lihat §19).
 
 ## 13. Motion
 
@@ -358,7 +358,7 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 | AI gagal / anggaran habis | pesan jelas di sidebar, editor tetap bisa menulis |
 | 404 | halaman 404 dengan pencarian dan artikel populer, dicatat di `log404` |
 | 500 | halaman error statis; error dikirim ke log Vercel |
-| Database | backup bawaan Supabase sesuai paket + GitHub Actions mingguan menjalankan `pg_dump` dan menyimpannya ke bucket privat Supabase Storage (khusus backup, bukan media) |
+| Database | backup harian Supabase Pro (7 hari) + GitHub Actions mingguan: `pg_dump` skema `public` lewat session pooler dengan role baca saja, dienkripsi ke kunci publik GPG pemilik, disimpan sebagai artifact privat repo 90 hari; runbook pemulihan `docs/operasional/pemulihan-database.md`. Diubah Rencana 8C dari bucket Supabase Storage: backup di proyek yang sama ikut hilang bila proyek dihapus, dan unggah ke Storage butuh kunci service role |
 
 ## 16. Testing & verifikasi
 
@@ -366,6 +366,7 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 - **Integrasi:** hook Payload memicu revalidasi dan job; validasi koleksi.
 - **E2E (Playwright):** buat artikel → terbitkan → URL ada di sitemap dan news sitemap → log indexing tercatat; ganti slug → redirect 301 bekerja; kalkulator gaji menghasilkan angka contoh resmi; banner persetujuan menahan iklan.
 - **Kualitas:** Lighthouse CI (§12), axe untuk aksesibilitas, skrip design-audit (tanpa temuan Critical), uji layar 375 / 768 / 1440 dan reduced motion.
+- **CI:** GitHub Actions setiap push ke `master` dan pull request: type check, lint, unit, migrasi sesuai skema, integrasi (Postgres 16), migrasi di database kosong lalu build, E2E, dan Lighthouse, tanpa rahasia produksi (Rencana 8C).
 
 ## 17. Cakupan
 
@@ -385,6 +386,8 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 6. Env Vercel untuk Mesin Indexing: `INDEXER_ADAPTER=asli` (Production) dan `palsu` (Preview), `GOOGLE_SERVICE_ACCOUNT_JSON` berisi seluruh file kunci JSON (Production saja), `CRON_SECRET` acak minimal 16 karakter. Kunci IndexNow diisi di Pengaturan SEO; status pemasangan tampil di halaman yang sama.
 7. Kunci Claude API: env Vercel `AI_ADAPTER=asli` dan `ANTHROPIC_API_KEY` (Production), `AI_ADAPTER=palsu` (Preview). Anggaran bulanan, harga per model, dan sumber resmi per pilar di Pengaturan, Asisten AI.
 8. Akun AdSense (setelah konten cukup): ID penerbit dan unit iklan display berukuran tetap di global Iklan, pesan European regulations di Privacy & messaging, Kebijakan Privasi terbit sebelum iklan dinyalakan. Penyedia newsletter.
+9. Database pratinjau: proyek Supabase kedua di organisasi Free terpisah (Singapura), env Preview Vercel menunjuk ke sana. Data API Supabase dimatikan di kedua proyek.
+10. Backup mingguan: kunci GPG khusus cadangan (kunci rahasia di pengelola password), role baca saja `cadangan_baca`, dan secret GitHub Actions `BACKUP_DATABASE_URL` dan `BACKUP_KUNCI_PUBLIK` (runbook pemulihan).
 
 ## 19. Risiko & mitigasi
 
@@ -398,6 +401,8 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 | Indexing lambat untuk domain baru | sitemap bersih, link internal kuat, distribusi (WhatsApp, newsletter), konten berkualitas; status dipantau |
 | Biaya Cloudinary/Claude API naik | incoming transformation, preset terbatas, anggaran AI bulanan, pantau pemakaian |
 | Cold start admin di serverless | halaman publik tetap statis; admin hanya dipakai pemilik |
+| LCP lab HP kunjungan pertama di sekitar 2,5 dtk (artikel median 2,6 dtk di probe Rencana 8C): elemen LCP adalah teks banner persetujuan, dan font Archivo 90 KB ikut dimuat sebelum paint pertama | Lighthouse CI memperingatkan LCP > 2,5 dtk; font hanya sumbu `wght` (35 KB) menurunkannya ke 2,45 dtk tetapi menghilangkan judul ramping (`font-stretch`); font yang dipangkas ke rentang `wdth` yang dipakai menunggu keputusan pemilik |
+| Database pratinjau di organisasi Free dijeda setelah 7 hari sepi | build pratinjau gagal sampai proyek dilanjutkan dari dashboard (data tetap ada 90 hari) |
 
 ## 20. Skill per tahap
 
