@@ -42,6 +42,10 @@ next-env.d.ts
 
 /media
 
+# Lighthouse CI
+/.lighthouseci/
+/lighthouse-laporan/
+
 # Playwright
 node_modules/
 /test-results/

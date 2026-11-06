@@ -76,7 +76,7 @@ jobs:
           pnpm build
 
   e2e:
-    name: E2E (build produksi, Playwright, axe)
+    name: E2E (build produksi, Playwright, axe) dan Lighthouse
     needs: cek
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -111,6 +111,29 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Tes E2E
         run: pnpm test:e2e
+      # Build dan database E2E yang sama, tanpa jaringan: gambar Cloudinary dan domain iklan diblokir di
+      # lighthouserc.json. Mode HP Lighthouse (4G lambat disimulasikan, CPU 4x lebih lambat).
+      - name: Lighthouse (beranda, artikel, rubrik, tools)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/pointlat_test_e2e
+          PORT: '3100'
+          NEXT_PUBLIC_SITE_URL: http://localhost:3100
+          CLOUDINARY_CLOUD_NAME: e2e
+          CLOUDINARY_API_KEY: e2e
+          CLOUDINARY_API_SECRET: e2e
+          INDEXER_ADAPTER: palsu
+          AI_ADAPTER: palsu
+        run: |
+          export CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
+          pnpm lighthouse
+      - name: Simpan laporan Lighthouse
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: laporan-lighthouse
+          path: lighthouse-laporan/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Simpan jejak tes yang gagal
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

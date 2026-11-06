@@ -23,7 +23,8 @@
     "indexer": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/jalankan-indexer.ts",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "periksa:rilis": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/periksa-rilis.ts",
-    "build:vercel": "pnpm periksa:rilis && pnpm migrate && pnpm periksa:rilis && pnpm build"
+    "build:vercel": "pnpm periksa:rilis && pnpm migrate && pnpm periksa:rilis && pnpm build",
+    "lighthouse": "lhci autorun --config=lighthouserc.json"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.92.1",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@fontsource-variable/archivo": "5.3.0",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.63.0",
     "@testing-library/react": "16.3.0",
     "@types/node": "22.19.9",
