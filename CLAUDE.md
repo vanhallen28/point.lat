@@ -28,6 +28,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
 - Build Vercel (`buildCommand` di `vercel.json`): `pnpm build:vercel`, yaitu `pnpm periksa:rilis` (env dan penanda database), `pnpm migrate`, `pnpm periksa:rilis` lagi (database baru ditandai), lalu `pnpm build`
 - Lighthouse CI (setelah build E2E, port 3100 kosong, `CHROME_PATH` ke Chromium Playwright, env server seperti langkah Lighthouse di `ci.yml`): `pnpm lighthouse`
 - Cadangan dan pemulihan database: `scripts/cadangkan-database.sh` dan `scripts/pulihkan-database.sh` (runbook `docs/operasional/pemulihan-database.md`)
+- Rilis dan uji langsung (langkah pemilik dari nol sampai live, lalu uji layanan luar): runbook `docs/operasional/rilis.md`
 
 ## Konvensi
 - Nama domain memakai bahasa Indonesia, sama dengan spesifikasi: slug koleksi (`artikel`, `pilar`), nama field (`judul`, `intinya`), nama fungsi modul (`kabari`, `hitung`, `pathFor` adalah pengecualian yang sudah ada).
