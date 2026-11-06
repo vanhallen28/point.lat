@@ -194,7 +194,7 @@ test('Izinkan semua: Consent Mode diatur sebelum skrip iklan, skrip dimuat sekal
   await page.getByRole('region', { name: 'Cookie dan iklan' }).getByRole('button', { name: 'Izinkan semua' }).click()
   const akhir = page.locator('[data-slot-iklan="artikel-akhir"]')
   await expect(akhir).toBeVisible()
-  await expect(akhir.getByText('Iklan', { exact: true })).toBeVisible()
+  await expect(akhir.getByText('Advertisements', { exact: true })).toBeVisible()
   const kotak = akhir.locator('[data-kotak-iklan]')
   expect(await kotak.boundingBox()).toMatchObject({ width: 336, height: 280 })
   await expect(kotak.locator('ins')).toHaveCount(0)

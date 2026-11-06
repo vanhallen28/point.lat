@@ -50,9 +50,9 @@ describe('banner persetujuan cookie', () => {
 describe('slot iklan', () => {
   const slot: SlotSiap = { id: 'artikel-akhir', posisi: 'artikel-akhir', lebar: 336, tinggi: 280, klien: 'ca-pub-0000000000000000', unit: '2222222222', uji: true, setelahParagraf: 3 }
 
-  it('wadah berlabel Iklan dengan kotak berukuran tetap dan data untuk pemuat; tanpa slot tidak merender apa pun', () => {
+  it('wadah berlabel Advertisements (bahasa Inggris, kebijakan AdSense) dengan kotak berukuran tetap dan data untuk pemuat; tanpa slot tidak merender apa pun', () => {
     expect(renderToStaticMarkup(h(SlotIklan, { slot }))).toMatch(
-      /^<div class="[^"]+" data-slot-iklan="artikel-akhir" data-lebar="336"><p class="[^"]+">Iklan<\/p><div class="[^"]+" style="width:336px;height:280px" data-kotak-iklan="" data-klien="ca-pub-0000000000000000" data-unit="2222222222" data-lebar="336" data-tinggi="280" data-uji="on"><\/div><\/div>$/,
+      /^<div class="[^"]+" data-slot-iklan="artikel-akhir" data-lebar="336"><p class="[^"]+" lang="en">Advertisements<\/p><div class="[^"]+" style="width:336px;height:280px" data-kotak-iklan="" data-klien="ca-pub-0000000000000000" data-unit="2222222222" data-lebar="336" data-tinggi="280" data-uji="on"><\/div><\/div>$/,
     )
     expect(renderToStaticMarkup(h(SlotIklan, { slot: { ...slot, uji: false } }))).not.toContain('data-uji')
     expect(renderToStaticMarkup(h(SlotIklan, { slot: null }))).toBe('')

@@ -288,6 +288,10 @@ await terbitkanHalaman(SLUG_HALAMAN.tentang, [
 await terbitkanHalaman(SLUG_HALAMAN.kebijakanRedaksi, [
   { blockType: 'teks', isi: isi(h2('Sumber dan koreksi'), p('Setiap angka di point. punya sumber. Koreksi dicatat di akhir tulisan.')) },
 ])
+// Kebijakan Privasi terbit sebelum iklan dinyalakan di bawah: saklar Tampilkan iklan ditolak selama halaman itu belum terbit.
+await terbitkanHalaman(SLUG_HALAMAN.kebijakanPrivasi, [
+  { blockType: 'teks', isi: isi(h2('Cookie dan iklan'), p('Cookie iklan hanya dipakai setelah kamu memilih Izinkan semua di banner cookie.')) },
+])
 
 // Beranda: artikel Belajar dan Tekno untuk mozaik, newsletter aktif ke form penyedia (tidak pernah dibuka tes).
 const belajar = await payload.create({

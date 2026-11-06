@@ -11,6 +11,7 @@ import {
   validasiAdsTxt,
   validasiDaftarSlot,
   validasiIdPenerbit,
+  validasiTampilkanIklan,
   validasiIdSlot,
   validasiUnit,
 } from '@/modules/iklan/aturan'
@@ -27,6 +28,7 @@ const pengaturan = (ubah: Partial<PengaturanIklan> = {}): PengaturanIklan => ({
   idPenerbit: PENERBIT,
   modeUji: false,
   adsTxtTambahan: null,
+  kebijakanTerbit: true,
   slot: [
     { id: 'artikel-tengah', posisi: 'artikel-tengah', ukuran: 'persegi', unit: '1111111111', setelahParagraf: 3, aktif: true },
     { id: 'artikel-akhir', posisi: 'artikel-akhir', ukuran: 'persegi-besar', unit: '2222222222', aktif: true },
@@ -61,6 +63,17 @@ describe('slot yang tampil', () => {
     expect(pilihSlot(pengaturan({ slot: [{ id: 'a', posisi: 'tools', ukuran: 'persegi', unit: 'abc', aktif: true }] }), 'tools')).toBeNull()
     expect(pilihSlot(null, 'artikel-akhir')).toBeNull()
     expect(iklanSiap(pengaturan())).toBe(true)
+  })
+
+  it('tanpa iklan dan tanpa banner selama halaman Kebijakan Privasi belum terbit; saklar Tampilkan iklan ditolak (keputusan pemilik)', () => {
+    expect(iklanSiap(pengaturan({ kebijakanTerbit: false }))).toBe(false)
+    expect(pilihSlot(pengaturan({ kebijakanTerbit: false }), 'artikel-akhir')).toBeNull()
+    expect(validasiTampilkanIklan(true, true)).toBe(true)
+    expect(validasiTampilkanIklan(false, false)).toBe(true)
+    expect(validasiTampilkanIklan(null, false)).toBe(true)
+    expect(validasiTampilkanIklan(true, false)).toBe(
+      'Terbitkan halaman Kebijakan Privasi dulu. Banner cookie menautkan halaman itu, jadi iklan baru bisa dinyalakan setelah halaman itu terbit.',
+    )
   })
 
   it('tidak ada posisi di dalam kotak Intinya, di atas H1, atau di dalam kalkulator', () => {

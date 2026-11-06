@@ -11,7 +11,7 @@ import { PemicuMasuk } from '@/components/motion/PemicuMasuk'
 import { Footer } from '@/components/tata-letak/Footer'
 import { Header } from '@/components/tata-letak/Header'
 import { pathFor } from '@/lib/paths'
-import { iklanSiap, muatIklan } from '@/modules/iklan'
+import { iklanSiap, muatIklan, SLUG_KEBIJAKAN_PRIVASI } from '@/modules/iklan'
 import { muatFooter, muatHeader } from '@/modules/konten'
 
 import { archivo } from './font'
@@ -22,7 +22,8 @@ export const metadata: Metadata = {
 }
 
 /**
- * Banner persetujuan cookie dan pemuat iklan hanya bila iklan dinyalakan dengan ID penerbit yang valid: tanpa iklan, situs
+ * Banner persetujuan cookie dan pemuat iklan hanya bila iklan dinyalakan dengan ID penerbit yang valid dan Kebijakan
+ * Privasi terbit (`iklanSiap`): tanpa iklan, situs
  * hanya memakai yang perlu. Pilihan pengunjung dibaca skrip awal di browser, jadi halaman tetap ISR;
  * `suppressHydrationWarning` karena skrip itu menulis atribut `<html>` sebelum React hidrasi.
  */
@@ -40,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a className="lewati" href="#isi">
           Langsung ke isi
         </a>
-        {persetujuan && <PanelPersetujuan kebijakan={pathFor({ jenis: 'halaman', slug: 'kebijakan-privasi' })} />}
+        {persetujuan && <PanelPersetujuan kebijakan={pathFor({ jenis: 'halaman', slug: SLUG_KEBIJAKAN_PRIVASI })} />}
         <Header data={header} />
         <main id="isi">{children}</main>
         <Footer data={footer} persetujuan={persetujuan} />

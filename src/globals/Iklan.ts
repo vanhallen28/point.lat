@@ -1,8 +1,17 @@
-import type { GlobalConfig } from 'payload'
+import type { GlobalConfig, PayloadRequest } from 'payload'
 
 import { anyone, isAdmin } from '@/access'
 import { revalidasiIklan } from '@/hooks/revalidasiPublik'
-import { PARAGRAF_IKLAN, validasiAdsTxt, validasiDaftarSlot, validasiIdPenerbit, validasiIdSlot, validasiUnit } from '@/modules/iklan/aturan'
+import {
+  PARAGRAF_IKLAN,
+  validasiAdsTxt,
+  validasiDaftarSlot,
+  validasiIdPenerbit,
+  validasiIdSlot,
+  validasiTampilkanIklan,
+  validasiUnit,
+} from '@/modules/iklan/aturan'
+import { kebijakanPrivasiTerbit } from '@/modules/iklan/data'
 import { LABEL_POSISI_IKLAN, LABEL_UKURAN_IKLAN, POSISI_IKLAN, UKURAN_IKLAN } from '@/modules/iklan/tipe'
 
 /**
@@ -19,7 +28,15 @@ export const Iklan: GlobalConfig = {
   hooks: { afterChange: [revalidasiIklan] },
   fields: [
     { name: 'petunjuk', type: 'ui', admin: { components: { Field: '@/modules/iklan/admin/PetunjukIklan#PetunjukIklan' } } },
-    { name: 'aktif', type: 'checkbox', label: 'Tampilkan iklan', defaultValue: false },
+    {
+      name: 'aktif',
+      type: 'checkbox',
+      label: 'Tampilkan iklan',
+      defaultValue: false,
+      // Keputusan pemilik: banner menautkan Kebijakan Privasi, jadi saklar ditolak selama halaman itu belum terbit.
+      validate: async (nilai: unknown, { req }: { req: PayloadRequest }) =>
+        validasiTampilkanIklan(nilai, nilai === true && (await kebijakanPrivasiTerbit(req.payload, req))),
+    },
     {
       name: 'penyedia',
       type: 'select',

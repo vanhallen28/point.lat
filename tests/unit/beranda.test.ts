@@ -97,6 +97,7 @@ describe('susunBeranda', () => {
       idPenerbit: 'ca-pub-0000000000000000',
       modeUji: false,
       adsTxtTambahan: null,
+      kebijakanTerbit: true,
       slot: [{ id: 'beranda-samping', posisi: 'beranda', ukuran: 'banner', unit: '5555555555', aktif: true }],
     }
     const tata = [blok.hero, blok.palingDibaca, blok.iklan, blok.newsletter]

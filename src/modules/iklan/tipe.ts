@@ -59,6 +59,8 @@ export type PengaturanIklan = {
   modeUji: boolean
   slot: PengaturanSlot[]
   adsTxtTambahan: string | null
+  /** Halaman Kebijakan Privasi sudah terbit. Banner persetujuan menautkannya, jadi tanpa itu iklan tidak tampil. */
+  kebijakanTerbit: boolean
 }
 
 /** Slot yang lolos semua syarat dan siap dirender `SlotIklan`. */

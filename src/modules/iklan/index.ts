@@ -9,6 +9,6 @@
  * - Kode penyedia (AdSense) hanya di `adsense.ts`; tes memotong permintaan ke domainnya.
  */
 export { muatAdsTxt, muatIklan } from './cache'
-export { ambilIklan, susunPengaturan } from './data'
-export { iklanSiap, isiAdsTxt, pilihSlot, sisipkanIklanTengah } from './aturan'
+export { ambilIklan, kebijakanPrivasiTerbit, susunPengaturan } from './data'
+export { iklanSiap, isiAdsTxt, pilihSlot, sisipkanIklanTengah, SLUG_KEBIJAKAN_PRIVASI } from './aturan'
 export type { PengaturanIklan, PosisiIklan, SlotSiap } from './tipe'

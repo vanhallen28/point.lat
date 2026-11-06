@@ -28,9 +28,24 @@ export const NODE_IKLAN = 'slotIklan'
 /** Baris `ads.txt` AdSense (Bantuan AdSense "Panduan ads.txt"); `pub-` adalah ID penerbit tanpa `ca-`. */
 export const ID_OTORITAS_GOOGLE = 'f08c47fec0942fa0'
 
-/** Iklan siap tampil bila dinyalakan, penyedianya AdSense, dan ID penerbitnya valid. */
+/** Slug halaman Kebijakan Privasi yang ditautkan banner persetujuan (halaman draf dari seed). */
+export const SLUG_KEBIJAKAN_PRIVASI = 'kebijakan-privasi'
+
+export const PESAN_KEBIJAKAN_PRIVASI =
+  'Terbitkan halaman Kebijakan Privasi dulu. Banner cookie menautkan halaman itu, jadi iklan baru bisa dinyalakan setelah halaman itu terbit.'
+
+/**
+ * Iklan siap tampil bila dinyalakan, halaman Kebijakan Privasi terbit, penyedianya AdSense, dan ID penerbitnya
+ * valid. Tanpa Kebijakan Privasi terbit, banner tidak punya tautan yang bisa dibuka (keputusan pemilik), jadi
+ * banner, pemuat, dan slot ikut tidak tampil, juga bila halaman itu ditarik dari terbit setelah iklan menyala.
+ */
 export function iklanSiap(p: PengaturanIklan | null | undefined): p is PengaturanIklan & { idPenerbit: string } {
-  return Boolean(p?.aktif && p.penyedia === 'adsense' && p.idPenerbit && POLA_ID_PENERBIT.test(p.idPenerbit))
+  return Boolean(p?.aktif && p.kebijakanTerbit && p.penyedia === 'adsense' && p.idPenerbit && POLA_ID_PENERBIT.test(p.idPenerbit))
+}
+
+/** Saklar Tampilkan iklan ditolak selama halaman Kebijakan Privasi belum terbit (keputusan pemilik). */
+export function validasiTampilkanIklan(aktif: unknown, kebijakanTerbit: boolean): true | string {
+  return aktif !== true || kebijakanTerbit ? true : PESAN_KEBIJAKAN_PRIVASI
 }
 
 /**
