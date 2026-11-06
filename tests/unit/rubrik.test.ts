@@ -58,6 +58,15 @@ describe('susunRubrik', () => {
     expect(susunRubrik({ ...pilar, intro: isiLexical([p('  ')]) as Pilar['intro'] }, null, [], [])?.intro).toBeNull()
     expect(susunRubrik({ ...pilar, slug: null }, null, [], [])).toBeNull()
   })
+
+  it('halaman berikutnya: intro pilar hanya di halaman 1, paginasi dan nomor halaman SEO, nomor di luar jangkauan null', () => {
+    const satu = susunRubrik(pilar, null, daftarSub, [kartu], { nomor: 1, total: 30 })
+    expect(satu?.paginasi).toMatchObject({ nomor: 1, jumlah: 2, berikutnya: '/uang-karier/halaman/2' })
+    const dua = susunRubrik(pilar, null, daftarSub, [kartu], { nomor: 2, total: 30 })
+    expect(dua).toMatchObject({ href: '/uang-karier', intro: null, paginasi: { nomor: 2, sebelumnya: '/uang-karier' }, seo: { jenis: 'pilar', halaman: 2 } })
+    expect(susunRubrik(pilar, pajak, daftarSub, [kartu], { nomor: 2, total: 30 })?.paginasi.sebelumnya).toBe('/uang-karier/pajak')
+    expect(susunRubrik(pilar, null, daftarSub, [], { nomor: 3, total: 30 })).toBeNull()
+  })
 })
 
 describe('HalamanRubrik', () => {

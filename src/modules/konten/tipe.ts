@@ -5,6 +5,8 @@ import type { IsiDokumen } from '@/modules/seo/lexical'
 import type { ArtikelSeo, HalamanSeo, PenulisSeo, PilarSeo, SubkategoriSeo, ToolsSeo, VideoSeo } from '@/modules/seo/tipe'
 import type { Video } from '@/payload-types'
 
+import type { Paginasi } from './paginasi'
+
 /**
  * Data tampilan yang sudah siap dirender komponen publik. Komponen tidak membaca dokumen Payload
  * mentah: modul ini yang menerjemahkan relasi, path (`pathFor`), dan nilai bawaan.
@@ -84,7 +86,10 @@ export type KelompokIstilah = { huruf: string; id: string; istilah: Istilah[] }
 /** Tautan navigasi subkategori di halaman rubrik; `aktif` untuk halaman yang sedang dibuka. */
 export type TautanRubrik = Tautan & { aktif: boolean }
 
-/** Halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`. `seo` dipakai `metadata()`, `jsonLd()`, `remahRoti()`. */
+/**
+ * Halaman rubrik `/{pilar}` dan `/{pilar}/{subkategori}`, atau halaman berikutnya (`/halaman/{n}`). `href`
+ * selalu alamat halaman 1. `seo` dipakai `metadata()`, `jsonLd()`, `remahRoti()`.
+ */
 export type DataRubrik = {
   judul: string
   href: string
@@ -93,7 +98,8 @@ export type DataRubrik = {
   pilar: PilarRingkas
   subkategori: TautanRubrik[]
   artikel: KartuArtikel[]
-  seo: { jenis: 'pilar'; doc: PilarSeo } | { jenis: 'subkategori'; doc: SubkategoriSeo }
+  paginasi: Paginasi
+  seo: { jenis: 'pilar'; doc: PilarSeo; halaman: number } | { jenis: 'subkategori'; doc: SubkategoriSeo; halaman: number }
 }
 
 export type KartuHalaman = { judul: string; teks: string | null; href: string | null }
@@ -111,7 +117,8 @@ export type BlokTampil =
 export type DataHalaman = { judul: string; href: string; heroUtama: boolean; blok: BlokTampil[]; seo: HalamanSeo }
 
 /** Profil penulis `/penulis/{slug}` (rambu kredibilitas, spesifikasi §3) dengan tulisan terbitnya. */
-export type DataPenulis = PenulisRingkas & { tautan: Tautan[]; artikel: KartuArtikel[]; seo: PenulisSeo }
+/** Profil penulis `/penulis/{slug}` dan halaman tulisan berikutnya (`/halaman/{n}`); `href` alamat halaman 1. */
+export type DataPenulis = PenulisRingkas & { tautan: Tautan[]; artikel: KartuArtikel[]; paginasi: Paginasi; seo: PenulisSeo }
 
 /** Kartu video vertikal 9:16 untuk indeks `/video` dan "Video lain". `poster`: unggahan editor atau frame video. */
 export type KartuVideo = { id: number; judul: string; href: string; durasi: number | null; pilar: PilarRingkas | null; poster: MediaTampil | null }

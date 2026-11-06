@@ -4,10 +4,8 @@ import { teksIsi, type IsiDokumen } from '@/modules/seo/lexical'
 import type { PilarSeo, SubkategoriSeo } from '@/modules/seo/tipe'
 
 import { pilarRingkas } from './artikel'
+import { susunPaginasi } from './paginasi'
 import type { DataRubrik, KartuArtikel } from './tipe'
-
-/** Jumlah tulisan terbaru di halaman rubrik. Paginasi menyusul bila satu pilar melewati angka ini. */
-export const MAKS_ARTIKEL_RUBRIK = 24
 
 type SubkategoriRingkas = Pick<Subkategori, 'id' | 'nama' | 'slug'>
 
@@ -19,16 +17,21 @@ function introBerisi(intro: IsiDokumen): IsiDokumen {
 /**
  * Data halaman rubrik pilar (`sub` `null`) atau subkategori. Navigasi berisi "Semua" (pilar) lalu
  * semua subkategori pilar itu, dengan halaman yang sedang dibuka ditandai `aktif`. Intro pilar
- * hanya tampil di halaman pilar. `null` bila pilar belum punya slug.
+ * hanya tampil di halaman 1 pilar. `halaman`: nomor halaman dan jumlah seluruh tulisan rubrik itu.
+ * `null` bila pilar belum punya slug atau nomor halaman di luar jangkauan (404).
  */
 export function susunRubrik(
   pilar: Pilar,
   sub: Subkategori | null,
   daftarSub: SubkategoriRingkas[],
   artikel: KartuArtikel[],
+  halaman: { nomor: number; total: number } = { nomor: 1, total: artikel.length },
 ): DataRubrik | null {
   const ringkas = pilarRingkas(pilar)
   if (!ringkas) return null
+  const href = sub?.slug ? pathFor({ jenis: 'subkategori', slug: sub.slug, pilarSlug: ringkas.slug }) : ringkas.href
+  const paginasi = susunPaginasi(href, halaman.nomor, halaman.total)
+  if (!paginasi) return null
   const subkategori = daftarSub
     .filter((s) => s.slug)
     .map((s) => ({
@@ -41,23 +44,25 @@ export function susunRubrik(
     const doc = { ...sub, pilar } as SubkategoriSeo
     return {
       judul: sub.nama,
-      href: pathFor({ jenis: 'subkategori', slug: sub.slug, pilarSlug: ringkas.slug }),
+      href,
       deskripsi: sub.deskripsi?.trim() || null,
       intro: null,
       pilar: ringkas,
       subkategori: navigasi,
       artikel,
-      seo: { jenis: 'subkategori', doc },
+      paginasi,
+      seo: { jenis: 'subkategori', doc, halaman: paginasi.nomor },
     }
   }
   return {
     judul: pilar.nama,
-    href: ringkas.href,
+    href,
     deskripsi: pilar.deskripsi?.trim() || null,
-    intro: introBerisi(pilar.intro as IsiDokumen),
+    intro: paginasi.nomor === 1 ? introBerisi(pilar.intro as IsiDokumen) : null,
     pilar: ringkas,
     subkategori: navigasi,
     artikel,
-    seo: { jenis: 'pilar', doc: pilar as PilarSeo },
+    paginasi,
+    seo: { jenis: 'pilar', doc: pilar as PilarSeo, halaman: paginasi.nomor },
   }
 }

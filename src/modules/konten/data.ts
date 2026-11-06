@@ -10,10 +10,11 @@ import { MAKS_TERBARU_BERANDA, MAKS_VIDEO_BERANDA, susunBeranda, susunNewsletter
 import { kataKueri, MAKS_HASIL_CARI, urutkanHasil } from './cari'
 import { kelompokkanIstilah } from './glosarium'
 import { susunHalaman } from './halaman'
-import { MAKS_ARTIKEL_PENULIS, susunPenulis } from './penulis'
+import { UKURAN_HALAMAN } from './paginasi'
+import { susunPenulis } from './penulis'
 import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
-import { MAKS_ARTIKEL_RUBRIK, susunRubrik } from './rubrik'
+import { susunRubrik } from './rubrik'
 import { susunFooter, susunHeader } from './tampilan'
 import { kelompokkanTools, susunTool } from './tools'
 import { kartuVideo, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
@@ -166,6 +167,25 @@ async function kartuTerbit(payload: Payload, syarat: Where[], jumlah: number): P
   return docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null)
 }
 
+/**
+ * Satu halaman kartu artikel terbit (bukan glosarium) yang memenuhi `syarat`, terbaru dulu, beserta jumlah
+ * seluruhnya untuk paginasi (`UKURAN_HALAMAN` kartu per halaman). Urutan kedua `-id` membuat urutan tetap
+ * walau tanggal terbitnya sama, jadi tidak ada kartu yang muncul di dua halaman atau terlewat.
+ */
+async function halamanKartu(payload: Payload, syarat: Where[], nomor: number): Promise<{ kartu: KartuArtikel[]; total: number }> {
+  const { docs, totalDocs } = await payload.find({
+    collection: 'artikel',
+    where: { and: [terbit, { tipe: { not_equals: 'glosarium' } }, ...syarat] },
+    sort: ['-terbitPada', '-id'],
+    page: nomor,
+    limit: UKURAN_HALAMAN,
+    depth: 1,
+    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
+    populate: { pilar: POPULATE_ARTIKEL.pilar },
+  })
+  return { kartu: docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null), total: totalDocs }
+}
+
 /** Artikel terbit terbaru (bukan glosarium) untuk halaman 404. */
 export async function ambilTerbaru(payload: Payload, jumlah: number): Promise<KartuArtikel[]> {
   return kartuTerbit(payload, [], jumlah)
@@ -200,11 +220,11 @@ export async function ambilPopuler(payload: Payload, jumlah: number): Promise<Ka
 }
 
 /**
- * Halaman rubrik `/{pilar}` (`subSlug` `null`) atau `/{pilar}/{subkategori}`. `null` bila pilar
- * tidak ada, atau subkategori tidak ada atau milik pilar lain. Intro pilar dimuat seperti isi
- * artikel (depth 2) supaya tautan dan gambar di dalamnya bisa dirender.
+ * Halaman rubrik `/{pilar}` (`subSlug` `null`) atau `/{pilar}/{subkategori}`, halaman ke-`nomor`. `null` bila
+ * pilar tidak ada, subkategori tidak ada atau milik pilar lain, atau nomor halaman di luar jangkauan. Intro
+ * pilar dimuat seperti isi artikel (depth 2) supaya tautan dan gambar di dalamnya bisa dirender.
  */
-export async function ambilRubrik(payload: Payload, pilarSlug: string, subSlug: string | null): Promise<DataRubrik | null> {
+export async function ambilRubrik(payload: Payload, pilarSlug: string, subSlug: string | null, nomor = 1): Promise<DataRubrik | null> {
   if (validasiFormatSlug(pilarSlug) !== true || (subSlug !== null && validasiFormatSlug(subSlug) !== true)) return null
   const { docs } = await payload.find({
     collection: 'pilar',
@@ -229,7 +249,8 @@ export async function ambilRubrik(payload: Payload, pilarSlug: string, subSlug: 
   const sub = subSlug === null ? null : daftarSub.find((s) => s.slug === subSlug)
   if (sub === undefined) return null
   const syarat: Where[] = [{ pilar: { equals: pilar.id } }, ...(sub ? [{ subkategori: { equals: sub.id } }] : [])]
-  return susunRubrik(pilar, sub, daftarSub, await kartuTerbit(payload, syarat, MAKS_ARTIKEL_RUBRIK))
+  const { kartu, total } = await halamanKartu(payload, syarat, nomor)
+  return susunRubrik(pilar, sub, daftarSub, kartu, { nomor, total })
 }
 
 /** Halaman statis terbit dengan slug ini. Blok dimuat seperti isi artikel (depth 2) untuk tautan, gambar, dan tool. */
@@ -246,8 +267,11 @@ export async function ambilHalaman(payload: Payload, slug: string): Promise<Data
   return docs[0] ? susunHalaman(docs[0]) : null
 }
 
-/** Profil penulis dengan tulisan terbitnya (bukan glosarium), terbaru dulu. Penulis tidak punya draf. */
-export async function ambilPenulis(payload: Payload, slug: string): Promise<DataPenulis | null> {
+/**
+ * Profil penulis dengan halaman ke-`nomor` tulisan terbitnya (bukan glosarium), terbaru dulu. Penulis tidak
+ * punya draf. `null` bila penulis tidak ada atau nomor halaman di luar jangkauan.
+ */
+export async function ambilPenulis(payload: Payload, slug: string, nomor = 1): Promise<DataPenulis | null> {
   if (validasiFormatSlug(slug) !== true) return null
   const { docs } = await payload.find({
     collection: 'penulis',
@@ -259,7 +283,8 @@ export async function ambilPenulis(payload: Payload, slug: string): Promise<Data
   })
   const penulis = docs[0]
   if (!penulis) return null
-  return susunPenulis(penulis, await kartuTerbit(payload, [{ penulis: { equals: penulis.id } }], MAKS_ARTIKEL_PENULIS))
+  const { kartu, total } = await halamanKartu(payload, [{ penulis: { equals: penulis.id } }], nomor)
+  return susunPenulis(penulis, kartu, { nomor, total })
 }
 
 /** Media video ikut membawa durasi file (cadangan bila editor tidak mengisi durasi). */
