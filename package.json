@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/run.ts",
     "media:siapkan": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/siapkan-media.ts",
-    "indexer": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/jalankan-indexer.ts"
+    "indexer": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/jalankan-indexer.ts",
+    "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.92.1",

@@ -28,6 +28,7 @@ const eslintConfig = [
       '.next/',
       'media/',
       'src/payload-types.ts',
+      'src/migrations/',
       'src/payload-generated-schema.ts',
       'src/app/(payload)/admin/importMap.js',
     ],
