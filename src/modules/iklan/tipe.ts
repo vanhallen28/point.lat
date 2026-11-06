@@ -18,6 +18,15 @@ export const LABEL_POSISI_IKLAN: Record<PosisiIklan, string> = {
   beranda: 'Beranda: di tempat blok Slot iklan',
 }
 
+/** Nama posisi singkat untuk label baris slot di admin. */
+export const LABEL_POSISI_SINGKAT: Record<PosisiIklan, string> = {
+  'artikel-tengah': 'Artikel, tengah isi',
+  'artikel-akhir': 'Artikel, setelah isi',
+  rubrik: 'Rubrik',
+  tools: 'Tools',
+  beranda: 'Beranda',
+}
+
 /**
  * Ukuran tetap dari daftar ukuran iklan display AdSense. Lebar paling besar 336 px supaya muat di layar
  * 375 px (kontainer 343 px), dan tinggi tetap supaya ruangnya bisa dipesan tanpa pergeseran tata letak.

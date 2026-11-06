@@ -57,6 +57,8 @@ export const Iklan: GlobalConfig = {
       type: 'array',
       label: 'Slot iklan',
       labels: { singular: 'Slot', plural: 'Slot' },
+      // Label baris: ID slot dan posisi ("beranda-samping · Beranda"), bukan "Slot 01".
+      admin: { components: { RowLabel: '@/modules/iklan/admin/LabelSlot#LabelSlot' } },
       validate: (nilai: unknown) => validasiDaftarSlot(nilai),
       fields: [
         // Bukan `id`: nama itu dipakai Payload sebagai kunci baris array.

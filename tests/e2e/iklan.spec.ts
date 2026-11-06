@@ -57,6 +57,13 @@ test('admin global Iklan: petunjuk terbaca dan pratinjau ads.txt mengikuti isian
   await expect(pratinjau).toContainText('google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0')
   await expect(pratinjau).toContainText(ADS_TXT_E2E)
 
+  // Label baris slot: ID slot dan posisinya, bukan "Slot 01" (Rencana 8B).
+  const slot = page.locator('#field-slot')
+  await slot.scrollIntoViewIfNeeded()
+  await expect(slot.getByText('artikel-tengah · Artikel, tengah isi', { exact: true })).toBeVisible()
+  await expect(slot.getByText('beranda-samping · Beranda', { exact: true })).toBeVisible()
+  await expect(slot.getByText(/^Slot \d{2}$/)).toHaveCount(0)
+
   await idPenerbit.fill('')
   await expect(pratinjau).not.toContainText('google.com')
   await page.getByLabel('Baris ads.txt tambahan').fill('')

@@ -4,6 +4,7 @@ import {
   barisAdsense,
   iklanSiap,
   isiAdsTxt,
+  labelBarisSlot,
   letakIklanTengah,
   periksaAdsTxt,
   pilihSlot,
@@ -173,5 +174,15 @@ describe('ads.txt', () => {
     ])
     expect(validasiAdsTxt('')).toBe(true)
     expect(validasiAdsTxt('google.com, pub-1, direct, ')).toBe('Baris 1: isian keempat (ID otoritas) kosong. Hapus koma terakhir atau isi ID-nya.')
+  })
+})
+
+describe('label baris slot di admin', () => {
+  it('ID slot dan posisi singkat, "nonaktif" bila dimatikan; tanpa ID slot memakai nomor baris', () => {
+    expect(labelBarisSlot({ idSlot: 'beranda-samping', posisi: 'beranda', aktif: true }, 4)).toBe('beranda-samping \u00b7 Beranda')
+    expect(labelBarisSlot({ idSlot: 'artikel-tengah', posisi: 'artikel-tengah', aktif: false }, 0)).toBe('artikel-tengah \u00b7 Artikel, tengah isi \u00b7 nonaktif')
+    expect(labelBarisSlot({ idSlot: '  ', posisi: 'rubrik' }, 2)).toBe('Slot 03 \u00b7 Rubrik')
+    expect(labelBarisSlot(undefined, 0)).toBe('Slot 01')
+    expect(labelBarisSlot({ idSlot: 'lama', posisi: 'sidebar' }, 0)).toBe('lama')
   })
 })

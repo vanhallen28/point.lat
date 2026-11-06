@@ -1,6 +1,6 @@
 import type { IsiDokumen } from '@/modules/seo/lexical'
 
-import { DIMENSI_IKLAN, LABEL_POSISI_IKLAN, type PengaturanIklan, type PosisiIklan, type SlotSiap } from './tipe'
+import { DIMENSI_IKLAN, LABEL_POSISI_IKLAN, LABEL_POSISI_SINGKAT, POSISI_IKLAN, type PengaturanIklan, type PosisiIklan, type SlotSiap } from './tipe'
 
 /**
  * Aturan iklan sebagai fungsi murni (spesifikasi §11): syarat slot tampil, penempatan di isi artikel,
@@ -95,6 +95,17 @@ export function sisipkanIklanTengah(isi: IsiDokumen, slot: SlotSiap | null): Isi
   const anak = [...(isi.root.children ?? [])]
   anak.splice(letak + 1, 0, { type: NODE_IKLAN, version: 1, slot })
   return { ...isi, root: { ...isi.root, children: anak } }
+}
+
+/**
+ * Label baris slot di global Iklan (admin): ID slot dan posisinya, misalnya "beranda-samping · Beranda", supaya
+ * editor mengenali slot tanpa membuka setiap baris. Slot yang dimatikan diberi "nonaktif". Baris yang belum
+ * punya ID slot memakai nomor baris seperti bawaan Payload ("Slot 01"). `nomor`: indeks baris mulai 0.
+ */
+export function labelBarisSlot(slot: { idSlot?: unknown; posisi?: unknown; aktif?: unknown } | null | undefined, nomor: number): string {
+  const id = typeof slot?.idSlot === 'string' && slot.idSlot.trim() ? slot.idSlot.trim() : `Slot ${String(nomor + 1).padStart(2, '0')}`
+  const posisi = POSISI_IKLAN.includes(slot?.posisi as PosisiIklan) ? LABEL_POSISI_SINGKAT[slot?.posisi as PosisiIklan] : null
+  return [id, posisi, slot?.aktif === false ? 'nonaktif' : null].filter(Boolean).join(' · ')
 }
 
 /** Validasi field global `iklan`: ID penerbit wajib dan berformat benar saat iklan dinyalakan. */
