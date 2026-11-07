@@ -127,12 +127,12 @@ Browser ──► Vercel (Next.js App Router)
             ├──► Google Search Console API / URL Inspection API
             ├──► IndexNow (api.indexnow.org)
             └──► Claude API (asisten AI, hanya dari server)
-Vercel Cron ──► /api/jobs/run setiap 10 menit (header rahasia)
+Vercel Cron ──► /api/jobs/run sesuai jadwal vercel.json (header rahasia)
 ```
 
 **Rendering:** halaman publik dirender statis dan di-cache dengan tag (`article:{id}`, `pilar:{slug}`, `home`, `sitemap`). Hook Payload `afterChange`/`afterDelete` memanggil `revalidateTag` untuk tag yang terdampak. Komponen server sebanyak mungkin, JavaScript klien hanya untuk kalkulator, pencarian, iklan, dan banner persetujuan.
 
-**Penjadwal:** Vercel Cron (paket Pro, interval minimal per menit) memanggil endpoint job runner Payload setiap 10 menit untuk pekerjaan berulang: retry indexing, cek status, sinkron Search Analytics harian, cek link rusak mingguan. Saat publikasi, job pertama langsung dijalankan lewat `after()` Next.js supaya tidak menunggu jadwal. Paket Hobby tidak dipakai karena cron-nya hanya sekali sehari dan paket itu untuk penggunaan non-komersial.
+**Penjadwal:** Vercel Cron (jadwal di `vercel.json`: setiap 10 menit di paket Pro; sekali sehari selama di Hobby, keputusan pemilik 2026-11-07) memanggil endpoint job runner Payload untuk pekerjaan berulang: retry indexing, cek status, sinkron Search Analytics harian, cek link rusak mingguan. Saat publikasi, job pertama langsung dijalankan lewat `after()` Next.js supaya tidak menunggu jadwal. Paket Hobby tidak dipakai karena cron-nya hanya sekali sehari dan paket itu untuk penggunaan non-komersial.
 
 **Koneksi database:** Supabase pooler Supavisor mode transaksi (port 6543, IPv4) untuk fungsi Vercel di `sin1` (dekat Supabase Singapura), pool 5 koneksi per instance, koneksi menganggur ditutup 5 detik, TLS terverifikasi dengan sertifikat CA Supabase (`DATABASE_CA`). Skema produksi dan pratinjau hanya lewat migrasi Payload (`src/migrations`) yang dijalankan build Vercel sebelum `next build`; push skema hanya ke database lokal. Data API Supabase dimatikan dan hak `anon` dan `authenticated` atas skema `public` dicabut migrasi. Deploy produksi dan pratinjau menandai databasenya dan menolak database milik lingkungan lain; pratinjau memakai proyek Supabase sendiri. (Rencana 8C)
 
@@ -265,7 +265,7 @@ Pemicu: `terbit`, `ubah-besar`, `hapus` (artikel, tools, video, halaman, pilar),
 
 Kegagalan: retry 3 kali dengan jeda 1, 5, 30 menit; setelah itu status Gagal di log (cek status: status indeks Error) dan peringatan di dashboard. Kuota Google habis (429): ditunda ke awal hari kuota berikutnya (tengah malam waktu Pasifik). Penghapusan dan batal terbit: URL keluar dari sitemap, halaman menjawab 404, atau 308 ke tujuan bila ada redirect (keputusan pemilik di Rencana 4A: redirect lewat `permanentRedirect()`, kode 410 di CMS menjawab 404), IndexNow tetap dikabari, dan `URL_DELETED` bila Indexing API aktif.
 
-Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) setiap 10 menit; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `pnpm indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
+Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) sesuai jadwal di `vercel.json`; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `pnpm indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
 
 Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cloud dengan Search Console API aktif (Indexing API hanya bila saklarnya kelak dipakai), ditambahkan sebagai **Owner** properti. Kredensial disimpan di env Vercel (`GOOGLE_SERVICE_ACCOUNT_JSON`), tanpa pustaka Google: token akses dari JWT RS256 akun layanan.
 

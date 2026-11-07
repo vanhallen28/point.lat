@@ -24,7 +24,7 @@ Membawa point.lat dari repo `vanhallen28/point.lat` sampai live di `https://poin
 
 ## A. Prasyarat
 
-- [ ] Akses Owner di organisasi Supabase berpaket Pro, tim Vercel berpaket Pro, admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
+- [ ] Akses Owner di organisasi Supabase berpaket Pro, tim Vercel (Hobby dulu sesuai keputusan pemilik; Pro sebelum iklan dinyalakan), admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
 - [ ] Akun Cloudinary, akun Google (Search Console dan Google Cloud), Claude Console, dan nanti AdSense.
 - [ ] Komputer dengan `git`, Node 26 (26.13.0 atau lebih baru di seri 26; dengan nvm cukup `nvm install` di folder repo karena ada `.nvmrc`; `npm` ikut terpasang bersama Node), `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
 - [ ] Pengelola password untuk menyimpan setiap rahasia yang dibuat di runbook ini.
@@ -134,7 +134,7 @@ Proyek Free dijeda bila aktivitas database selama 7 hari terlalu sedikit (Supaba
 
 ### D1. Impor repo
 
-Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`npm run build:vercel`), versi Node dari `engines` di `package.json` (`26.x`, mengalahkan pilihan Node.js Version di Settings). Jangan isi env di layar impor. Pilih **Deploy**.
+Di tim Vercel: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`npm run build:vercel`), versi Node dari `engines` di `package.json` (`26.x`, mengalahkan pilihan Node.js Version di Settings). Jangan isi env di layar impor. Pilih **Deploy**.
 
 **Hasil yang diharapkan:** deploy pertama **gagal** di langkah `npm run periksa:rilis` dengan `Env deploy belum benar:` dan daftar yang diawali `DATABASE_URL belum diisi.` Ini bukti penjaga lingkungan aktif dan `VERCEL_ENV` terbaca; database belum tersentuh.
 **Bila gagal dengan galat lain:** `missing secret key. A secret key is needed to secure Payload.` berarti `VERCEL_ENV` tidak terbaca (penjaga mati); lanjutkan ke D2 dulu.
@@ -191,11 +191,13 @@ hasilnya dua migrasi dengan batch 1, `produksi`, dan `false`.
 
 ### D5. Cron, region, dan perlindungan pratinjau
 
-- Settings, Cron Jobs: `/api/jobs/run` dengan jadwal `*/10 * * * *`. Cron hanya berjalan untuk deploy Production.
+- Settings, Cron Jobs: `/api/jobs/run` dengan jadwal `0 23 * * *` (sekali sehari, sekitar 06.00 WIB; di Hobby bisa meleset sampai 59 menit). Cron hanya berjalan untuk deploy Production. Di Pro, jadwal bisa dikembalikan ke `*/10 * * * *` lewat `vercel.json`.
 - Settings, Functions: region fungsi Singapura (`sin1`).
 - Settings, Deployment Protection: **Vercel Authentication** aktif untuk deploy pratinjau, jadi URL pratinjau hanya bisa dibuka anggota tim.
 
-**Hasil yang diharapkan:** ketiganya sesuai. Dalam 10 menit, Logs dengan filter path `/api/jobs/run` menampilkan permintaan berstatus 200.
+**Hasil yang diharapkan:** ketiganya sesuai. Setelah jadwal cron berikutnya, Logs dengan filter path `/api/jobs/run` menampilkan permintaan berstatus 200.
+
+Selama di Hobby (cron sekali sehari): artikel terjadwal terbit pada jalan cron berikutnya (paling lambat sehari); kabar ke Google dan IndexNow tetap langsung terkirim saat konten disimpan atau terbit, tetapi kiriman yang tertunda (jendela IndexNow 5 menit dan sitemap 30 menit, kiriman ulang setelah gagal) baru terkirim pada simpan berikutnya atau cron keesokan harinya; cek status indeks dan sinkron Search Console berjalan sekali sehari; tautan ke situs lain dicek paling banyak 10 per hari. Hobby juga hanya untuk penggunaan non-komersial: pindah ke Pro sebelum bagian J (iklan).
 
 ## E. Domain point.lat
 
@@ -298,7 +300,7 @@ Di Claude Console: buat workspace untuk point.lat, pasang batas belanja bulanan 
 
 ### H2. Aturan Firewall
 
-Vercel, proyek point.lat, **Firewall**, **Configure**, **+ New Rule**, dua aturan:
+Vercel, proyek point.lat, **Firewall**, **Configure**, **+ New Rule**, dua aturan. Di Hobby hanya satu aturan rate limit yang tersedia: pasang **Batas pencarian** dulu (`/cari` satu-satunya halaman yang dirender per permintaan, jadi paling berisiko menghabiskan kuota Hobby); beacon log 404 sudah dibatasi di aplikasi (2 KB, 200 path baru per 24 jam), dan aturannya ditambahkan setelah pindah ke Pro.
 
 | Nama | Kondisi **If** (semua benar) | **Then** |
 |---|---|---|
@@ -368,7 +370,7 @@ PageSpeed Insights, mode seluler, untuk beranda, artikel I1, satu rubrik, dan `h
 
 Vercel, Logs, filter path `/api/jobs/run`, satu jam terakhir. Admin, Dashboard SEO.
 
-**Hasil yang diharapkan:** enam permintaan per jam berstatus 200, masing-masing jauh di bawah batas 300 detik fungsi Vercel Pro. Dalam satu jalan cron, baris "Sinkron Search Console" dan "Pindai tautan" di Dashboard SEO berhasil (data Google untuk domain baru muncul beberapa hari kemudian). Bila durasi mendekati 300 detik, catat untuk Fase 2 (`maxDuration` di `vercel.json`).
+**Hasil yang diharapkan:** satu permintaan per hari selama di Hobby (enam per jam di Pro, `*/10 * * * *`) berstatus 200, jauh di bawah batas 300 detik fungsi Vercel (Hobby dan Pro). Dalam satu jalan cron, baris "Sinkron Search Console" dan "Pindai tautan" di Dashboard SEO berhasil (data Google untuk domain baru muncul beberapa hari kemudian). Bila durasi mendekati 300 detik, catat untuk Fase 2 (`maxDuration` di `vercel.json`).
 
 ### I6. Log 404
 
@@ -425,7 +427,7 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 - [ ] Deploy Production terakhir **Ready** dan log build memuat `Lingkungan produksi siap: env dan database cocok.`
 - [ ] `https://point.lat` menjawab 200 dengan HSTS dan lima header keamanan (E2).
 - [ ] Log indexing tulisan pertama Berhasil untuk Search Console dan IndexNow (I1).
-- [ ] Cron `/api/jobs/run` 200 setiap 10 menit (I5).
+- [ ] Cron `/api/jobs/run` 200 sesuai jadwal (sekali sehari di Hobby, I5).
 - [ ] Data API Supabase tidak menjawab data (I7).
 - [ ] Backup mingguan hijau dan uji pulih tercatat (H3).
 - [ ] Deploy pratinjau memakai database pratinjau (H4).
@@ -459,7 +461,7 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 
 | Situasi | Kontak | Cara |
 |---|---|---|
-| Build, domain, cron, atau Firewall bermasalah di sisi Vercel | Dukungan Vercel (paket Pro) | Dashboard Vercel, Help |
+| Build, domain, cron, atau Firewall bermasalah di sisi Vercel | Dukungan Vercel (tiket hanya di paket Pro; Hobby lewat komunitas) | Dashboard Vercel, Help |
 | Database, pooler, atau SSL bermasalah di sisi Supabase | Dukungan Supabase (paket Pro) | Dashboard Supabase, Support, tiket baru |
 | Search Console atau akun layanan | Bantuan Search Console | support.google.com/webmasters |
 | Cloudinary menolak unggah atau transformasi | Dukungan Cloudinary | Dashboard Cloudinary, Support |

@@ -15,7 +15,7 @@ import { JENIS_TUGAS, type JenisTugas, type StatusTugas } from './tipe'
 /**
  * Pantau SEO (spesifikasi §8 "Tingkat situs" dan "Dashboard SEO"). Antarmuka modul:
  *
- * - `jalankanPantau(payload, opsi)`: dipanggil cron `GET /api/jobs/run` setiap 10 menit. Menjalankan
+ * - `jalankanPantau(payload, opsi)`: dipanggil cron `GET /api/jobs/run` (jadwal di `vercel.json`). Menjalankan
  *   tugas yang jatuh tempo (masing-masing sekali sehari): sinkron Search Analytics beserta retensi data,
  *   dan pindai tautan (tautan internal rusak, halaman yatim, daftar tautan luar). Setiap jalan juga
  *   memeriksa beberapa tautan luar yang jatuh tempo (masing-masing seminggu sekali).

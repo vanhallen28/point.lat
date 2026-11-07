@@ -147,7 +147,7 @@ Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**
 
 Password role buatan sendiri tidak ikut backup Supabase. Setelah pemulihan, di SQL Editor jalankan `alter role cadangan_baca with password '<password-cadangan_baca-dari-pengelola-password>';` dengan password yang sama seperti di A2, supaya secret `BACKUP_DATABASE_URL` tetap berlaku.
 
-**Periksa:** beranda, satu artikel, admin login, dan Dashboard SEO (cron berjalan dalam 10 menit).
+**Periksa:** beranda, satu artikel, admin login, dan Dashboard SEO (cron berjalan pada jadwal berikutnya, sekali sehari selama di Hobby).
 
 ### C2. Proyek Supabase hilang, atau backup harian tidak cukup
 

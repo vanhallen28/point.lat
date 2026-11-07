@@ -37,7 +37,7 @@ export async function jalankanJadwal(payload: Payload, opsi: OpsiJadwal = {}): P
 }
 
 /**
- * `GET /api/jobs/run`: dipanggil Vercel Cron setiap 10 menit (`vercel.json`). GET karena Vercel Cron
+ * `GET /api/jobs/run`: dipanggil Vercel Cron sesuai jadwal di `vercel.json`. GET karena Vercel Cron
  * hanya mengirim GET. Boleh juga dibuka admin yang sedang masuk (menjalankan antrean sekarang).
  */
 export const endpointJalankanJob: Endpoint = {

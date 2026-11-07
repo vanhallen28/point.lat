@@ -36,7 +36,7 @@ export const RETENSI_LOG_INDEXING_HARI = 90
 /** Total harian disimpan 16 bulan, sama dengan riwayat Search Console, untuk perbandingan di Fase 2. */
 export const RETENSI_ANALITIK_SITUS_HARI = 480
 
-/** Tautan ke situs lain yang dicek per jalan cron (10 menit sekali), dan berapa yang dicek bersamaan. */
+/** Tautan ke situs lain yang dicek per jalan cron (jadwal di `vercel.json`), dan berapa yang dicek bersamaan. */
 export const BATAS_TAUTAN_PER_JALAN = 10
 export const TAUTAN_BERSAMAAN = 5
 
@@ -180,7 +180,7 @@ export type HasilTugas = 'berhasil' | 'dilewati' | 'gagal' | 'kuota-habis'
 
 /**
  * Jadwal tugas harian berikutnya. Berhasil, dilewati (kredensial belum diatur), atau kuota Search Console
- * habis: awal hari waktu Pasifik berikutnya, jadi cron 10 menit sekali menjalankannya sekali sehari.
+ * habis: awal hari waktu Pasifik berikutnya, jadi cron menjalankannya paling banyak sekali sehari.
  * Gagal karena hal lain: dicoba lagi satu jam kemudian.
  */
 export function jadwalTugas(hasil: HasilTugas, sekarang: Date): Date {

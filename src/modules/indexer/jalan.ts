@@ -30,7 +30,7 @@ import {
 import { pathFileKunci } from './kunci'
 import { LABEL_STATUS_INDEKS, type HasilPanggilan, type NamaAdapter, type PengaturanIndexing, type StatusLog } from './tipe'
 
-/** Baris paling banyak per jalan. Cron 10 menit sekali menghabiskan sisanya di jalan berikutnya. */
+/** Baris paling banyak per jalan. Sisanya dihabiskan jalan berikutnya (cron atau `after()` setelah simpan). */
 export const BATAS_PER_JALAN = 200
 
 /** Sewa baris yang sedang dikirim; bila proses berhenti, baris dicoba lagi setelah sewa habis. */
@@ -184,7 +184,7 @@ async function catatHasilCek(k: Konteks, baris: BarisTersimpan, hasil: HasilPang
 /**
  * Menjalankan antrean yang jatuh tempo (spesifikasi §8 langkah 2 sampai 6): sitemap, IndexNow, Indexing
  * API, lalu cek status, masing-masing dengan jendela kirim, kuota, dan jeda ulang dari `aturan.ts`.
- * Dipanggil cron setiap 10 menit dan lewat `after()` setelah konten terbit. Aman dipanggil berulang atau
+ * Dipanggil cron (jadwal di `vercel.json`) dan lewat `after()` setelah konten terbit. Aman dipanggil berulang atau
  * bersamaan: baris diklaim sebelum dikirim, dan baris yang selesai dihapus.
  */
 export async function jalankanIndexer(payload: Payload, opsi: { sekarang?: Date; adapter?: AdapterIndexer } = {}): Promise<RingkasanJalan> {

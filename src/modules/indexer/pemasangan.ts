@@ -32,7 +32,7 @@ export function ringkasPemasangan(
       label: 'Cron',
       siap: Boolean(env.CRON_SECRET),
       teks: env.CRON_SECRET
-        ? 'CRON_SECRET terpasang. Vercel Cron menjalankan antrean setiap 10 menit.'
+        ? 'CRON_SECRET terpasang. Vercel Cron menjalankan antrean sesuai jadwal di vercel.json, dan simpan atau terbit konten juga langsung menjalankannya.'
         : 'CRON_SECRET belum diatur, jadi Vercel Cron ditolak. Isi minimal 16 karakter acak di env Vercel.',
     },
     {

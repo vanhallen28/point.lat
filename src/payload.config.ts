@@ -95,7 +95,7 @@ export default buildConfig({
     PemakaianAi,
   ],
   globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter, AsistenAi, Iklan],
-  // `GET /api/jobs/run`: cron Vercel setiap 10 menit (vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
+  // `GET /api/jobs/run`: cron Vercel (jadwal di vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
   endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),
   // Admin hanya berbahasa Indonesia (keputusan pemilik, Rencana 8A).
