@@ -26,7 +26,7 @@ Membawa point.lat dari repo `vanhallen28/point.lat` sampai live di `https://poin
 
 - [ ] Akses Owner di organisasi Supabase berpaket Pro, tim Vercel berpaket Pro, admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
 - [ ] Akun Cloudinary, akun Google (Search Console dan Google Cloud), Claude Console, dan nanti AdSense.
-- [ ] Komputer dengan `git`, Node 22.23.4 atau lebih baru (atau 24.22.1 ke atas), `pnpm`, `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
+- [ ] Komputer dengan `git`, Node 26 (26.13.0 atau lebih baru di seri 26; dengan nvm cukup `nvm install` di folder repo karena ada `.nvmrc`), `pnpm`, `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
 - [ ] Pengelola password untuk menyimpan setiap rahasia yang dibuat di runbook ini.
 
 ## B. Repo dan CI
@@ -132,7 +132,7 @@ Proyek Free dijeda bila aktivitas database selama 7 hari terlalu sedikit (Supaba
 
 ### D1. Impor repo
 
-Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`pnpm build:vercel`). Jangan isi env di layar impor. Pilih **Deploy**.
+Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`pnpm build:vercel`), versi Node dari `engines` di `package.json` (`26.x`, mengalahkan pilihan Node.js Version di Settings). Jangan isi env di layar impor. Pilih **Deploy**.
 
 **Hasil yang diharapkan:** deploy pertama **gagal** di langkah `pnpm periksa:rilis` dengan `Env deploy belum benar:` dan daftar yang diawali `DATABASE_URL belum diisi.` Ini bukti penjaga lingkungan aktif dan `VERCEL_ENV` terbaca; database belum tersentuh.
 **Bila gagal dengan galat lain:** `missing secret key. A secret key is needed to secure Payload.` berarti `VERCEL_ENV` tidak terbaca (penjaga mati); lanjutkan ke D2 dulu.
@@ -440,6 +440,7 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 | Build pratinjau gagal terhubung setelah lama tidak dipakai | Proyek Free dijeda | Dashboard Supabase, organisasi pratinjau, proyek pratinjau, **Resume project** |
 | `pnpm seed` mencetak `Seed dihentikan. password: ...` | Password admin ditolak | Pakai frasa lain minimal 15 karakter (C5) |
 | Cron di Logs berstatus 401 | `CRON_SECRET` berubah tanpa deploy ulang | Redeploy produksi |
+| Panggilan ke Google, IndexNow, atau Claude gagal dengan galat koneksi atau protokol (misalnya `ERR_HTTP2`, `GOAWAY`, `stream`) padahal kunci benar | `fetch` Node 26 di Vercel memakai HTTP/2 bila server mendukung | Tambahkan env `VERCEL_FETCH_DISABLE_H2` = `1` di Production (dan Preview bila perlu), Redeploy, lalu ulangi uji langsungnya; catat temuannya untuk diperbaiki di kode |
 | Log indexing: Google 403 | Akun layanan belum Owner | G3 |
 | Log indexing: IndexNow 403 | File kunci tidak cocok | Buka `https://point.lat/<kunci>.txt`, cocokkan dengan Pengaturan SEO (G5) |
 | AdSense: ads.txt "Not found" atau "Unauthorized" | ID penerbit belum diisi atau salah | Cocokkan isi `https://point.lat/ads.txt` dengan ID penerbit (J1) |

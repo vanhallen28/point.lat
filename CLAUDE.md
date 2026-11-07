@@ -9,7 +9,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
 - Editor Lexical (`@payloadcms/richtext-lexical`)
 - Vitest (unit + integrasi), Playwright + axe (e2e)
 - Frontend: CSS Module + token CSS (`src/styles/tokens.css`), font Archivo variable lewat `next/font/local`
-- Node `^22.23.4 || >=24.22.1`, pnpm 10
+- Node 26 (`engines` `26.x`: Vercel memakai 26.x terbaru, CI 26.13.0, `.nvmrc` untuk nvm), pnpm 10.28.0. Di Node 26 `fetch` bawaan memakai HTTP/2 bila server mendukung (Undici 8); tes memakai adapter palsu, jadi perilaku HTTP/2 ke Google, IndexNow, dan Claude baru teruji di uji langsung runbook rilis
 
 ## Perintah
 - Database lokal: `docker compose up -d` (membuat database `pointlat` dan `pointlat_test`)
