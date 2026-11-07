@@ -29,7 +29,7 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'pnpm payload run tests/e2e/siapkan.ts && rm -rf .next/cache/fetch-cache && pnpm build && pnpm start',
+    command: 'npm run payload -- run tests/e2e/siapkan.ts && rm -rf .next/cache/fetch-cache && npm run build && npm run start',
     url: `${BASE_URL}/robots.txt`,
     reuseExistingServer: false,
     timeout: 600_000,

@@ -17,7 +17,7 @@ Cadangan mingguan dienkripsi ke kunci publik GPG pemilik sebelum disimpan. Kunci
 ## Prasyarat
 
 - [ ] Akses Owner di organisasi Supabase dan admin di repo GitHub `vanhallen28/point.lat`.
-- [ ] Komputer dengan `gpg` (GnuPG 2.2 atau lebih baru), `psql` dan `pg_restore` versi sama dengan Postgres Supabase (lihat Settings, Infrastructure), Node dan pnpm, serta salinan repo.
+- [ ] Komputer dengan `gpg` (GnuPG 2.2 atau lebih baru), `psql` dan `pg_restore` versi sama dengan Postgres Supabase (lihat Settings, Infrastructure), Node dan npm, serta salinan repo.
 - [ ] Kunci rahasia GPG cadangan di pengelola password pemilik (dibuat di bagian A).
 
 ## A. Penyiapan sekali
@@ -118,15 +118,15 @@ Bila `pg_restore` lokal lebih lama dari versi Postgres Supabase, isi `PG_BIN` de
 ### B4. Jalankan situs dari database hasil pulih
 
 ```bash
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih pnpm migrate
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih pnpm build
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih npm run migrate
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih npm run build
 DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih INDEXER_ADAPTER=palsu AI_ADAPTER=palsu \
-  CLOUDINARY_CLOUD_NAME=<cloud-name-produksi> CLOUDINARY_API_KEY=uji-pulih CLOUDINARY_API_SECRET=uji-pulih PORT=3200 pnpm start
+  CLOUDINARY_CLOUD_NAME=<cloud-name-produksi> CLOUDINARY_API_KEY=uji-pulih CLOUDINARY_API_SECRET=uji-pulih PORT=3200 npm run start
 ```
 
 Cloud name asli membuat gambar tampil dari CDN Cloudinary; API key dan secret tiruan cukup karena uji pulih tidak mengunggah apa pun. Adapter palsu memastikan uji ini tidak mengabari Google atau memanggil Claude.
 
-**Hasil yang diharapkan:** `pnpm migrate` hanya mencetak `Done.` (semua migrasi sudah tercatat, kecuali migrasi yang lebih baru dari cadangan); build berhasil; `http://localhost:3200/`, satu artikel, satu rubrik, satu tools, `/sitemap.xml`, dan `/admin/login` menjawab 200; login admin dengan akun produksi berhasil; jumlah artikel di admin sama dengan produksi saat cadangan dibuat.
+**Hasil yang diharapkan:** `npm run migrate` hanya mencetak `Done.` (semua migrasi sudah tercatat, kecuali migrasi yang lebih baru dari cadangan); build berhasil; `http://localhost:3200/`, satu artikel, satu rubrik, satu tools, `/sitemap.xml`, dan `/admin/login` menjawab 200; login admin dengan akun produksi berhasil; jumlah artikel di admin sama dengan produksi saat cadangan dibuat.
 
 ### B5. Bersihkan
 
@@ -143,7 +143,7 @@ Hapus file cadangan yang diunduh. Catat hasilnya di Riwayat.
 
 Supabase, Database, Backups, pilih backup harian sebelum kejadian, **Restore**. Proyek tidak bisa diakses selama pemulihan (situs publik tetap tampil dari cache ISR, admin dan halaman yang belum tercache galat).
 
-Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**. Build menjalankan `pnpm build:vercel`, jadi migrasi yang lebih baru dari backup diterapkan ulang.
+Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**. Build menjalankan `npm run build:vercel`, jadi migrasi yang lebih baru dari backup diterapkan ulang.
 
 Password role buatan sendiri tidak ikut backup Supabase. Setelah pemulihan, di SQL Editor jalankan `alter role cadangan_baca with password '<password-cadangan_baca-dari-pengelola-password>';` dengan password yang sama seperti di A2, supaya secret `BACKUP_DATABASE_URL` tetap berlaku.
 

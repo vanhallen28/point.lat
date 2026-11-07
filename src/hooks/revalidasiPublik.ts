@@ -16,7 +16,7 @@ export type PemicuRevalidasi = (tag: string) => void
  * Mesin Indexing tepat setelah terbit) menunggu data baru, bukan menerima versi lama. Dokumentasi
  * Next 16 menyarankan bentuk ini untuk revalidasi dari luar Server Action (route handler Payload).
  *
- * Di luar server Next (`pnpm seed`, tes, skrip `payload run`) tidak ada cache yang perlu dibuang dan
+ * Di luar server Next (`npm run seed`, tes, skrip `payload run`) tidak ada cache yang perlu dibuang dan
  * `revalidateTag` melempar "static generation store missing"; galat itu sengaja diabaikan.
  */
 const pemicuNext: PemicuRevalidasi = (tag) => {

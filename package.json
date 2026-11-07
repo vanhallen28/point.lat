@@ -13,7 +13,7 @@
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
-    "test": "pnpm run test:unit && pnpm run test:int",
+    "test": "npm run test:unit && npm run test:int",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts",
     "test:unit": "vitest run --config ./vitest.unit.config.mts",
     "test:e2e": "playwright test",
@@ -23,7 +23,7 @@
     "indexer": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/jalankan-indexer.ts",
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "periksa:rilis": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/periksa-rilis.ts",
-    "build:vercel": "pnpm periksa:rilis && pnpm migrate && pnpm periksa:rilis && pnpm build",
+    "build:vercel": "npm run periksa:rilis && npm run migrate && npm run periksa:rilis && npm run build",
     "lighthouse": "lhci autorun --config=lighthouserc.json"
   },
   "dependencies": {
@@ -62,14 +62,11 @@
     "vitest": "4.0.18"
   },
   "engines": {
-    "node": "26.x",
-    "pnpm": "^9 || ^10 || ^11"
+    "node": "26.x"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "esbuild",
-      "unrs-resolver"
-    ]
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
   }
 }

@@ -5,7 +5,7 @@ import { jalankanJadwal } from '@/modules/indexer/endpoint'
 import { JENIS_TUGAS, LABEL_STATUS_TUGAS, LABEL_TUGAS } from '@/modules/pantau/tipe'
 
 /**
- * `pnpm indexer`: menjalankan sekali pekerjaan cron (jadwal terbit, antrean Mesin Indexing, dan tugas
+ * `npm run indexer`: menjalankan sekali pekerjaan cron (jadwal terbit, antrean Mesin Indexing, dan tugas
  * Pantau SEO yang jatuh tempo) tanpa Vercel. Adapter mengikuti `INDEXER_ADAPTER` (lokal: palsu, tanpa jaringan).
  */
 const payload = await getPayload({ config })

@@ -1,7 +1,7 @@
 /**
  * Koneksi Postgres untuk adapter Payload (`postgresAdapter` di `payload.config.ts`). Lokal, tes, E2E, dan CI
  * memakai Postgres di mesin sendiri dengan push skema Payload; database bersama (Supabase produksi dan
- * pratinjau) hanya diubah lewat migrasi (`pnpm migrate`) dan dihubungi lewat pooler Supavisor mode transaksi.
+ * pratinjau) hanya diubah lewat migrasi (`npm run migrate`) dan dihubungi lewat pooler Supavisor mode transaksi.
  */
 
 type Env = Record<string, string | undefined>
@@ -36,7 +36,7 @@ export function databaseLokal(url: string | undefined): boolean {
 
 /**
  * Push skema Payload (Drizzle) hanya ke database lokal. Database bersama tidak pernah didorong, juga saat
- * `pnpm seed` atau skrip `payload run` dijalankan dari komputer dengan `DATABASE_URL` Supabase (tanpa
+ * `npm run seed` atau skrip `payload run` dijalankan dari komputer dengan `DATABASE_URL` Supabase (tanpa
  * `NODE_ENV=production`, Payload mendorong skema bila opsi ini tidak dimatikan).
  */
 export function pushSkema(env: Env = process.env): boolean {

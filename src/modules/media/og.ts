@@ -6,7 +6,7 @@ import { asal, UKURAN_OG } from './url'
  * Gambar OG otomatis lewat transformasi teks Cloudinary (spesifikasi §9).
  *
  * Basis gambar adalah kanvas PNG 1x1 putih (`point/sistem/kanvas`, diunggah sekali dengan
- * `pnpm media:siapkan`) yang diregangkan ke 1200x630 lalu diwarnai warna pilar.
+ * `npm run media:siapkan`) yang diregangkan ke 1200x630 lalu diwarnai warna pilar.
  * Judul memakai Google Font Archivo lewat sintaks `@google` dengan berat numerik 900
  * (https://cloudinary.com/documentation/image_text_layer_fonts). Sumbu lebar (`wdth`) font
  * variable tidak bisa diatur di text overlay, jadi OG memakai Archivo lebar normal.

@@ -31,7 +31,7 @@ export function jenisLingkungan(env: Env = process.env): JenisLingkungan | null 
 
 /**
  * Lingkungan yang datanya nyata atau alamatnya terbuka: deploy produksi dan pratinjau, atau database bukan
- * lokal (juga `pnpm seed` dari komputer pemilik ke Supabase). Aturan password admin berlaku di sini.
+ * lokal (juga `npm run seed` dari komputer pemilik ke Supabase). Aturan password admin berlaku di sini.
  */
 export function lingkunganTerbuka(env: Env = process.env): boolean {
   return jenisLingkungan(env) !== null || !databaseLokal(env.DATABASE_URL)

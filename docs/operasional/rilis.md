@@ -26,8 +26,10 @@ Membawa point.lat dari repo `vanhallen28/point.lat` sampai live di `https://poin
 
 - [ ] Akses Owner di organisasi Supabase berpaket Pro, tim Vercel berpaket Pro, admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
 - [ ] Akun Cloudinary, akun Google (Search Console dan Google Cloud), Claude Console, dan nanti AdSense.
-- [ ] Komputer dengan `git`, Node 26 (26.13.0 atau lebih baru di seri 26; dengan nvm cukup `nvm install` di folder repo karena ada `.nvmrc`), `pnpm`, `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
+- [ ] Komputer dengan `git`, Node 26 (26.13.0 atau lebih baru di seri 26; dengan nvm cukup `nvm install` di folder repo karena ada `.nvmrc`; `npm` ikut terpasang bersama Node), `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
 - [ ] Pengelola password untuk menyimpan setiap rahasia yang dibuat di runbook ini.
+
+Mac Intel: Homebrew tidak lagi mendukung Mac Intel. `psql` cukup dijalankan dari image Docker Postgres yang sama dengan `docker-compose.yml` (Docker Desktop harus jalan), misalnya di C4: `docker run --rm -e DATABASE_URL postgres:17 sh -c 'psql "$DATABASE_URL" -c "select version()"'`. Opsi `-e DATABASE_URL` meneruskan nilai dari shell tanpa menampilkannya.
 
 ## B. Repo dan CI
 
@@ -43,7 +45,7 @@ Di GitHub, repo `vanhallen28/point.lat`, tab Actions, workflow **CI**: run terak
 ```bash
 git switch master
 git pull
-pnpm install
+npm install
 ```
 
 **Hasil yang diharapkan:** `git log -1 --oneline` sama dengan commit yang hijau di B1, dan `ls src/migrations` menampilkan `20261106_152942_awal.ts` dan `20261106_163351_kunci_data_api.ts`.
@@ -68,7 +70,7 @@ Biarkan zona waktu database tetap UTC (bawaan Supabase; jangan jalankan `alter d
 
 ### C2. Wajibkan SSL dan unduh sertifikat CA
 
-Database Settings, bagian SSL Configuration: nyalakan **Enforce SSL on incoming connections** (database restart singkat), lalu **Download certificate**. Simpan file itu sebagai `~/point-lat-ca-produksi.crt`.
+Database Settings, bagian SSL Configuration: nyalakan **Enforce SSL on incoming connections** (database restart singkat), lalu **Download certificate**. File unduhan bernama misalnya `prod-supabase.cer` atau `prod-ca-2021.crt` (cek dengan `ls -lt ~/Downloads | head -5`); simpan sebagai `~/point-lat-ca-produksi.crt`, misalnya `mv ~/Downloads/prod-supabase.cer ~/point-lat-ca-produksi.crt`. Bila `head -1` tidak mencetak baris di bawah (berkas biner DER), ubah dengan `openssl x509 -inform der -in ~/point-lat-ca-produksi.crt -out ~/point-lat-ca-produksi.crt`.
 
 **Hasil yang diharapkan:** setelan menyatakan SSL diwajibkan; `head -1 ~/point-lat-ca-produksi.crt` mencetak `-----BEGIN CERTIFICATE-----`.
 
@@ -98,10 +100,10 @@ Migrasi pertama dan seed dijalankan dari komputer sebelum deploy pertama, supaya
 
 ```bash
 export DATABASE_CA="$(cat ~/point-lat-ca-produksi.crt)"
-pnpm migrate
+npm run migrate
 read -r SEED_ADMIN_EMAIL && export SEED_ADMIN_EMAIL
 read -rs SEED_ADMIN_PASSWORD && export SEED_ADMIN_PASSWORD
-pnpm seed
+npm run seed
 unset DATABASE_URL DATABASE_CA SEED_ADMIN_EMAIL SEED_ADMIN_PASSWORD
 ```
 
@@ -119,7 +121,7 @@ INFO: Done.
 INFO: Seed selesai. Admin: dibuat. Pilar: 4. Halaman draf: 6. Tools baru: 6. Parameter baru: 22.
 ```
 
-**Bila gagal:** `Seed dihentikan. password: ...` berarti password ditolak aturan password produksi; buat frasa lain dan ulangi dua perintah `read` dan `pnpm seed`. Bila `pnpm migrate` bertanya soal data loss atau migrasi `dev`, hentikan (Ctrl+C) dan pastikan `DATABASE_URL` menunjuk proyek Supabase yang baru dibuat, bukan database lokal.
+**Bila gagal:** `Seed dihentikan. password: ...` berarti password ditolak aturan password produksi; buat frasa lain dan ulangi dua perintah `read` dan `npm run seed`. Bila `npm run migrate` bertanya soal data loss atau migrasi `dev`, hentikan (Ctrl+C) dan pastikan `DATABASE_URL` menunjuk proyek Supabase yang baru dibuat, bukan database lokal.
 
 ### C6. Proyek pratinjau di organisasi Free terpisah
 
@@ -132,9 +134,9 @@ Proyek Free dijeda bila aktivitas database selama 7 hari terlalu sedikit (Supaba
 
 ### D1. Impor repo
 
-Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`pnpm build:vercel`), versi Node dari `engines` di `package.json` (`26.x`, mengalahkan pilihan Node.js Version di Settings). Jangan isi env di layar impor. Pilih **Deploy**.
+Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`npm run build:vercel`), versi Node dari `engines` di `package.json` (`26.x`, mengalahkan pilihan Node.js Version di Settings). Jangan isi env di layar impor. Pilih **Deploy**.
 
-**Hasil yang diharapkan:** deploy pertama **gagal** di langkah `pnpm periksa:rilis` dengan `Env deploy belum benar:` dan daftar yang diawali `DATABASE_URL belum diisi.` Ini bukti penjaga lingkungan aktif dan `VERCEL_ENV` terbaca; database belum tersentuh.
+**Hasil yang diharapkan:** deploy pertama **gagal** di langkah `npm run periksa:rilis` dengan `Env deploy belum benar:` dan daftar yang diawali `DATABASE_URL belum diisi.` Ini bukti penjaga lingkungan aktif dan `VERCEL_ENV` terbaca; database belum tersentuh.
 **Bila gagal dengan galat lain:** `missing secret key. A secret key is needed to secure Payload.` berarti `VERCEL_ENV` tidak terbaca (penjaga mati); lanjutkan ke D2 dulu.
 
 ### D2. System Environment Variables
@@ -229,8 +231,8 @@ Dari root repo di komputer:
 read -r CLOUDINARY_CLOUD_NAME && export CLOUDINARY_CLOUD_NAME
 read -rs CLOUDINARY_API_KEY && export CLOUDINARY_API_KEY
 read -rs CLOUDINARY_API_SECRET && export CLOUDINARY_API_SECRET
-pnpm media:siapkan
-pnpm media:siapkan
+npm run media:siapkan
+npm run media:siapkan
 unset CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET
 ```
 
@@ -438,7 +440,7 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 | Build: `unable to verify the first certificate` atau `self-signed certificate in certificate chain` | `DATABASE_CA` bukan sertifikat proyek itu, atau terpotong | Tempel ulang seluruh isi file sertifikat proyek yang sama dengan `DATABASE_URL` |
 | Build: `password authentication failed` | Password di `DATABASE_URL` salah | Salin ulang URI transaction pooler (C4) |
 | Build pratinjau gagal terhubung setelah lama tidak dipakai | Proyek Free dijeda | Dashboard Supabase, organisasi pratinjau, proyek pratinjau, **Resume project** |
-| `pnpm seed` mencetak `Seed dihentikan. password: ...` | Password admin ditolak | Pakai frasa lain minimal 15 karakter (C5) |
+| `npm run seed` mencetak `Seed dihentikan. password: ...` | Password admin ditolak | Pakai frasa lain minimal 15 karakter (C5) |
 | Cron di Logs berstatus 401 | `CRON_SECRET` berubah tanpa deploy ulang | Redeploy produksi |
 | Panggilan ke Google, IndexNow, atau Claude gagal dengan galat koneksi atau protokol (misalnya `ERR_HTTP2`, `GOAWAY`, `stream`) padahal kunci benar | `fetch` Node 26 di Vercel memakai HTTP/2 bila server mendukung | Tambahkan env `VERCEL_FETCH_DISABLE_H2` = `1` di Production (dan Preview bila perlu), Redeploy, lalu ulangi uji langsungnya; catat temuannya untuk diperbaiki di kode |
 | Log indexing: Google 403 | Akun layanan belum Owner | G3 |

@@ -103,7 +103,7 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
   // Lokal dan tes: push skema ke Postgres sendiri. Supabase (produksi, pratinjau): hanya migrasi
-  // (`src/migrations`, `pnpm migrate`), lewat pooler mode transaksi dengan pool kecil (`src/lib/database.ts`).
+  // (`src/migrations`, `npm run migrate`), lewat pooler mode transaksi dengan pool kecil (`src/lib/database.ts`).
   db: postgresAdapter({
     pool: opsiPool(),
     push: pushSkema(),

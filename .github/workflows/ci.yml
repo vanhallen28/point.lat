@@ -43,37 +43,34 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 10.28.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26.13.0
-          cache: pnpm
+          cache: npm
       - name: Pasang dependensi
-        run: pnpm install --frozen-lockfile
+        run: npm ci
       - name: Type check
-        run: pnpm typecheck
+        run: npm run typecheck
       - name: Lint
-        run: pnpm lint
+        run: npm run lint
       - name: Tes unit
-        run: pnpm test:unit
+        run: npm run test:unit
       - name: Migrasi sesuai skema
         run: |
-          pnpm payload migrate:create periksa --skip-empty
+          npm run payload -- migrate:create periksa --skip-empty
           if [ -n "$(git status --porcelain -- src/migrations)" ]; then
             git status --porcelain -- src/migrations
-            echo "::error::Skema Payload berubah tanpa migrasi. Jalankan pnpm payload migrate:create <nama>, periksa SQL-nya, lalu commit file di src/migrations."
+            echo "::error::Skema Payload berubah tanpa migrasi. Jalankan npm run payload -- migrate:create <nama>, periksa SQL-nya, lalu commit file di src/migrations."
             exit 1
           fi
       - name: Tes integrasi
-        run: pnpm test:int
+        run: npm run test:int
       - name: Migrasi di database kosong, lalu build terhadap database itu
         env:
           DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/pointlat_ci
         run: |
-          pnpm migrate
-          pnpm build
+          npm run migrate
+          npm run build
 
   e2e:
     name: E2E (build produksi, Playwright, axe) dan Lighthouse
@@ -98,19 +95,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 10.28.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26.13.0
-          cache: pnpm
+          cache: npm
       - name: Pasang dependensi
-        run: pnpm install --frozen-lockfile
+        run: npm ci
       - name: Pasang Chromium Playwright
-        run: pnpm exec playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
       - name: Tes E2E
-        run: pnpm test:e2e
+        run: npm run test:e2e
       # Build dan database E2E yang sama, tanpa jaringan: gambar Cloudinary dan domain iklan diblokir di
       # lighthouserc.json. Mode HP Lighthouse (4G lambat disimulasikan, CPU 4x lebih lambat).
       - name: Lighthouse (beranda, artikel, rubrik, tools)
@@ -125,7 +119,7 @@ jobs:
           AI_ADAPTER: palsu
         run: |
           export CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
-          pnpm lighthouse
+          npm run lighthouse
       - name: Simpan laporan Lighthouse
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
