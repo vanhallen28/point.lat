@@ -52,11 +52,17 @@ type Blok = NonNullable<Beranda['tataLetak']>[number]
 
 const ambil = <T extends object>(relasi: T | number | null | undefined): T | null => (relasi && typeof relasi === 'object' ? relasi : null)
 
-/** Newsletter tampil hanya bila aktif dan punya URL form penyedia (spesifikasi §17: penyedia eksternal). */
-export function susunNewsletter(global: Pick<Newsletter, 'aktif' | 'urlForm' | 'judul' | 'deskripsi'>): DataNewsletter | null {
+/**
+ * Newsletter tampil hanya bila saklar Newsletter di global `fitur` menyala (`aktif`, spesifikasi §23). Cara `form`:
+ * form point. yang menyimpan email di database; cara `penyedia`: tautan ke form penyedia, hanya bila URL-nya https.
+ */
+export function susunNewsletter(global: Partial<Pick<Newsletter, 'cara' | 'urlForm' | 'judul' | 'deskripsi'>>, aktif: boolean): DataNewsletter | null {
+  if (!aktif) return null
+  const dasar = { judul: global.judul?.trim() || 'Intinya, tiap Senin.', teks: global.deskripsi?.trim() || null }
+  if ((global.cara ?? 'form') === 'form') return { ...dasar, cara: 'form' }
   const href = global.urlForm?.trim()
-  if (!global.aktif || !href || !/^https:\/\//.test(href)) return null
-  return { judul: global.judul?.trim() || 'Intinya, tiap Senin.', teks: global.deskripsi?.trim() || null, href }
+  if (!href || !/^https:\/\//.test(href)) return null
+  return { ...dasar, cara: 'penyedia', href }
 }
 
 function kartuMozaik(relasi: (number | Artikel)[]): KartuArtikel[] {
@@ -84,7 +90,7 @@ function kartuStrip(relasi: (number | Video)[] | null | undefined): KartuVideo[]
  * - "Paling dicari" menampilkan artikel dengan klik Google terbanyak 7 hari terakhir (judul editor, bawaan
  *   `JUDUL_POPULER`) bila datanya cukup untuk semua tempat; peringkat apa adanya, jadi artikel mozaik bisa
  *   ikut. Bila belum cukup: tulisan terbaru di luar mozaik dengan judul `JUDUL_TERBARU`.
- * - Newsletter hanya bila global `newsletter` aktif; bila tepat setelah tulisan terbaru, ia menjadi
+ * - Newsletter hanya bila saklar Newsletter di global `fitur` menyala; bila tepat setelah tulisan terbaru, ia menjadi
  *   kolom samping blok itu (seperti mockup).
  * - Slot iklan hanya bila ID slotnya aktif di global iklan dengan posisi beranda; selain itu dilewati,
  *   jadi blok slot yang tidak dipakai tidak memisahkan tulisan terbaru dari newsletter.

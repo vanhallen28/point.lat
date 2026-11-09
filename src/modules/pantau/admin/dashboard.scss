@@ -1,9 +1,9 @@
-// Dashboard SEO di admin. Memakai variabel tema Payload supaya ikut mode terang dan gelap admin. Warna
-// grafik satu hue (biru Payload), dicek dengan validator dataviz: blue-500 di permukaan putih dan blue-450
-// di permukaan gelap lolos rentang terang dan kontras 3:1. Status selalu bertanda teks, tidak hanya warna.
+// Dashboard SEO di admin, dengan kartu dan warna ruang redaksi (spesifikasi §23, token `--redaksi-*` dari
+// `custom.scss`, terang dan gelap). Grafik satu hue biru merek `#2f6bff` (kontras 4,5:1 di kartu putih dan 3,8:1
+// di kartu gelap). Status selalu bertanda teks, tidak hanya warna.
 
 .pantau {
-  --pantau-grafik: var(--color-blue-500);
+  --pantau-grafik: var(--redaksi-merek);
   padding-bottom: calc(var(--base) * 3);
   font-variant-numeric: tabular-nums;
   // Pesan Google dan path bisa berisi URL panjang tanpa spasi.
@@ -18,15 +18,19 @@
   }
 }
 
-html[data-theme='dark'] .pantau {
-  --pantau-grafik: var(--color-blue-450);
-}
-
 .pantau-kepala {
-  margin: calc(var(--base) * 1.5) 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  margin: 8px 0 18px;
 
   h1 {
-    margin: 0 0 calc(var(--base) * 0.5);
+    margin: 0 0 4px;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
   }
 
   p {
@@ -49,18 +53,22 @@ html[data-theme='dark'] .pantau {
 
 .pantau-bagian {
   min-width: 0;
-  padding: var(--base);
-  border: 1px solid var(--theme-elevation-150);
-  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--redaksi-garis);
+  border-radius: 16px;
+  background: var(--redaksi-kartu);
+  box-shadow: var(--redaksi-bayang);
 
   h2 {
     margin: 0 0 calc(var(--base) * 0.5);
-    font-size: 20px;
+    font-size: 16px;
+    font-weight: 800;
   }
 
   h3 {
     margin: calc(var(--base) * 1.5) 0 calc(var(--base) * 0.5);
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: 800;
   }
 }
 
@@ -122,22 +130,48 @@ html[data-theme='dark'] .pantau {
   margin: var(--base) 0;
 
   div {
-    padding: calc(var(--base) * 0.75);
-    border-radius: 10px;
-    background: var(--theme-elevation-50);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-top: 4px solid var(--aksen, var(--redaksi-merek));
+    border-radius: 12px;
+    background: var(--redaksi-bidang);
+  }
+
+  .pantau-angka--biru {
+    --aksen: var(--redaksi-merek);
+  }
+  .pantau-angka--hijau {
+    --aksen: var(--redaksi-hijau);
+  }
+  .pantau-angka--kuning {
+    --aksen: var(--redaksi-kuning);
+  }
+  .pantau-angka--oranye {
+    --aksen: var(--redaksi-oranye);
   }
 
   dt {
-    font-size: 13px;
-    color: var(--theme-elevation-650);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--redaksi-redup);
   }
 
   dd {
     margin: 0;
     font-size: 30px;
-    font-weight: 700;
-    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
     overflow-wrap: anywhere;
+  }
+
+  dd + dd {
+    font-size: 12px;
+    letter-spacing: 0;
   }
 }
 
@@ -214,6 +248,7 @@ html[data-theme='dark'] .pantau {
 
 // Tabel panjang bergulir di dalam kotaknya sendiri, halaman tidak bergeser horizontal.
 .pantau-gulir {
+  position: relative;
   max-width: 100%;
   overflow-x: auto;
 }
@@ -392,4 +427,9 @@ html[data-theme='dark'] .pantau {
   &:empty {
     display: none;
   }
+}
+
+// Pilihan periode memakai gaya pil ruang redaksi, tanpa garis bawah tautan dashboard.
+.pantau .redaksi-periode a {
+  text-decoration: none;
 }

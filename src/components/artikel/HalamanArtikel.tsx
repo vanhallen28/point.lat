@@ -5,12 +5,14 @@ import { Ikon } from '@/components/dasar/Ikon'
 import { JsonLd } from '@/components/dasar/JsonLd'
 import { RemahRoti } from '@/components/dasar/RemahRoti'
 import { SlotIklan } from '@/components/iklan/SlotIklan'
+import { KotakNewsletter } from '@/components/beranda/KotakNewsletter'
 import { Tautan } from '@/components/dasar/Tautan'
 import { Keterangan, UKURAN_KOLOM_ISI } from '@/components/isi/GambarIsi'
 import { IsiArtikel } from '@/components/isi/IsiArtikel'
 import { DaftarKartu } from '@/components/kartu/KartuArtikel'
 import { JudulBersama } from '@/components/motion/JudulBersama'
 import { LABEL_TIPE_ARTIKEL } from '@/lib/konstanta'
+import { FITUR_ARTIKEL_BAWAAN, type FiturArtikel } from '@/modules/fitur/data'
 import { pilihSlot, sisipkanIklanTengah } from '@/modules/iklan/aturan'
 import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import { tanggalIndonesia } from '@/modules/konten/artikel'
@@ -26,6 +28,7 @@ import { DaftarIsi } from './DaftarIsi'
 import { Faq } from './Faq'
 import { KotakIntinya } from './KotakIntinya'
 import { ProfilPenulis } from './ProfilPenulis'
+import { TombolBagikan } from './TombolBagikan'
 
 /**
  * Halaman artikel (keempat tipe, termasuk glosarium) dengan urutan dari spesifikasi §4: kicker
@@ -34,8 +37,21 @@ import { ProfilPenulis } from './ProfilPenulis'
  *
  * Iklan (spesifikasi §11) hanya di dua tempat: di tengah isi setelah paragraf ke-N (`sisipkanIklanTengah`)
  * dan setelah isi, sebelum catatan, sumber, dan FAQ. Tidak pernah di atas H1 atau di dalam kotak Intinya.
+ *
+ * Fitur dari Pengaturan, Fitur (spesifikasi §23): daftar isi dan waktu baca bisa dimatikan; tombol bagikan dan
+ * kotak newsletter tampil setelah FAQ bila dinyalakan.
  */
-export function HalamanArtikel({ artikel, situs, iklan = null }: { artikel: DataArtikel; situs: Situs; iklan?: PengaturanIklan | null }) {
+export function HalamanArtikel({
+  artikel,
+  situs,
+  iklan = null,
+  fitur = FITUR_ARTIKEL_BAWAAN,
+}: {
+  artikel: DataArtikel
+  situs: Situs
+  iklan?: PengaturanIklan | null
+  fitur?: FiturArtikel
+}) {
   const masukan = { jenis: 'artikel', doc: artikel.seo } as const
   const gambar = propsGambar(artikel.gambar, 'hero', { cloudName: situs.cloudName, lebar: 1440 })
   return (
@@ -63,16 +79,18 @@ export function HalamanArtikel({ artikel, situs, iklan = null }: { artikel: Data
               Diperbarui <time dateTime={artikel.diperbarui}>{tanggalIndonesia(artikel.diperbarui)}</time>
             </span>
           )}
-          <span>
-            <Ikon nama="clock" ukuran={18} />
-            {artikel.waktuBaca} menit baca
-          </span>
+          {fitur.waktuBaca && (
+            <span>
+              <Ikon nama="clock" ukuran={18} />
+              {artikel.waktuBaca} menit baca
+            </span>
+          )}
         </p>
       </header>
 
       <div className={gaya.badan}>
         <KotakIntinya poin={artikel.intinya} warna={artikel.pilar?.warna ?? null} />
-        {artikel.daftarIsi.length > 0 && (
+        {fitur.daftarIsi && artikel.daftarIsi.length > 0 && (
           <div className={gaya.samping}>
             <DaftarIsi subjudul={artikel.daftarIsi} />
           </div>
@@ -89,6 +107,8 @@ export function HalamanArtikel({ artikel, situs, iklan = null }: { artikel: Data
           <Catatan teks={artikel.pilar?.disclaimer ?? null} />
           <BlokSumber sumber={artikel.sumber} />
           <Faq faq={artikel.faq} />
+          {fitur.tombolBagikan && <TombolBagikan url={`${situs.urlSitus}${artikel.href}`} judul={artikel.judul} />}
+          {fitur.newsletter && <KotakNewsletter newsletter={fitur.newsletter} id="newsletter-artikel" lepas asal={artikel.href} />}
         </div>
       </div>
 

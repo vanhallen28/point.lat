@@ -47,7 +47,7 @@ test('mozaik di tablet 768 px: kartu samping berdampingan, kotak Hitung sendiri 
   expect(tools).toBeLessThan(tekno.y + tekno.height)
 })
 
-test('strip video gelap, paling dibaca pekan ini dari klik Google, dan newsletter ke form penyedia', async ({ page }) => {
+test('strip video gelap, paling dibaca pekan ini dari klik Google, dan form newsletter point.', async ({ page }) => {
   await page.goto('/')
   const strip = page.getByRole('region', { name: 'Intinya dalam 45 detik' })
   await expect(strip).toHaveCSS('background-color', 'rgb(17, 17, 17)')
@@ -62,7 +62,11 @@ test('strip video gelap, paling dibaca pekan ini dari klik Google, dan newslette
 
   const newsletter = page.getByRole('complementary', { name: 'Newsletter' })
   await expect(newsletter.getByRole('heading', { level: 2 })).toHaveText('Intinya, tiap Senin.')
-  await expect(newsletter.getByRole('link', { name: /Langganan gratis/ })).toHaveAttribute('href', 'https://point.kit.com/intinya')
+  const form = newsletter.getByRole('form', { name: 'Daftar newsletter' })
+  await expect(form.getByLabel('Email', { exact: true })).toHaveAttribute('type', 'email')
+  await expect(form.getByRole('checkbox', { name: /Saya setuju email ini disimpan/ })).toBeVisible()
+  await expect(form.getByRole('link', { name: 'berhenti kapan saja' })).toHaveAttribute('href', '/newsletter/berhenti')
+  await expect(form.getByRole('button', { name: 'Langganan gratis' })).toBeVisible()
 })
 
 test('jarak antarbagian beranda tetap, tanpa celah kosong, di 375 dan 1440 px', async ({ page }) => {

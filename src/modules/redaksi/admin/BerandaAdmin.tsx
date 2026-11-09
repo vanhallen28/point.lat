@@ -1,0 +1,110 @@
+import { Gutter } from '@payloadcms/ui'
+import { redirect } from 'next/navigation'
+import type { AdminViewServerProps } from 'payload'
+
+import { PATH_ADMIN, urlAdmin } from '@/lib/admin'
+import { teksTanggal } from '@/modules/pantau/format'
+
+import { bacaPeriode, PERIODE_BERANDA, sapaan } from '../aturan'
+import { ambilRuangRedaksi } from '../data'
+
+import {
+  BarisAngka,
+  KalenderKonten,
+  KesehatanSitus,
+  KolomGoogle,
+  PerluPerhatian,
+  TabelTerbit,
+} from './BagianRedaksi'
+import { Ikon } from './IkonRedaksi'
+
+import './redaksi.scss'
+
+const TANGGAL_PANJANG = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Asia/Jakarta',
+})
+
+/**
+ * Beranda admin (`admin.components.views.dashboard`, spesifikasi §23), menggantikan daftar koleksi bawaan Payload.
+ * Tata letak mengikuti gambar referensi pemilik: kepala dengan pilihan periode dan lencana layanan, empat kartu
+ * angka, kalender konten dan kolom Google, lalu terbit terbaru, kesehatan situs, dan perlu perhatian. Semua angka
+ * dari database point.; editor melihat bagian konten saja. Payload membungkus view dashboard dengan templat bawaan
+ * (menu dan kepala), jadi komponen ini hanya isinya.
+ */
+export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewServerProps) {
+  const { req } = initPageResult
+  const pengguna = req.user as
+    ({ nama?: string | null; peran?: string | null } & NonNullable<typeof req.user>) | null
+  if (!pengguna) redirect(`${PATH_ADMIN}/login`)
+  const sekarang = new Date()
+  const periode = bacaPeriode(searchParams?.periode, PERIODE_BERANDA, 7)
+  const data = await ambilRuangRedaksi(req.payload, pengguna, { sekarang, periode })
+  const namaDepan = data.nama.split(/\s+/)[0]
+
+  return (
+    <Gutter className="redaksi">
+      <header className="redaksi-kepala">
+        <div>
+          <h1>
+            {sapaan(sekarang)}, {namaDepan}
+          </h1>
+          <p className="redaksi-kepala__sub">
+            Ringkasan redaksi point. · {TANGGAL_PANJANG.format(sekarang)}
+            {data.dataSampai && ` · data Google sampai ${teksTanggal(data.dataSampai)}`}
+          </p>
+        </div>
+        <div className="redaksi-kepala__alat">
+          {data.admin && (
+            <nav className="redaksi-periode" aria-label="Periode angka Google">
+              <Ikon nama="kalender" />
+              {PERIODE_BERANDA.map((p) => (
+                <a
+                  key={p}
+                  href={p === 7 ? PATH_ADMIN : `${PATH_ADMIN}?periode=${p}`}
+                  aria-current={p === periode ? 'true' : undefined}
+                >
+                  {p} hari
+                </a>
+              ))}
+            </nav>
+          )}
+          {data.layanan && (
+            <a
+              className={`redaksi-lencana redaksi-lencana--${data.layanan.normal ? 'baik' : 'waspada'}`}
+              href={`${PATH_ADMIN}/seo`}
+            >
+              <Ikon nama={data.layanan.normal ? 'centangBulat' : 'segitiga'} />
+              {data.layanan.pesan}
+            </a>
+          )}
+          <a className="redaksi-tombol" href={urlAdmin.buat('artikel')}>
+            <Ikon nama="plus" />
+            Tulis artikel
+          </a>
+        </div>
+      </header>
+
+      <BarisAngka data={data} />
+
+      <div className={`redaksi-baris-dua${data.admin ? '' : ' redaksi-baris-dua--penuh'}`}>
+        <KalenderKonten kalender={data.kalender} />
+        {data.admin && <KolomGoogle data={data} />}
+      </div>
+
+      <div className={`redaksi-baris-tiga${data.admin ? '' : ' redaksi-baris-tiga--editor'}`}>
+        <TabelTerbit data={data} />
+        {data.kesehatan && <KesehatanSitus kesehatan={data.kesehatan} />}
+        <PerluPerhatian item={data.perhatian} />
+      </div>
+
+      <p className="redaksi-kaki-halaman">
+        <span>point. · Ruang redaksi</span>
+        <span>Diperbarui saat halaman dibuka</span>
+      </p>
+    </Gutter>
+  )
+}

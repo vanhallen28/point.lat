@@ -1,0 +1,34 @@
+// Tombol unduh CSV di atas daftar pelanggan newsletter: tombol utama admin (biru aksi), target 44 px.
+.pembaca-csv {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: calc(var(--base) * 0.75);
+
+  p {
+    margin: 0;
+    color: var(--theme-elevation-650);
+  }
+}
+
+.pembaca-csv__tombol {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: var(--redaksi-aksi);
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--redaksi-aksi-tekan);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-text);
+    outline-offset: 2px;
+  }
+}

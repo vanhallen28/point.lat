@@ -3,6 +3,7 @@ import { cache } from 'react'
 
 import { HalamanArtikel } from '@/components/artikel/HalamanArtikel'
 import { pathFor } from '@/lib/paths'
+import { muatFiturArtikel } from '@/modules/fitur/cache'
 import { muatArtikel, muatSitus, tanganiTidakAda } from '@/modules/konten'
 import { metadata, metadataTidakDitemukan } from '@/modules/seo'
 
@@ -31,5 +32,5 @@ export default async function Istilah({ params }: Props) {
   const { slug } = await params
   const istilah = await cari(slug)
   if (!istilah) return tanganiTidakAda(pathIstilah(slug))
-  return <HalamanArtikel artikel={istilah} situs={await muatSitus()} />
+  return <HalamanArtikel artikel={istilah} situs={await muatSitus()} fitur={await muatFiturArtikel()} />
 }

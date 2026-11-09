@@ -39,6 +39,8 @@ function susunBlok(blok: Blok, i: number, utama: boolean): BlokTampil | null {
       if (!href || typeof blok.tool !== 'object') return null
       return { jenis: 'tool', id, nama: blok.tool.nama, ringkasan: blok.tool.ringkasan, href }
     }
+    case 'formKontak':
+      return { jenis: 'formKontak', id, judul: teks(blok.judul) ?? 'Kirim pesan', pengantar: teks(blok.pengantar) }
   }
 }
 
@@ -55,7 +57,11 @@ export function susunHalaman(doc: Halaman): DataHalaman {
     judul: doc.judul,
     href: pathFor({ jenis: 'halaman', slug: doc.slug ?? '' }),
     heroUtama,
-    blok: tataLetak.map((b, i) => susunBlok(b, i, heroUtama && i === 0)).filter((b): b is BlokTampil => b !== null),
+    // Satu form kontak per halaman: id hasil form (`#pesan-terkirim`) harus unik.
+    blok: tataLetak
+      .map((b, i) => susunBlok(b, i, heroUtama && i === 0))
+      .filter((b): b is BlokTampil => b !== null)
+      .filter((b, i, semua) => b.jenis !== 'formKontak' || semua.findIndex((x) => x.jenis === 'formKontak') === i),
     seo: doc as HalamanSeo,
   }
 }

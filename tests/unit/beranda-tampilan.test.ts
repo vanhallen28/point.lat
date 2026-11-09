@@ -13,7 +13,7 @@ vi.mock('next/image', () => ({
 
 const pilar = { nama: 'Uang & Karier', slug: 'uang-karier', href: '/uang-karier', warna: 'hijau' as const, disclaimer: null }
 const kartu = (id: number): KartuArtikel => ({ id, judul: `Artikel ${id}`, href: `/artikel-${id}`, tipe: 'panduan', pilar, intinya: `Intinya ${id}.` })
-const newsletter = { judul: 'Intinya, tiap Senin.', teks: 'Lima tulisan terbaik pekan ini.', href: 'https://point.kit.com/intinya' }
+const newsletter = { judul: 'Intinya, tiap Senin.', teks: 'Lima tulisan terbaik pekan ini.', cara: 'penyedia' as const, href: 'https://point.kit.com/intinya' }
 
 const bagian: BagianBeranda[] = [
   { jenis: 'hero', id: 'h', judul: 'Intinya dulu.', subjudul: 'Dijelaskan dari intinya.', placeholder: 'misal: cara hitung THR' },

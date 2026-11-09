@@ -112,6 +112,7 @@ export type BlokTampil =
   | { jenis: 'cta'; id: string; judul: string; teks: string | null; label: string; href: string }
   | { jenis: 'faq'; id: string; judul: string; faq: Faq[] }
   | { jenis: 'tool'; id: string; nama: string; ringkasan: string; href: string }
+  | { jenis: 'formKontak'; id: string; judul: string; pengantar: string | null }
 
 /** Halaman statis dari koleksi `halaman`. `heroUtama`: blok pertama hero, jadi judul tidak ditulis ulang. */
 export type DataHalaman = { judul: string; href: string; heroUtama: boolean; blok: BlokTampil[]; seo: HalamanSeo }
@@ -158,7 +159,11 @@ export type DataTool = {
 }
 
 /** Ajakan newsletter: pendaftaran di form penyedia (global `newsletter`), bukan di point. */
-export type DataNewsletter = { judul: string; teks: string | null; href: string }
+/**
+ * Kotak newsletter: `form` menyimpan email di database point. (spesifikasi §23), `penyedia` menautkan ke form
+ * penyedia (`href`).
+ */
+export type DataNewsletter = { judul: string; teks: string | null } & ({ cara: 'form' } | { cara: 'penyedia'; href: string })
 
 /** Bagian beranda siap render, urut sesuai global `beranda`. `id` dari blok Payload. */
 export type BagianBeranda =

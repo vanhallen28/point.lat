@@ -48,7 +48,7 @@ test('dashboard SEO dari menu admin: performa Google, halaman teratas, status in
 
   const google = page.getByRole('region', { name: 'Performa di Google' })
   await expect(google).toContainText('Sinkron Search Console: berhasil')
-  await expect(google).toContainText('28 hari sampai 2 Nov 2026.')
+  await expect(google).toContainText('28 hari sampai 2 Nov 2026, dibanding 28 hari sebelumnya.')
   const klik = HARI_CONTOH.reduce((n, h) => n + h.klik, 0)
   await expect(google.getByRole('definition').first()).toHaveText(klik.toLocaleString('id-ID'))
   await expect(google.getByRole('img', { name: /^Klik per hari, 6 Okt 2026 sampai 2 Nov 2026: total / })).toBeVisible()
@@ -62,17 +62,6 @@ test('dashboard SEO dari menu admin: performa Google, halaman teratas, status in
   await expect(page.getByRole('region', { name: 'Halaman yatim' })).toBeVisible()
   await expect(page.getByRole('region', { name: '404 teratas' }).getByRole('link', { name: 'Buka Log 404' })).toBeVisible()
   await periksaAxe(page, '.pantau')
-})
-
-test('halaman awal admin punya kartu Dashboard SEO yang membuka /admin/seo', async ({ page }) => {
-  await page.request.post('/api/pengguna/login', { data: ADMIN_E2E })
-  await page.goto('/admin')
-  const kartu = page.getByRole('region', { name: 'Dashboard SEO' })
-  await expect(kartu).toContainText('Klik dari Google, status indeks, tautan rusak, dan 404 teratas')
-  await periksaAxe(page, '.pantau-kartu')
-  await kartu.getByRole('link', { name: 'Buka dashboard' }).click()
-  await expect(page).toHaveURL(/\/admin\/seo$/)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Dashboard SEO')
 })
 
 // Paling banyak dua kolom: baris dua kartu (Status indeks + Log, Halaman yatim + 404) selalu terisi penuh,

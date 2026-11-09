@@ -4,7 +4,7 @@ import { urlAdmin } from '@/lib/admin'
 import { HARI } from '@/modules/indexer/aturan'
 import { LABEL_LANGKAH, LABEL_STATUS_INDEKS, LABEL_STATUS_LOG, STATUS_INDEKS, type StatusIndeks, type StatusLog } from '@/modules/indexer/tipe'
 
-import { batasPindaiManual, geserTanggal, ringkasSitus, tanggalPasifik, type RingkasanSitus } from './aturan'
+import { batasPindaiManual, geserTanggal, HARI_RINGKASAN, ringkasSebelumnya, ringkasSitus, tanggalPasifik, type RingkasanSitus } from './aturan'
 import type { KoleksiSumber, Sumber } from './tautan'
 import { JENIS_TUGAS, type JenisTugas, type RingkasanHalaman, type StatusTugas } from './tipe'
 
@@ -30,7 +30,16 @@ export type DataDashboard = {
   tugas: Record<JenisTugas, InfoTugas | null>
   /** Tombol "Pindai ulang sekarang": boleh, atau kenapa belum dan kapan boleh lagi (ISO). */
   pindai: { boleh: true } | { boleh: false; alasan: 'berjalan' | 'jeda'; bolehLagi: string }
-  analitik: { sampai: string | null; situs: RingkasanSitus | null; halaman: RingkasanHalaman[]; jumlahHalaman: number }
+  analitik: {
+    sampai: string | null
+    /** Panjang ringkasan dan grafik (7, 28, atau 90 hari). */
+    periode: number
+    situs: RingkasanSitus | null
+    /** Periode sebelumnya untuk perbandingan, `null` bila datanya belum lengkap. */
+    sebelumnya: Omit<RingkasanSitus, 'seri'> | null
+    halaman: RingkasanHalaman[]
+    jumlahHalaman: number
+  }
   statusIndeks: { status: StatusIndeks; label: string; jumlah: number }[]
   log: {
     gagal7Hari: number
@@ -56,7 +65,7 @@ const URUTAN_TAUTAN: TautanBermasalah['jenis'][] = ['rusak', 'luar-rusak', 'dial
  * gagal 7 hari, tautan rusak, halaman yatim, 404 teratas, dan status tugas harian. Hanya membaca; tugas
  * berkala yang mengisi datanya.
  */
-export async function ambilDashboard(payload: Payload, sekarang = new Date()): Promise<DataDashboard> {
+export async function ambilDashboard(payload: Payload, sekarang = new Date(), periode = HARI_RINGKASAN): Promise<DataDashboard> {
   const { docs: tugasDocs } = await payload.find({ collection: 'tugas-seo', depth: 0, limit: JENIS_TUGAS.length, pagination: false })
   const tugas = Object.fromEntries(
     JENIS_TUGAS.map((jenis) => {
@@ -67,13 +76,14 @@ export async function ambilDashboard(payload: Payload, sekarang = new Date()): P
 
   const { docs: hari } = await payload.find({
     collection: 'analitik-situs',
-    where: { tanggal: { greater_than_equal: geserTanggal(tanggalPasifik(sekarang), -45) } },
+    where: { tanggal: { greater_than_equal: geserTanggal(tanggalPasifik(sekarang), -(2 * periode + 17)) } },
     sort: 'tanggal',
     depth: 0,
-    limit: 100,
+    limit: 2 * periode + 30,
     pagination: false,
   })
   const sampai = hari.at(-1)?.tanggal ?? null
+  const hariSitus = hari.map(({ tanggal, klik, impresi, ctr, posisi }) => ({ tanggal, klik, impresi, ctr, posisi }))
   const halaman = await payload.find({ collection: 'analitik-halaman', sort: ['-klik28', '-impresi28', 'path'], depth: 0, limit: MAKS_HALAMAN_DASHBOARD })
 
   const statusIndeks = []
@@ -133,7 +143,9 @@ export async function ambilDashboard(payload: Payload, sekarang = new Date()): P
     pindai: pindai.boleh ? pindai : { ...pindai, bolehLagi: pindai.bolehLagi.toISOString() },
     analitik: {
       sampai,
-      situs: sampai ? ringkasSitus(hari.map(({ tanggal, klik, impresi, ctr, posisi }) => ({ tanggal, klik, impresi, ctr, posisi })), sampai) : null,
+      periode,
+      situs: sampai ? ringkasSitus(hariSitus, sampai, periode) : null,
+      sebelumnya: sampai ? ringkasSebelumnya(hariSitus, sampai, periode) : null,
       halaman: halaman.docs.map(({ path, klik7, impresi7, klik28, impresi28, ctr28, posisi28 }) => ({ path, klik7, impresi7, klik28, impresi28, ctr28, posisi28 })),
       jumlahHalaman: halaman.totalDocs,
     },

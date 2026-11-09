@@ -5,6 +5,7 @@ import { cache } from 'react'
 import { HalamanArtikel } from '@/components/artikel/HalamanArtikel'
 import { HalamanStatis } from '@/components/halaman/HalamanStatis'
 import { HalamanRubrik } from '@/components/rubrik/HalamanRubrik'
+import { muatFitur, muatFiturArtikel } from '@/modules/fitur/cache'
 import { muatIklan } from '@/modules/iklan'
 import { muatJalur, muatSitus, pathDariSegmen, tanganiTidakAda } from '@/modules/konten'
 import { metadata, metadataTidakDitemukan } from '@/modules/seo'
@@ -49,11 +50,11 @@ export default async function Halaman({ params }: Props) {
   const hasil = await cari(jalur)
   switch (hasil?.jenis) {
     case 'artikel':
-      return <HalamanArtikel artikel={hasil.artikel} situs={await muatSitus()} iklan={await muatIklan()} />
+      return <HalamanArtikel artikel={hasil.artikel} situs={await muatSitus()} iklan={await muatIklan()} fitur={await muatFiturArtikel()} />
     case 'rubrik':
       return <HalamanRubrik rubrik={hasil.rubrik} situs={await muatSitus()} iklan={await muatIklan()} />
     case 'halaman':
-      return <HalamanStatis halaman={hasil.halaman} situs={await muatSitus()} />
+      return <HalamanStatis halaman={hasil.halaman} situs={await muatSitus()} formKontak={(await muatFitur()).formKontak} />
     case 'alihkan':
       return permanentRedirect(hasil.ke)
     default:

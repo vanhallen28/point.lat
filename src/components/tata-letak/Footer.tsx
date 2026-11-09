@@ -6,7 +6,7 @@ import type { DataFooter } from '@/modules/konten/tipe'
 import gaya from './Footer.module.css'
 
 /**
- * `persetujuan`: banner persetujuan cookie aktif (iklan dinyalakan), jadi footer memuat tombol "Pengaturan
+ * `persetujuan`: banner persetujuan cookie aktif (iklan atau Kode sematan yang butuh persetujuan), jadi footer memuat tombol "Pengaturan
  * cookie" yang membukanya lagi. Tombol itu tampil hanya bila JavaScript berjalan (CSS dari atribut `<html>`).
  */
 export function Footer({ data, persetujuan = false }: { data: DataFooter; persetujuan?: boolean }) {

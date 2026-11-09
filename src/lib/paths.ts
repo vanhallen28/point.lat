@@ -8,6 +8,9 @@ export type TargetPath =
 /** Halaman indeks yang tidak mewakili satu dokumen. */
 export const PATH_INDEKS = { cari: '/cari', glosarium: '/glosarium', tools: '/tools', video: '/video' } as const
 
+/** Halaman berhenti langganan newsletter (spesifikasi §23); segmen `newsletter` dicadangkan untuk slug. */
+export const PATH_BERHENTI_NEWSLETTER = '/newsletter/berhenti'
+
 /** Segmen paginasi: halaman ke-n sebuah daftar ada di `{path}/halaman/{n}` (slug `halaman` dicadangkan). */
 export const SEGMEN_HALAMAN = 'halaman'
 

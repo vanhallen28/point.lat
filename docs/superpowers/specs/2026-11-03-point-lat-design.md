@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 November 2026 (v1.1.0): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 November 2026 (v1.1.0 dan v1.2.0): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -13,6 +13,7 @@
 | 2026-11-03 | - | Spesifikasi awal: Vercel Pro, pnpm, Postgres lokal lewat Docker |
 | 2026-11-07 | v1.0.0 | Vercel Hobby dulu (cron sekali sehari), npm menggantikan pnpm, pembaruan dikirim sebagai zip bernomor versi |
 | 2026-11-09 | v1.1.0 | 1. Hosting **Vercel paket gratis (Hobby)**, bukan Pro (§2, §5, §18, §19). 2. **Full Next.js dengan perintah terminal npm** di semua dokumen. 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (§21). 4. **Tanpa Docker: hanya Next.js, Vercel, dan Supabase**; data tersambung ke Supabase lewat kredensial bawaan akun Supabase (§5 Koneksi database). Ditambah: logo resmi dari file pemilik (§3, §4), jadwal 10 menit opsional lewat Supabase Cron (§5), peta skill lengkap (§20), saran trafik (§22) |
+| 2026-11-09 | v1.2.0 | Admin lebih profesional mengikuti gambar referensi pemilik: tema bermerek, beranda admin baru, Dashboard SEO dengan perbandingan periode. Fitur mirip plugin WordPress lewat halaman Fitur dan Kode sematan (plugin unggahan tidak didukung). Form kontak disimpan di admin, pelanggan newsletter disimpan di Supabase dengan unduhan CSV, dan tombol bagikan (§23) |
 
 ---
 
@@ -248,7 +249,9 @@ point-lat/
 | `pengaturanSEO` | nama situs, judul default, pola judul, meta default, gambar OG default, organisasi (logo, sameAs), kode verifikasi, robots.txt; grup Mesin Indexing: status pemasangan (mode adapter, akun layanan Google, `CRON_SECRET`, kunci IndexNow; rahasia tidak ditampilkan), IndexNow key, properti Search Console, batas cek status per hari (bawaan 1.000), saklar Indexing API (mati) dengan peringatan, batas Indexing API (bawaan 200). Kredensial Google hanya di env server |
 | `iklan` | aktif (bawaan mati), penyedia (AdSense), ID penerbit (`ca-pub-` 16 angka), mode uji (`data-adtest`), slot (ID, posisi yang sekaligus menentukan jenis halaman: artikel tengah setelah paragraf ke-N, artikel akhir, rubrik, tools, beranda; ukuran tetap 300 x 250, 336 x 280, atau 320 x 100; unit `data-ad-slot`; aktif; satu slot aktif per posisi kecuali beranda), baris `ads.txt` tambahan (baris AdSense dibuat otomatis dari ID penerbit) |
 | `asistenAI` | status pemasangan (mode adapter, kunci API terpasang atau belum, model per tugas dari env, pemakaian bulan ini), aktif, anggaran bulanan (US$, bawaan 10), harga per model (US$ per juta token), sumber resmi per pilar untuk brief, frasa klise tambahan untuk cek pola |
-| `newsletter` | penyedia, teks form, tautan arsip |
+| `newsletter` | cara (form point. atau tautan ke form penyedia), penyedia, teks form, tampil di akhir artikel, tautan arsip (§23) |
+| `fitur` | saklar fitur pembaca: form kontak, newsletter, tombol bagikan, daftar isi, waktu baca (§23) |
+| `kode-sematan` | kode pihak ketiga (Analytics, Pixel, chat) per posisi, dengan jenis persetujuan dan cookie-nya; hanya admin (§23) |
 
 Validasi: kotak Intinya wajib sebelum terbit; alt gambar wajib; gambar utama ≥1200px; panjang judul SEO dan meta di luar rentang hanya peringatan, tidak memblokir.
 
@@ -355,7 +358,7 @@ Pengaman:
 - Slot dikelola dari global `iklan`; komponen `SlotIklan` memesan lebar dan tinggi sesuai ukuran tetap slot (CLS 0) dengan label "Advertisements" (keputusan pemilik: kebijakan penempatan AdSense hanya mengizinkan "Advertisements" atau "Sponsored links"; ditandai bahasa Inggris untuk pembaca layar), dan skrip AdSense dimuat setelah halaman interaktif, setelah pengunjung memilih "Izinkan semua", dan saat slot hampir terlihat. Unit yang tidak terisi tetap berukuran sama (tidak diciutkan).
 - Posisi: artikel (setelah paragraf ke-N di tingkat atas isi, bila masih ada dua paragraf sesudahnya, dan setelah isi sebelum sumber dan FAQ), rubrik (setelah daftar tulisan), tools (setelah penjelasan, di luar kalkulator), dan beranda (blok Slot iklan).
 - Banner persetujuan cookie (UU PDP No. 27/2022) di atas header, di dalam alur halaman (tidak menutupi isi): pilihan "Hanya yang perlu" dan "Izinkan semua", setara dan sejajar, dengan tautan Kebijakan Privasi. "Hanya yang perlu" berarti iklan tidak dimuat sama sekali (iklan non-personalisasi AdSense tetap memakai cookie untuk pembatasan frekuensi). Pilihan disimpan di cookie pihak pertama berversi dan bertanggal selama 12 bulan, dibaca di browser (halaman tetap statis), dan bisa diubah atau ditarik lewat "Pengaturan cookie" di footer; menarik persetujuan menghapus cookie iklan di domain situs dan memuat ulang halaman.
-- Google Consent Mode v2: keempat sinyal ditolak sebelum skrip iklan apa pun; "Izinkan semua" membuka sinyal iklan (`ad_storage`, `ad_user_data`, `ad_personalization`), `analytics_storage` tetap ditolak selama situs tanpa alat analitik.
+- Google Consent Mode v2: keempat sinyal ditolak sebelum skrip iklan apa pun; "Izinkan semua" membuka sinyal iklan (`ad_storage`, `ad_user_data`, `ad_personalization`), dan `analytics_storage` ikut dibuka hanya bila ada Kode sematan jenis Butuh persetujuan yang aktif (§23).
 - Pengunjung EEA, Inggris, dan Swiss: iklan personalisasi di sana mensyaratkan CMP bersertifikat Google (TCF); pemilik memakai pesan European regulations di AdSense, Privacy & messaging.
 - Tidak ada iklan di dalam kotak Intinya, di atas H1, atau di dalam kalkulator.
 - `ads.txt` dari CMS: baris AdSense dari ID penerbit dan baris tambahan, 404 bila kosong.
@@ -490,6 +493,8 @@ Semua skill yang ditautkan pemilik aktif sesuai tahapnya. Di awal setiap tahap C
 
 Dimuat di revisi v1.1.0: using-superpowers, brainstorming, dan brand (aturan logo). Hasil logo diperiksa lewat tangkapan layar 375 px dan 1440 px serta seluruh tes (unit 550, integrasi 164, E2E 153 dengan axe).
 
+Dimuat di revisi v1.2.0: brainstorming (pilihan cakupan admin, pengganti plugin, form kontak, dan newsletter), dataviz (grafik beranda admin dan Dashboard SEO: satu seri biru merek, palet pilar diuji validator dan tidak dipakai untuk grafik berdampingan karena koral dan oranye terlalu mirip, warna status selalu dengan ikon dan label), dan docs (draf Kebijakan Privasi). Hasil diperiksa lewat tangkapan layar admin 1512 px terang dan gelap, situs 390 px, serta seluruh tes.
+
 ## 21. Alur pembaruan (zip + perintah terminal)
 
 Setiap pembaruan dikirim ke pemilik sebagai `point-lat-vX.Y.Z.zip` (Z perbaikan, Y fitur, X perubahan besar) bersama blok perintah terminal npm yang siap ditempel. Zip berisi clone bersih `master` dengan riwayat git, tag versi, dan `origin` GitHub, tanpa `.env` dan tanpa `node_modules`. Riwayat untuk pemilik ada di `CHANGELOG.md`.
@@ -523,6 +528,135 @@ Arah yang paling cepat menghasilkan trafik untuk media baru berbahasa Indonesia,
 5. **Perbarui, jangan hanya menambah.** Setiap bulan buka Dashboard SEO: halaman dengan impresi tinggi dan CTR rendah diperbaiki judul dan metanya; artikel yang angkanya berubah diperbarui dengan saklar "perubahan besar".
 6. **Distribusi di luar Google.** Saluran WhatsApp (sudah ada di footer), newsletter, dan potongan video 9:16 di Instagram, TikTok, dan YouTube Shorts yang menautkan ke artikel induk.
 7. **Kredibilitas YMYL.** Profil penulis lengkap, sumber resmi di setiap artikel uang dan kesehatan, tanggal diperbarui, dan disclaimer, karena Google menilai topik ini lebih ketat.
+
+## 23. Ruang redaksi (admin) dan fitur pembaca (v1.2.0)
+
+Keputusan pemilik 9 November 2026:
+- Admin dibuat lebih profesional dengan cakupan merek, halaman awal, dan SEO.
+- Tampilannya mengikuti gambar referensi dashboard korporat yang dikirim pemilik: menu kiri gelap, bidang terang, kartu putih, kartu angka beraksen warna, grafik, tabel, dan linimasa.
+- Fitur mirip plugin WordPress diwujudkan lewat halaman **Fitur** dan **Kode sematan**. Mengunggah plugin tidak didukung, karena Vercel hanya menjalankan kode hasil build dan kode yang diunggah lewat admin adalah celah keamanan besar. Fitur baru datang lewat zip pembaruan (§21).
+- Form kontak hanya disimpan di admin, tanpa email.
+- Pelanggan newsletter disimpan di database point. (Supabase).
+
+Rencana implementasi: `docs/superpowers/plans/2026-11-09-rencana-9-ruang-redaksi.md`.
+
+### Tema admin
+
+- **Merek.** Logo point. versi terbalik (tulisan putih, titik biru) dipasang di menu kiri, dan logo tinta di halaman masuk (`admin.components.graphics`). Hurufnya Archivo, dari file yang sama dengan situs.
+- **Menu kiri** gelap (`#141414`) di tema terang dan gelap.
+  - Ikon Lucide per menu dipasang lewat CSS mask (tanpa paket ikon). Penanda menu aktif berupa garis biru merek.
+  - Grup menu: Ringkasan, Konten, Pembaca, Tools, SEO, Tampilan, Pengaturan.
+  - Di bawah menu ada kartu "Sinkron Google" (sinkron terakhir dan tanggal data terakhir), hanya untuk admin.
+- **Bidang dan kartu.** Bidang krem `#f4f1ec`. Kartu putih bersudut 16 px dengan garis tipis.
+- **Tombol utama** memakai biru aksi `#265fe8` (teks putih 5,4:1). Biru merek `#2f6bff` hanya 4,50:1 dengan teks putih, jadi dipakai untuk grafik dan penanda, tidak untuk tombol berteks.
+- **Warna status** (baik, waspada, kritis) selalu disertai ikon dan label, tidak pernah warna saja.
+- **Tema gelap Payload** tetap jalan: token admin punya nilai gelap sendiri.
+
+### Beranda admin (`/admin`)
+
+Beranda admin menggantikan daftar koleksi bawaan (`admin.components.views.dashboard`). Datanya dari `ambilRuangRedaksi()` di `src/modules/redaksi`. Halaman ini hanya membaca database point.; Google tidak dipanggil saat halaman dibuka.
+
+- **Kepala:**
+  - Sapaan sesuai jam Jakarta, dan tanggal.
+  - Pilihan periode 7 atau 28 hari (tautan `?periode=`).
+  - Lencana layanan: "normal" bila tugas harian terakhir berhasil dan tidak ada kabar Google yang gagal dalam 24 jam.
+  - Tombol Tulis artikel.
+- **Empat kartu angka:**
+  - Klik dan impresi Google, dibanding periode sebelumnya. Arah perubahan ditandai tanda +/− dan panah, bukan warna saja, dan ada garis harian.
+  - Artikel terbit, ditambah jumlah terbit pekan ini, draf, dan terjadwal.
+  - Terindeks Google: x dari y halaman, dengan bar.
+- **Kalender konten per pilar:**
+  - Kolom: pekan lalu, pekan ini, pekan depan (Senin sampai Minggu, waktu Jakarta), dan Draf.
+  - Chip terbit berisi warna pilar, chip terjadwal bergaris, chip draf bergaris putus.
+  - Paling banyak 3 chip per sel, sisanya ditulis "+N lagi".
+- **Klik per pekan:** 8 pekan, satu seri berwarna biru merek, dengan label angka di batang terakhir dan tertinggi.
+- **Status indeks:** donat terindeks, menunggu, dan bermasalah, masing-masing dengan ikon, label, dan angka.
+- **Terbit terbaru:** 6 artikel, dengan pilar, klik 7 hari, dan status Google.
+- **Kesehatan situs:** persentase halaman terindeks, artikel tanpa tautan rusak, artikel dengan meta deskripsi, dan artikel yang punya tautan masuk (bukan yatim). Ditambah anggaran AI bulan ini.
+- **Perlu perhatian:**
+  - Isinya: pesan masuk baru, artikel AI yang belum direview, tautan rusak, 404 baru dalam 7 hari, dan kabar Google yang gagal dalam 7 hari.
+  - Setiap baris membuka daftar yang sudah tersaring. Urutannya dari yang paling mendesak.
+- **Peran editor:** editor melihat bagian konten (kartu artikel, kalender, terbit terbaru tanpa klik, pesan masuk, review AI). Data Search Console, status indeks, kesehatan situs, dan anggaran AI hanya untuk admin, sama dengan hak baca koleksinya.
+
+### Dashboard SEO
+
+- Gaya kartu dan chip sama dengan beranda admin.
+- Pilihan periode 7, 28, atau 90 hari untuk ringkasan dan grafik. Setiap angka dibanding periode sebelumnya, dihitung dari total harian `analitik-situs` (disimpan 16 bulan). Bila data periode sebelumnya belum lengkap, tertulis "belum cukup data".
+- Daftar halaman teratas tetap memakai angka 7 dan 28 hari dari sinkron harian.
+
+### Fitur (global `fitur`, Pengaturan, hanya admin)
+
+- **Saklar:**
+  - Form kontak (mati)
+  - Newsletter (mati, menggantikan saklar `aktif` di global `newsletter`; migrasi menyalin nilainya)
+  - Tombol bagikan (mati)
+  - Daftar isi artikel (nyala)
+  - Waktu baca (nyala)
+- **Ringkasan fitur yang diatur di tempat lain:** Iklan, Asisten AI, Mesin Indexing, dan Kode sematan, dengan status dan tautan ke pengaturannya.
+- Mengubah saklar membuang tag cache `fitur`, yang dipakai halaman artikel, halaman statis, dan beranda.
+
+### Kode sematan (global `kode-sematan`, Pengaturan, hanya admin)
+
+- **Isian per kode:** nama, posisi (`head`, awal `body`, akhir `body`), jenis (Wajib atau Butuh persetujuan), nama cookie yang dipakai, aktif, dan kode HTML.
+- **Cara dipasang:** kode aktif dikirim sebagai data JSON di layout situs. Pemuat kecil di browser memasangnya dan membuat ulang elemen `<script>` supaya berjalan. Kode tidak pernah berjalan di admin.
+- **Persetujuan:**
+  - Kode Butuh persetujuan baru dipasang setelah "Izinkan semua". Saat itu Consent Mode juga membuka `analytics_storage`.
+  - Banner persetujuan muncul bila iklan siap atau ada kode Butuh persetujuan yang aktif. Seperti iklan, kode itu hanya jalan bila halaman Kebijakan Privasi terbit.
+  - Menarik persetujuan menghapus cookie yang didaftarkan, lalu memuat ulang halaman.
+- **Peringatan di admin:**
+  - Setiap kode memperlambat halaman dan tidak dihitung dalam anggaran JS point. (§12).
+  - Kode dari pihak tidak dikenal bisa mencuri data pembaca.
+  - Hanya admin yang bisa mengisi.
+
+### Form kontak
+
+- **Tempat:** blok `formKontak` di halaman statis, misalnya halaman Kontak. Blok hanya tampil bila saklar Form kontak di menu Fitur menyala.
+- **Isian:** nama, email, topik (Koreksi, Hak jawab, Kerja sama, Lainnya), pesan (20 sampai 5.000 karakter), dan centang persetujuan.
+- **Pengiriman:** `POST /api/pesan-masuk/kirim`.
+  - Form biasa tanpa JavaScript dialihkan 303 ke `#pesan-terkirim` atau `#pesan-gagal`, dan pesan hasilnya tampil lewat CSS `:target`.
+  - Dengan JavaScript, jawabannya JSON.
+- **Anti-spam:**
+  - Kolom jebakan tersembunyi.
+  - `Sec-Fetch-Site` harus `same-origin` bila header itu ada.
+  - Isian paling besar 10 KB.
+  - Paling banyak 5 kiriman per jam per sidik pengirim. Sidik adalah HMAC alamat IP dengan `PAYLOAD_SECRET` dan tanggal; IP mentah tidak disimpan, dan sidik dihapus setelah 24 jam.
+- **Koleksi `pesan-masuk` (grup Pembaca):**
+  - Status: Baru, Dibaca, atau Selesai.
+  - Admin dan editor membaca dan mengubah status, hanya admin yang menghapus.
+  - Pesan dibuat hanya lewat endpoint, dan tanpa email pemberitahuan.
+  - Jumlah pesan Baru tampil di menu dan di beranda admin.
+  - Pesan dihapus otomatis setelah 12 bulan oleh cron harian.
+
+### Newsletter
+
+- **Cara:** global `newsletter` mendapat pilihan cara, yaitu Form point. (disimpan di database, bawaan) atau Tautan ke form penyedia (perilaku lama).
+- **Tempat form:** form email dengan centang persetujuan ada di blok newsletter beranda, dan opsional di akhir artikel (`newsletter.diArtikel`).
+- **Pendaftaran:** `POST /api/pelanggan-newsletter/daftar`.
+  - Email disimpan dalam huruf kecil.
+  - Email yang sudah terdaftar dijawab sama seperti pendaftar baru, supaya tidak membocorkan siapa yang terdaftar.
+  - Anti-spam sama dengan form kontak.
+- **Koleksi `pelanggan-newsletter`** (grup Pembaca, hanya admin): tombol Unduh CSV di daftar pelanggan (`GET /api/pelanggan-newsletter/csv`).
+- **Berhenti langganan:** di `/newsletter/berhenti`, lewat form email. Datanya dihapus, bukan ditandai. Slug `newsletter` dicadangkan untuk semua koleksi.
+- **Belum ada pengiriman email.** Konfirmasi dua langkah dilakukan penyedia saat CSV diimpor.
+
+### Tombol bagikan
+
+- Tampil di halaman artikel setelah isi.
+- WhatsApp, Telegram, X, dan Facebook berupa tautan biasa, tanpa skrip pihak ketiga.
+- Salin tautan memakai JavaScript kecil.
+
+### Kebijakan Privasi
+
+Draf halaman Kebijakan Privasi diperbarui dengan:
+- data form kontak dan newsletter: apa yang disimpan, untuk apa, berapa lama, dan cara meminta penghapusan;
+- sidik IP yang disimpan 24 jam untuk anti-spam;
+- kode pihak ketiga yang dipasang lewat Kode sematan, beserta cookie-nya.
+
+### Batasan teknis
+
+- Tanpa dependensi baru: form, CSV, ikon, dan grafik SVG ditulis sendiri. Plugin form-builder Payload tidak dipakai.
+- Migrasi hanya menambah tabel dan kolom.
+- Form kontak dan newsletter berfungsi tanpa JavaScript, dan anggaran JS halaman publik (§12) tetap dijaga `motion.spec.ts`.
 
 ## Sumber riset
 

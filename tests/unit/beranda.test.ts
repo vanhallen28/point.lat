@@ -20,7 +20,7 @@ const video = (id: number, status: 'published' | 'draft' = 'published'): Video =
   ({ id, judul: `Video ${id}`, slug: `video-${id}`, file, pilar, transkrip: 'T.', _status: status, ...waktu }) as Video
 const kartuVid = (id: number): KartuVideo => ({ id, judul: `Video ${id}`, href: `/video/video-${id}`, durasi: 40, pilar: null, poster: null })
 
-const newsletter = { judul: 'Intinya, tiap Senin.', teks: 'Lima tulisan terbaik pekan ini.', href: 'https://contoh.kit.com/point' }
+const newsletter = { judul: 'Intinya, tiap Senin.', teks: 'Lima tulisan terbaik pekan ini.', cara: 'penyedia' as const, href: 'https://contoh.kit.com/point' }
 
 const sumber: SumberBeranda = {
   terbaru: [1, 2, 3, 4, 5, 6].map(kartu),
@@ -40,15 +40,26 @@ const blok = {
 } satisfies Record<string, Blok>
 
 describe('susunNewsletter', () => {
-  it('hanya bila aktif dan URL form penyedia https', () => {
-    expect(susunNewsletter({ aktif: true, urlForm: ' https://contoh.kit.com/point ', judul: '', deskripsi: null })).toEqual({
+  it('cara penyedia: hanya bila saklar Fitur menyala dan URL form penyedia https', () => {
+    expect(susunNewsletter({ cara: 'penyedia', urlForm: ' https://contoh.kit.com/point ', judul: '', deskripsi: null }, true)).toEqual({
       judul: 'Intinya, tiap Senin.',
       teks: null,
+      cara: 'penyedia',
       href: 'https://contoh.kit.com/point',
     })
-    expect(susunNewsletter({ aktif: false, urlForm: 'https://contoh.kit.com/point' })).toBeNull()
-    expect(susunNewsletter({ aktif: true, urlForm: 'javascript:alert(1)' })).toBeNull()
-    expect(susunNewsletter({ aktif: true, urlForm: null })).toBeNull()
+    expect(susunNewsletter({ cara: 'penyedia', urlForm: 'https://contoh.kit.com/point' }, false)).toBeNull()
+    expect(susunNewsletter({ cara: 'penyedia', urlForm: 'javascript:alert(1)' }, true)).toBeNull()
+    expect(susunNewsletter({ cara: 'penyedia', urlForm: null }, true)).toBeNull()
+  })
+
+  it('cara form point. (bawaan): tanpa URL, hanya bila saklar Fitur menyala', () => {
+    expect(susunNewsletter({ cara: 'form', urlForm: null, judul: ' Kabar Senin ', deskripsi: ' Lima tulisan. ' }, true)).toEqual({
+      judul: 'Kabar Senin',
+      teks: 'Lima tulisan.',
+      cara: 'form',
+    })
+    expect(susunNewsletter({ urlForm: null }, true)).toEqual({ judul: 'Intinya, tiap Senin.', teks: null, cara: 'form' })
+    expect(susunNewsletter({ cara: 'form' }, false)).toBeNull()
   })
 })
 

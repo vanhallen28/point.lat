@@ -53,6 +53,9 @@ const KOLEKSI_DIBERSIHKAN = [
   'tugas-seo',
   'log-ai',
   'pemakaian-ai',
+  // Kiriman form pembaca dari run sebelumnya ikut dihitung batas 5 kiriman per jam (pengirim E2E selalu localhost).
+  'pesan-masuk',
+  'pelanggan-newsletter',
 ] as const
 for (const koleksi of KOLEKSI_DIBERSIHKAN) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
@@ -319,7 +322,13 @@ await terbitkanHalaman(SLUG_HALAMAN.kebijakanPrivasi, [
   { blockType: 'teks', isi: isi(h2('Cookie dan iklan'), p('Cookie iklan hanya dipakai setelah kamu memilih Izinkan semua di banner cookie.')) },
 ])
 
-// Beranda: artikel Belajar dan Tekno untuk mozaik, newsletter aktif ke form penyedia (tidak pernah dibuka tes).
+// Kontak dengan blok Form kontak (spesifikasi §23); saklar fitur pembaca dinyalakan di bawah.
+await terbitkanHalaman(SLUG_HALAMAN.kontak, [
+  { blockType: 'teks', isi: isi(p('Hubungi redaksi point. lewat form di bawah.')) },
+  { blockType: 'formKontak', judul: 'Kirim pesan' },
+])
+
+// Beranda: artikel Belajar dan Tekno untuk mozaik, newsletter dengan form point. (juga di akhir artikel).
 const belajar = await payload.create({
   collection: 'artikel',
   data: {
@@ -371,7 +380,20 @@ await payload.updateGlobal({
 })
 await payload.updateGlobal({
   slug: 'newsletter',
-  data: { aktif: true, penyedia: 'kit', urlForm: 'https://point.kit.com/intinya', judul: 'Intinya, tiap Senin.', deskripsi: 'Lima tulisan terbaik pekan ini, langsung ke email.' },
+  data: {
+    cara: 'form',
+    diArtikel: true,
+    penyedia: 'kit',
+    urlForm: 'https://point.kit.com/intinya',
+    judul: 'Intinya, tiap Senin.',
+    deskripsi: 'Lima tulisan terbaik pekan ini, langsung ke email.',
+  },
+})
+await payload.updateGlobal({ slug: 'fitur', data: { formKontak: true, newsletter: true, tombolBagikan: true, daftarIsi: true, waktuBaca: true } })
+// Satu pesan baru untuk beranda admin (Perlu perhatian, angka di menu), supaya `redaksi.spec.ts` tidak bergantung pada `pembaca.spec.ts`.
+await payload.create({
+  collection: 'pesan-masuk',
+  data: { status: 'baru', nama: 'Pembaca contoh', email: 'pembaca@contoh.com', topik: 'koreksi', pesan: 'Tautan sumber di artikel PTKP tidak bisa dibuka.', asal: `/${SLUG_HALAMAN.kontak}` },
 })
 await payload.updateGlobal({
   slug: 'beranda',

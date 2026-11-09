@@ -4,10 +4,14 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 
 import { PATH_ADMIN } from '@/lib/admin'
+import { bacaPeriode } from '@/modules/redaksi/aturan'
+import { Ikon } from '@/modules/redaksi/admin/IkonRedaksi'
 
+import { PERIODE_DASHBOARD } from '../aturan'
 import { ambilDashboard } from '../dashboard'
 import { Bagian404, BagianLog, BagianSearchConsole, BagianStatusIndeks, BagianTautan, BagianYatim } from './BagianDashboard'
 
+import '@/modules/redaksi/admin/redaksi.scss'
 import './dashboard.scss'
 
 /** Path dashboard di admin (`admin.components.views` di payload.config.ts). */
@@ -23,7 +27,8 @@ export async function DashboardSeo({ initPageResult, params, searchParams }: Adm
   const { req, permissions, locale, visibleEntities } = initPageResult
   const pengguna = req.user as ({ peran?: string | null } & NonNullable<typeof req.user>) | null
   if (!pengguna) redirect(`${PATH_ADMIN}/login?redirect=${encodeURIComponent(`${PATH_ADMIN}${PATH_DASHBOARD_SEO}`)}`)
-  const data = pengguna.peran === 'admin' ? await ambilDashboard(req.payload) : null
+  const periode = bacaPeriode(searchParams?.periode, PERIODE_DASHBOARD, 28)
+  const data = pengguna.peran === 'admin' ? await ambilDashboard(req.payload, new Date(), periode) : null
   return (
     <DefaultTemplate
       i18n={req.i18n}
@@ -37,8 +42,24 @@ export async function DashboardSeo({ initPageResult, params, searchParams }: Adm
     >
       <Gutter className="pantau">
         <header className="pantau-kepala">
-          <h1>Dashboard SEO</h1>
-          <p>Performa di Google, status indeks, dan kesehatan tautan situs. Data diperbarui otomatis sekali sehari.</p>
+          <div>
+            <h1>Dashboard SEO</h1>
+            <p>Performa di Google, status indeks, dan kesehatan tautan situs. Data diperbarui otomatis sekali sehari.</p>
+          </div>
+          {data && (
+            <nav className="redaksi-periode" aria-label="Periode performa Google">
+              <Ikon nama="kalender" />
+              {PERIODE_DASHBOARD.map((p) => (
+                <a
+                  key={p}
+                  href={p === 28 ? `${PATH_ADMIN}${PATH_DASHBOARD_SEO}` : `${PATH_ADMIN}${PATH_DASHBOARD_SEO}?periode=${p}`}
+                  aria-current={p === periode ? 'true' : undefined}
+                >
+                  {p} hari
+                </a>
+              ))}
+            </nav>
+          )}
         </header>
         {data ? (
           <div className="pantau-kisi">

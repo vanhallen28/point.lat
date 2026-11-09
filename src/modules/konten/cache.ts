@@ -163,7 +163,7 @@ export const muatCari = unstable_cache(async (kueri: string) => cariArtikel(awai
  * statis terbit atau batal terbit (blok Slot iklan tampil hanya bila Kebijakan Privasi terbit).
  */
 export const muatBeranda = unstable_cache(async () => ambilBeranda(await payload()), ['konten', 'beranda'], {
-  tags: [TAG.beranda, TAG.media, TAG.analitik, TAG.iklan, TAG.koleksi('halaman')],
+  tags: [TAG.beranda, TAG.media, TAG.analitik, TAG.iklan, TAG.koleksi('halaman'), TAG.fitur],
   revalidate: SEJAM,
 })
 

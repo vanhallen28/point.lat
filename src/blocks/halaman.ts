@@ -61,5 +61,24 @@ export const BlokFaq: Block = {
   fields: [{ name: 'judul', type: 'text' }, faqField],
 }
 
+export const BlokFormKontak: Block = {
+  slug: 'formKontak',
+  interfaceName: 'BlokFormKontak',
+  labels: { singular: 'Form kontak', plural: 'Form kontak' },
+  admin: {
+    // Penjelasan di form blok: blok baru tampil di situs bila saklarnya menyala (spesifikasi §23).
+    disableBlockName: true,
+  },
+  fields: [
+    { name: 'judul', type: 'text', defaultValue: 'Kirim pesan' },
+    {
+      name: 'pengantar',
+      type: 'textarea',
+      defaultValue: 'Untuk koreksi, hak jawab, atau kerja sama. Kami membaca setiap pesan dan membalas lewat email bila perlu.',
+      admin: { description: 'Form tampil di situs bila Form kontak dinyalakan di Pengaturan, Fitur. Pesan masuk ke Pembaca, Pesan masuk.' },
+    },
+  ],
+}
+
 /** Blok page builder untuk koleksi halaman. */
-export const blokHalaman: Block[] = [BlokHero, BlokTeks, BlokKartu, BlokCta, BlokFaq, BlokEmbedTool]
+export const blokHalaman: Block[] = [BlokHero, BlokTeks, BlokKartu, BlokCta, BlokFaq, BlokEmbedTool, BlokFormKontak]

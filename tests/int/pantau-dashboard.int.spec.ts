@@ -21,7 +21,7 @@ describe('data dashboard SEO', () => {
     expect(await ambilDashboard(payload, T0)).toEqual({
       tugas: { analitik: null, tautan: null },
       pindai: { boleh: true },
-      analitik: { sampai: null, situs: null, halaman: [], jumlahHalaman: 0 },
+      analitik: { sampai: null, periode: 28, situs: null, sebelumnya: null, halaman: [], jumlahHalaman: 0 },
       statusIndeks: [],
       log: { gagal7Hari: 0, terbaru: [] },
       tautan: [],

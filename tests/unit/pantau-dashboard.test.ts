@@ -12,7 +12,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: () => {} }) }))
 /** Teks yang terlihat: tag dibuang, spasi biasa dirapikan (spasi tak putus dari `Intl` dipertahankan). */
 const teks = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/[ \t\r\n]+/g, ' ').trim()
 
-const KOSONG: DataDashboard['analitik'] = { sampai: null, situs: null, halaman: [], jumlahHalaman: 0 }
+const KOSONG: DataDashboard['analitik'] = { sampai: null, periode: 28, situs: null, sebelumnya: null, halaman: [], jumlahHalaman: 0 }
 const info = (status: InfoTugas['status'], pesan: string): InfoTugas => ({
   status,
   pesan,
@@ -54,13 +54,43 @@ describe('keadaan dashboard SEO', () => {
   it('terisi: empat kartu angka, grafik dengan teks alternatif, dan tabel halaman teratas', () => {
     const situs = ringkasSitus([{ tanggal: '2026-11-02', klik: 1284, impresi: 182_400, ctr: 0.007, posisi: 6.43 }], '2026-11-02')
     const html = sc(
-      { sampai: '2026-11-02', situs, halaman: [{ path: '/cara-hitung-thr', klik7: 30, impresi7: 900, klik28: 1284, impresi28: 182_400, ctr28: 0.007, posisi28: 6.43 }], jumlahHalaman: 41 },
+      {
+        sampai: '2026-11-02',
+        periode: 28,
+        situs,
+        sebelumnya: null,
+        halaman: [{ path: '/cara-hitung-thr', klik7: 30, impresi7: 900, klik28: 1284, impresi28: 182_400, ctr28: 0.007, posisi28: 6.43 }],
+        jumlahHalaman: 41,
+      },
       tugas(info('berhasil', 'Data sampai 2026-11-02.')),
     )
-    expect(teks(html)).toContain('Klik 1.284 Impresi 182,4\u00a0rb CTR 0,7% Posisi rata-rata 6,4')
+    expect(teks(html)).toContain(
+      'Klik 1.284 belum cukup data Impresi 182,4\u00a0rb belum cukup data CTR 0,7% belum cukup data Posisi rata-rata 6,4 belum cukup data',
+    )
+    expect(teks(html)).toContain('28 hari sampai 2 Nov 2026, dibanding 28 hari sebelumnya.')
     expect(html).toContain('aria-label="Klik per hari, 6 Okt 2026 sampai 2 Nov 2026: total 1.284, tertinggi 1.284 pada 2 Nov 2026."')
     expect(teks(html)).toContain('/cara-hitung-thr 1.284 182.400 0,7% 6,4 30')
     expect(teks(html)).toContain('Menampilkan 1 dari 41 halaman yang muncul di Google.')
+  })
+
+  it('periode dengan data sebelumnya: perubahan bertanda +/- dan panah; posisi yang mengecil ditandai membaik', () => {
+    const situs = ringkasSitus([{ tanggal: '2026-11-02', klik: 1284, impresi: 182_400, ctr: 0.007, posisi: 6.43 }], '2026-11-02', 7)
+    const html = sc(
+      {
+        sampai: '2026-11-02',
+        periode: 7,
+        situs,
+        sebelumnya: { klik: 1000, impresi: 200_000, ctr: 0.005, posisi: 7 },
+        halaman: [],
+        jumlahHalaman: 0,
+      },
+      tugas(info('berhasil', 'Data sampai 2026-11-02.')),
+    )
+    expect(teks(html)).toContain('7 hari sampai 2 Nov 2026, dibanding 7 hari sebelumnya.')
+    expect(teks(html)).toContain('Klik 1.284 +28% dibanding periode sebelumnya')
+    expect(teks(html)).toContain('Impresi 182,4\u00a0rb -9% dibanding periode sebelumnya')
+    // Posisi 7 ke 6,4: angkanya turun, artinya membaik (kelas naik, warna hijau).
+    expect(html).toMatch(/redaksi-perubahan--naik"[^>]*title="Periode sebelumnya: 7,0 "/)
   })
 
   it('tautan rusak, halaman yatim, dan 404: daftar dengan tautan perbaikan, atau keadaan kosong yang jelas', () => {

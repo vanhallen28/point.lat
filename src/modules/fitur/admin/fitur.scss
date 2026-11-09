@@ -1,0 +1,77 @@
+// Ringkasan di atas halaman Fitur: kartu fitur yang diatur di halaman lain, dengan status berlabel (bukan warna saja).
+.fitur-ringkas {
+  margin-bottom: calc(var(--base) * 0.5);
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 0 0 calc(var(--base) * 1.25);
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    display: grid;
+    gap: 4px;
+    height: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 14px;
+    background: var(--theme-elevation-0);
+    color: var(--theme-text);
+    text-decoration: none;
+
+    &:hover {
+      border-color: var(--theme-elevation-400);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--theme-text);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.fitur-ringkas__nama {
+  font-weight: 800;
+}
+
+.fitur-ringkas__ket {
+  color: var(--theme-elevation-650);
+  font-size: 13px;
+}
+
+.fitur-ringkas__status {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fitur-ringkas__status--nyala {
+  background: var(--redaksi-baik-latar);
+  color: var(--redaksi-baik-teks);
+}
+
+.fitur-ringkas__status--perlu {
+  background: var(--redaksi-waspada-latar);
+  color: var(--redaksi-waspada-teks);
+}
+
+.fitur-ringkas__status--mati {
+  background: var(--theme-elevation-100);
+  color: var(--theme-elevation-800);
+}
+
+.fitur-ringkas__judul-saklar {
+  margin-bottom: 0 !important;
+}

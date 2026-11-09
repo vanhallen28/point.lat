@@ -1,5 +1,6 @@
 import * as migration_20261106_152942_awal from './20261106_152942_awal';
 import * as migration_20261106_163351_kunci_data_api from './20261106_163351_kunci_data_api';
+import * as migration_20261109_152615_ruang_redaksi from './20261109_152615_ruang_redaksi';
 
 export const migrations = [
   {
@@ -10,6 +11,11 @@ export const migrations = [
   {
     up: migration_20261106_163351_kunci_data_api.up,
     down: migration_20261106_163351_kunci_data_api.down,
-    name: '20261106_163351_kunci_data_api'
+    name: '20261106_163351_kunci_data_api',
+  },
+  {
+    up: migration_20261109_152615_ruang_redaksi.up,
+    down: migration_20261109_152615_ruang_redaksi.down,
+    name: '20261109_152615_ruang_redaksi'
   },
 ];

@@ -8,6 +8,32 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.2.0 (9 November 2026)
+
+Admin yang lebih profesional mengikuti gambar referensi kamu, plus fitur yang biasanya dipasang lewat plugin WordPress.
+
+- **Tampilan admin bermerek:** logo point. di halaman masuk dan menu kiri, huruf Archivo, menu kiri gelap dengan ikon, bidang krem dengan kartu putih, dan tombol utama biru. Tema gelap tetap jalan.
+- **Beranda admin baru** (`/admin`):
+  - empat kartu angka: klik dan impresi Google dibanding periode sebelumnya, artikel terbit, terindeks;
+  - kalender konten per pilar untuk pekan lalu, pekan ini, pekan depan, dan draf;
+  - grafik klik per pekan dan donat status indeks;
+  - tabel terbit terbaru, kesehatan situs, dan anggaran AI;
+  - daftar Perlu perhatian, yang setiap barisnya membuka daftar yang tepat.
+
+  Editor hanya melihat bagian konten.
+- **Dashboard SEO:** gaya kartu yang sama, pilihan periode 7, 28, atau 90 hari, dan setiap angka dibanding periode sebelumnya.
+- **Menu Fitur (pengganti plugin):** saklar Form kontak, Newsletter, Tombol bagikan, Daftar isi, dan Waktu baca, plus ringkasan Iklan, Asisten AI, Mesin Indexing, dan Kode sematan. Plugin yang diunggah tidak didukung: fitur baru datang lewat zip pembaruan seperti ini.
+- **Kode sematan:** tempat menempel kode Google Analytics, Meta Pixel, widget chat, dan sejenisnya. Kode jenis "Butuh persetujuan" baru jalan setelah pembaca memilih Izinkan semua, banner cookie ikut menyebut layanannya, dan cookie-nya dihapus saat persetujuan ditarik. Hanya admin yang bisa mengisi.
+- **Form kontak:** blok "Form kontak" untuk halaman Kontak. Pesan masuk ke menu Pembaca, Pesan masuk (tanpa email), dengan anti-spam dan batas 5 kiriman per jam per pengirim. Pesan dihapus otomatis setelah 12 bulan.
+- **Newsletter tersimpan:**
+  - form email dengan persetujuan di beranda, dan opsional di akhir artikel;
+  - pelanggan disimpan di Supabase (menu Pembaca, Pelanggan newsletter) dengan tombol Unduh CSV;
+  - halaman berhenti langganan di `/newsletter/berhenti`;
+  - pilihan lama "tautan ke form penyedia" tetap ada.
+- **Tombol bagikan** di akhir artikel: WhatsApp, Telegram, X, Facebook, dan Salin tautan, tanpa skrip pihak ketiga.
+- **Data lama aman:** migrasi `ruang_redaksi` hanya menambah tabel. Bila newsletter sudah memakai URL form penyedia, caranya tetap penyedia, dan saklar newsletter lama dipindah ke menu Fitur.
+- **Kebijakan Privasi:** draf di dokumen "Draf halaman wajib" sudah diperbarui untuk form kontak, newsletter, pencegahan spam, dan kode pihak ketiga. Baca ulang lalu salin ke admin sebelum menyalakan fitur-fitur ini.
+
 ## v1.1.0 (9 November 2026)
 
 Tanpa Docker, logo baru, dan dokumen disesuaikan dengan keputusan pemilik: Vercel gratis, npm, kiriman zip.

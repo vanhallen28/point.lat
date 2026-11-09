@@ -1,0 +1,180 @@
+/*
+ * Form pembaca (kontak, newsletter, berhenti langganan; spesifikasi §23). Gaya kontrol sama dengan kalkulator:
+ * garis tinta 2px, sudut 14px, tinggi sentuh 56px, label selalu terlihat, huruf 16px supaya iOS tidak memperbesar.
+ */
+.kotak {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-4);
+  max-width: 720px;
+  padding: var(--ruang-6);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kartu);
+}
+
+@media (min-width: 48rem) {
+  .kotak {
+    padding: var(--ruang-8);
+  }
+}
+
+.judul {
+  font-size: var(--teks-h3);
+  font-stretch: var(--lebar-h3);
+  line-height: var(--tinggi-judul);
+}
+
+.pengantar {
+  color: var(--teks-sekunder);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ruang-4);
+}
+
+.dua {
+  display: grid;
+  gap: var(--ruang-4);
+}
+
+@media (min-width: 40rem) {
+  .dua {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.kolom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-2);
+  margin: 0;
+}
+
+.kolom label {
+  font-weight: 700;
+}
+
+.kolom input,
+.kolom select,
+.kolom textarea {
+  width: 100%;
+  min-height: 56px;
+  padding: var(--ruang-3) var(--ruang-4);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kontrol);
+  background: var(--latar);
+  font-size: 16px;
+}
+
+.kolom textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Kolom yang ditolak server: garis lebih tebal dan tanda di depan label (bukan warna saja). */
+.form [aria-invalid='true'] {
+  box-shadow: 0 0 0 2px var(--garis);
+}
+
+.kolom:has([aria-invalid='true']) label::before {
+  content: '! ';
+}
+
+.bantuan {
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+}
+
+.setuju {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ruang-3);
+  margin: 0;
+  font-size: var(--teks-kecil);
+  line-height: 1.5;
+}
+
+.setuju input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--tombol);
+}
+
+.tombol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  min-height: 56px;
+  padding: 0 var(--ruang-6);
+  border: 0;
+  border-radius: var(--radius-kontrol);
+  background: var(--tombol);
+  color: var(--tombol-teks);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tombol[aria-disabled='true'] {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* Wilayah status selalu ada di DOM (bukan `display: none`) supaya pembaca layar mengumumkan isinya. */
+.status {
+  font-weight: 700;
+}
+
+.status ul {
+  margin: var(--ruang-2) 0 0;
+  padding-left: var(--ruang-5);
+  font-weight: 400;
+}
+
+/* Hasil form tanpa JavaScript: tersembunyi sampai endpoint mengalihkan ke `#id` (`:target`). */
+.hasil {
+  display: none;
+  margin: 0;
+  padding: var(--ruang-3) var(--ruang-4);
+  border: var(--garis-tebal) solid var(--garis);
+  border-radius: var(--radius-kontrol);
+  font-weight: 700;
+}
+
+.hasil:target {
+  display: block;
+}
+
+.berhasil {
+  background: var(--permukaan);
+}
+
+.gagal {
+  border-style: dashed;
+}
+
+/* Kolom jebakan: di luar layar, bukan `display: none` (bot sering melewati kolom yang tersembunyi). */
+.jebakan {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.newsletter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-3);
+  width: 100%;
+}
+
+.newsletter .form {
+  gap: var(--ruang-3);
+}

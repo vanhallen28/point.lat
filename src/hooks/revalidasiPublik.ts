@@ -177,3 +177,9 @@ export const revalidasiFooter = revalidasiGlobal([TAG.footer])
 
 /** Global iklan dibaca layout (banner persetujuan), halaman berslot iklan, beranda, dan `/ads.txt`. */
 export const revalidasiIklan = revalidasiGlobal([TAG.iklan])
+
+/** Saklar fitur pembaca dibaca halaman artikel, halaman statis (form kontak), dan beranda (newsletter). */
+export const revalidasiFitur = revalidasiGlobal([TAG.fitur])
+
+/** Kode sematan dirender layout di semua halaman publik. */
+export const revalidasiKodeSematan = revalidasiGlobal([TAG.kodeSematan])

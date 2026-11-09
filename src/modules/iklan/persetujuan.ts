@@ -15,6 +15,15 @@ export const NAMA_KUKI = 'persetujuan'
  */
 export const VERSI_PERSETUJUAN = 1
 
+/**
+ * Versi untuk cakupan persetujuan: 1 bila hanya iklan, 2 bila ada Kode sematan jenis "Butuh persetujuan"
+ * (analitik atau pelacak, spesifikasi §23). Pilihan yang diberikan untuk cakupan lain tidak berlaku, jadi
+ * banner tampil lagi saat pemilik menambah atau mencabut kode semacam itu.
+ */
+export function versiPersetujuan(analitik: boolean): number {
+  return analitik ? VERSI_PERSETUJUAN + 1 : VERSI_PERSETUJUAN
+}
+
 /** Pilihan berlaku 12 bulan, lalu pengunjung ditanya lagi. */
 export const UMUR_PERSETUJUAN_HARI = 365
 
@@ -37,22 +46,22 @@ export type Persetujuan = { versi: number; pilihan: PilihanPersetujuan; tanggal:
 const SEHARI = 86_400_000
 
 /** Nilai cookie: versi, pilihan, dan tanggal (UTC), misalnya `1.semua.2026-11-06`. */
-export function nilaiKuki(pilihan: PilihanPersetujuan, sekarang: Date): string {
-  return `${VERSI_PERSETUJUAN}.${pilihan}.${sekarang.toISOString().slice(0, 10)}`
+export function nilaiKuki(pilihan: PilihanPersetujuan, sekarang: Date, versi = VERSI_PERSETUJUAN): string {
+  return `${versi}.${pilihan}.${sekarang.toISOString().slice(0, 10)}`
 }
 
 /** Pilihan yang masih berlaku dari `document.cookie`, atau `null` (belum memilih, versi lama, kedaluwarsa, rusak). */
-export function bacaPersetujuan(kuki: string, sekarang: Date): Persetujuan | null {
+export function bacaPersetujuan(kuki: string, sekarang: Date, versi = VERSI_PERSETUJUAN): Persetujuan | null {
   const cocok = new RegExp(`(?:^|;\\s*)${NAMA_KUKI}=(\\d+)\\.(perlu|semua)\\.(\\d{4}-\\d{2}-\\d{2})(?:;|$)`).exec(kuki)
-  if (!cocok || Number(cocok[1]) !== VERSI_PERSETUJUAN) return null
+  if (!cocok || Number(cocok[1]) !== versi) return null
   const umur = (sekarang.getTime() - Date.parse(`${cocok[3]}T00:00:00Z`)) / SEHARI
   if (!(umur >= -1 && umur <= UMUR_PERSETUJUAN_HARI)) return null
-  return { versi: VERSI_PERSETUJUAN, pilihan: cocok[2] as PilihanPersetujuan, tanggal: cocok[3] }
+  return { versi, pilihan: cocok[2] as PilihanPersetujuan, tanggal: cocok[3] }
 }
 
 /** String `document.cookie` untuk menyimpan pilihan: berlaku 12 bulan, `SameSite=Lax`, `Secure` di HTTPS. */
-export function tulisKuki(pilihan: PilihanPersetujuan, sekarang: Date, https: boolean): string {
-  return `${NAMA_KUKI}=${nilaiKuki(pilihan, sekarang)}; Path=/; Max-Age=${UMUR_PERSETUJUAN_HARI * 86_400}; SameSite=Lax${https ? '; Secure' : ''}`
+export function tulisKuki(pilihan: PilihanPersetujuan, sekarang: Date, https: boolean, versi = VERSI_PERSETUJUAN): string {
+  return `${NAMA_KUKI}=${nilaiKuki(pilihan, sekarang, versi)}; Path=/; Max-Age=${UMUR_PERSETUJUAN_HARI * 86_400}; SameSite=Lax${https ? '; Secure' : ''}`
 }
 
 /**
@@ -73,12 +82,27 @@ export type Sinyal = Record<JenisSinyal, 'granted' | 'denied'>
 
 /**
  * Sinyal Google Consent Mode v2. Sebelum memilih dan untuk "Hanya yang perlu": semuanya `denied`.
- * "Izinkan semua": ketiga sinyal iklan `granted`; `analytics_storage` tetap `denied` karena point. tidak
- * memasang alat analitik (menambahkannya berarti teks banner dan `VERSI_PERSETUJUAN` ikut berubah).
+ * "Izinkan semua": ketiga sinyal iklan `granted`; `analytics_storage` hanya `granted` bila ada Kode sematan
+ * jenis "Butuh persetujuan" (`analitik`, spesifikasi §23), karena hanya kode itu yang memasang alat analitik.
  */
-export function sinyalPersetujuan(keadaan: KeadaanPersetujuan): Sinyal {
+export function sinyalPersetujuan(keadaan: KeadaanPersetujuan, analitik = false): Sinyal {
   const iklan = keadaan === 'semua' ? 'granted' : 'denied'
-  return { ad_storage: iklan, ad_user_data: iklan, ad_personalization: iklan, analytics_storage: 'denied' }
+  return { ad_storage: iklan, ad_user_data: iklan, ad_personalization: iklan, analytics_storage: analitik ? iklan : 'denied' }
+}
+
+/** Isi banner persetujuan sesuai yang benar-benar dimuat setelah "Izinkan semua": iklan, layanan dari Kode sematan, atau keduanya. */
+export function teksPersetujuan({ iklan, layanan }: { iklan: boolean; layanan: readonly string[] }): { judul: string; isi: string } {
+  const nama = layanan.length > 1 ? `${layanan.slice(0, -1).join(', ')} dan ${layanan.at(-1)}` : (layanan[0] ?? 'layanan pihak ketiga')
+  const bagian: string[] = []
+  if (iklan) bagian.push('Google AdSense memakai cookie untuk menampilkan iklan, termasuk iklan yang disesuaikan dengan minatmu')
+  if (layanan.length) bagian.push(`${nama} ${iklan ? 'juga ' : ''}dimuat dan bisa memakai cookie untuk mengukur kunjungan`)
+  const yangDimuat = iklan && layanan.length ? 'iklan dan layanan itu' : iklan ? 'iklan' : 'layanan itu'
+  return {
+    judul: iklan ? 'Cookie dan iklan' : 'Cookie',
+    isi:
+      'point. memakai cookie yang perlu supaya situs berjalan, termasuk untuk mengingat pilihanmu. ' +
+      `Bila kamu pilih Izinkan semua, ${bagian.join('; ')}. Dengan Hanya yang perlu, ${yangDimuat} tidak dimuat.`,
+  }
 }
 
 /**
@@ -90,9 +114,10 @@ export function sinyalPersetujuan(keadaan: KeadaanPersetujuan): Sinyal {
  * Tanpa JavaScript atribut ini tidak ada: banner dan slot iklan tidak tampil, iklan tidak dimuat.
  * Aturannya sama dengan `bacaPersetujuan` (dijaga tes unit yang menjalankan keduanya).
  */
-export function skripAwal(): string {
+export function skripAwal(analitik = false): string {
   const bawaan = JSON.stringify(sinyalPersetujuan('belum'))
-  const semua = JSON.stringify(sinyalPersetujuan('semua'))
+  const semua = JSON.stringify(sinyalPersetujuan('semua', analitik))
+  const versi = versiPersetujuan(analitik)
   return [
     '(function(){',
     'var w=window,d=document;',
@@ -100,7 +125,7 @@ export function skripAwal(): string {
     'function gtag(){w.dataLayer.push(arguments)}',
     `gtag('consent','default',${bawaan});`,
     `var m=/(?:^|;\\s*)${NAMA_KUKI}=(\\d+)\\.(perlu|semua)\\.(\\d{4}-\\d{2}-\\d{2})(?:;|$)/.exec(d.cookie),k='belum';`,
-    `if(m&&+m[1]===${VERSI_PERSETUJUAN}){var u=(Date.now()-Date.parse(m[3]+'T00:00:00Z'))/${SEHARI};if(u>=-1&&u<=${UMUR_PERSETUJUAN_HARI})k=m[2]}`,
+    `if(m&&+m[1]===${versi}){var u=(Date.now()-Date.parse(m[3]+'T00:00:00Z'))/${SEHARI};if(u>=-1&&u<=${UMUR_PERSETUJUAN_HARI})k=m[2]}`,
     `d.documentElement.setAttribute('${ATRIBUT_PERSETUJUAN}',k);`,
     `if(k==='semua')gtag('consent','update',${semua});`,
     '})()',

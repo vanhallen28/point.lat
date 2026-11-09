@@ -22,6 +22,8 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'ads',
   'media',
   'next',
+  // Halaman berhenti langganan `/newsletter/berhenti` (spesifikasi §23).
+  'newsletter',
   SEGMEN_HALAMAN,
 ])
 

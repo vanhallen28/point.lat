@@ -16,8 +16,10 @@ import { LogIndexing } from './collections/LogIndexing'
 import { Media } from './collections/Media'
 import { PemakaianAi } from './collections/PemakaianAi'
 import { ParameterTools } from './collections/ParameterTools'
+import { PelangganNewsletter } from './collections/PelangganNewsletter'
 import { Pengguna } from './collections/Pengguna'
 import { Penulis } from './collections/Penulis'
+import { PesanMasuk } from './collections/PesanMasuk'
 import { Pilar } from './collections/Pilar'
 import { Redirect } from './collections/Redirect'
 import { StatusIndeks } from './collections/StatusIndeks'
@@ -29,9 +31,11 @@ import { TugasSeo } from './collections/TugasSeo'
 import { Video } from './collections/Video'
 import { AsistenAi } from './globals/AsistenAi'
 import { Beranda } from './globals/Beranda'
+import { Fitur } from './globals/Fitur'
 import { Footer } from './globals/Footer'
 import { Header } from './globals/Header'
 import { Iklan } from './globals/Iklan'
+import { KodeSematan } from './globals/KodeSematan'
 import { Newsletter } from './globals/Newsletter'
 import { PengaturanSEO } from './globals/PengaturanSEO'
 import { BAHASA_ADMIN } from './lib/bahasa-admin'
@@ -56,11 +60,18 @@ export default buildConfig({
     dateFormat: 'd MMMM yyyy, HH.mm',
     importMap: { baseDir: path.resolve(dirname) },
     components: {
-      // Dashboard SEO (spesifikasi §8) di /admin/seo, dengan tautan di atas menu admin.
-      beforeNavLinks: ['@/modules/pantau/admin/TautanDashboard#TautanDashboard'],
-      // Kartu di halaman awal admin, karena di layar laptop menu admin tertutup (keputusan pemilik 6B).
-      beforeDashboard: ['@/modules/pantau/admin/KartuDashboard#KartuDashboard'],
+      // Tema ruang redaksi (spesifikasi §23): logo point. di halaman masuk dan remah roti, logo terbalik dan grup
+      // Ringkasan (Beranda admin, Dashboard SEO) di atas menu, kartu Sinkron Google dan pengguna di bawahnya.
+      graphics: {
+        Logo: '@/modules/redaksi/admin/Grafik#LogoAdmin',
+        Icon: '@/modules/redaksi/admin/Grafik#IkonAdmin',
+      },
+      beforeNavLinks: ['@/modules/redaksi/admin/MenuRingkasan#MenuRingkasan'],
+      afterNavLinks: ['@/modules/redaksi/admin/KakiMenu#KakiMenu'],
       views: {
+        // Beranda admin menggantikan daftar koleksi bawaan: angka, kalender konten, status Google, perlu perhatian.
+        dashboard: { Component: '@/modules/redaksi/admin/BerandaAdmin#BerandaAdmin' },
+        // Dashboard SEO (spesifikasi §8) di /admin/seo.
         dashboardSeo: {
           Component: '@/modules/pantau/admin/DashboardSeo#DashboardSeo',
           path: '/seo',
@@ -70,17 +81,20 @@ export default buildConfig({
       },
     },
   },
+  // Urutan menentukan urutan grup menu admin: Konten, Pembaca, Tools, SEO, Pengaturan (koleksi), lalu grup yang
+  // hanya berisi global (Tampilan).
   collections: [
-    Pengguna,
+    Artikel,
+    Video,
+    Halaman,
     Media,
     Pilar,
     Subkategori,
     Penulis,
-    Artikel,
+    PesanMasuk,
+    PelangganNewsletter,
     Tools,
     ParameterTools,
-    Video,
-    Halaman,
     Redirect,
     Log404,
     AntreanIndexing,
@@ -91,10 +105,11 @@ export default buildConfig({
     TugasSeo,
     TemuanTautan,
     TautanLuar,
+    Pengguna,
     LogAi,
     PemakaianAi,
   ],
-  globals: [Header, Footer, Beranda, PengaturanSEO, Newsletter, AsistenAi, Iklan],
+  globals: [Beranda, Header, Footer, Newsletter, Iklan, PengaturanSEO, Fitur, KodeSematan, AsistenAi],
   // `GET /api/jobs/run`: cron Vercel (jadwal di vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
   endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),

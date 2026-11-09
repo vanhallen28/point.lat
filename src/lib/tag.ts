@@ -12,6 +12,8 @@
  * - `parameter-tools`: angka aturan kalkulator yang dibaca halaman `/tools/{slug}`.
  * - `analitik`: klik Search Console per halaman ("Paling dicari pekan ini"), dibuang setiap sinkron harian.
  * - `iklan`: global iklan (slot, banner persetujuan, `ads.txt`) yang dibaca layout dan halaman berslot iklan.
+ * - `fitur`: saklar fitur pembaca (global `fitur`) yang dibaca halaman artikel, halaman statis, dan beranda.
+ * - `kode-sematan`: kode pihak ketiga (global `kode-sematan`) yang dibaca layout di setiap halaman publik.
  */
 
 export const KOLEKSI_PUBLIK = ['artikel', 'pilar', 'subkategori', 'penulis', 'tools', 'video', 'halaman'] as const
@@ -28,6 +30,8 @@ export const TAG = {
   parameterTools: 'parameter-tools',
   analitik: 'analitik',
   iklan: 'iklan',
+  fitur: 'fitur',
+  kodeSematan: 'kode-sematan',
   koleksi: (koleksi: KoleksiPublik) => koleksi,
   dokumen: (koleksi: KoleksiPublik, id: number | string) => `${koleksi}:${id}`,
   pilar: (slug: string) => `pilar:${slug}`,

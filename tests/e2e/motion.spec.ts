@@ -19,6 +19,8 @@ const HALAMAN_ANGGARAN = [
   `/${SLUG.panduan}`,
   `/uang-karier/${SLUG_SUB.pajak}`,
   '/tentang',
+  '/kontak',
+  '/newsletter/berhenti',
   '/penulis/redaksi',
   '/belajar/halaman/2',
   '/penulis/redaksi/halaman/2',

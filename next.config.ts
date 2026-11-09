@@ -11,6 +11,9 @@ const dirname = path.dirname(__filename)
 const nextConfig: NextConfig = {
   // Tanpa `X-Powered-By` (Next dan Payload): teknologi situs tidak diumumkan di setiap jawaban.
   poweredByHeader: false,
+  // `next dev` 16.3 menambahkan blok aturan agen berbahasa Inggris ke CLAUDE.md di setiap jalan; CLAUDE.md proyek
+  // ditulis sendiri, jadi dimatikan.
+  agentRules: false,
   // Header keamanan di semua jawaban (`src/lib/header-keamanan.ts`). Lewat konfigurasi, bukan dibaca atau
   // ditulis saat render, jadi halaman publik tetap ISR.
   async headers() {

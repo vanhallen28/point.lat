@@ -8,6 +8,7 @@ import { Faq } from '@/components/artikel/Faq'
 import { UKURAN_KOLOM_ISI } from '@/components/isi/GambarIsi'
 import { IsiArtikel } from '@/components/isi/IsiArtikel'
 import { TautanTool } from '@/components/isi/KartuTool'
+import { FormKontak } from '@/components/pembaca/FormKontak'
 import type { BlokTampil, DataHalaman } from '@/modules/konten/tipe'
 import { propsGambar } from '@/modules/media/props'
 import { jsonLd, remahRoti } from '@/modules/seo/jsonld'
@@ -35,7 +36,7 @@ function Hero({ blok, cloudName }: { blok: Extract<BlokTampil, { jenis: 'hero' }
   )
 }
 
-function Blok({ blok, cloudName }: { blok: BlokTampil; cloudName: string }) {
+function Blok({ blok, cloudName, formKontak, asal }: { blok: BlokTampil; cloudName: string; formKontak: boolean; asal: string }) {
   switch (blok.jenis) {
     case 'hero':
       return <Hero blok={blok} cloudName={cloudName} />
@@ -79,6 +80,9 @@ function Blok({ blok, cloudName }: { blok: BlokTampil; cloudName: string }) {
       return <Faq faq={blok.faq} judul={blok.judul} id={`${blok.id}-faq`} />
     case 'tool':
       return <TautanTool nama={blok.nama} ringkasan={blok.ringkasan} href={blok.href} />
+    case 'formKontak':
+      // Hanya bila saklar Form kontak di Pengaturan, Fitur menyala (spesifikasi §23).
+      return formKontak ? <FormKontak id={blok.id} judul={blok.judul} pengantar={blok.pengantar} asal={asal} /> : null
   }
 }
 
@@ -87,7 +91,7 @@ function Blok({ blok, cloudName }: { blok: BlokTampil; cloudName: string }) {
  * seterusnya): blok page builder dirender berurutan. Bila blok pertama bukan hero, judul halaman
  * menjadi H1 di atas blok.
  */
-export function HalamanStatis({ halaman, situs }: { halaman: DataHalaman; situs: Situs }) {
+export function HalamanStatis({ halaman, situs, formKontak = false }: { halaman: DataHalaman; situs: Situs; formKontak?: boolean }) {
   const masukan = { jenis: 'halaman', doc: halaman.seo } as const
   return (
     <article className={`kontainer ${gaya.halaman}`}>
@@ -95,7 +99,7 @@ export function HalamanStatis({ halaman, situs }: { halaman: DataHalaman; situs:
       <RemahRoti remah={remahRoti(masukan)} />
       {!halaman.heroUtama && <h1 className={gaya.judul}>{halaman.judul}</h1>}
       {halaman.blok.map((b) => (
-        <Blok key={b.id} blok={b} cloudName={situs.cloudName} />
+        <Blok key={b.id} blok={b} cloudName={situs.cloudName} formKontak={formKontak} asal={halaman.href} />
       ))}
     </article>
   )

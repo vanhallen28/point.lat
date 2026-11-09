@@ -476,6 +476,39 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 
 **Hasil yang diharapkan:** iklan termuat selama pengukuran dan CLS paling banyak 0,1 (slot memesan tinggi). Catat skor Performance; skor di bawah 90 karena skrip iklan dicatat di log keputusan untuk dibahas, bukan alasan mematikan iklan.
 
+## K. Fitur pembaca dan ruang redaksi (v1.2.0)
+
+Setelah zip v1.2.0 di-push dan deploy Vercel berhasil (migrasi `ruang_redaksi` ikut di build), semua fitur baru masih mati kecuali daftar isi dan waktu baca. Nyalakan satu per satu.
+
+### K1. Beranda admin dan Dashboard SEO
+
+Buka `https://point.lat/admin`. Beranda admin menampilkan sapaan, empat kartu angka, kalender konten, klik per pekan, status indeks, terbit terbaru, kesehatan situs, dan Perlu perhatian. Di Dashboard SEO, coba pilihan 7, 28, dan 90 hari. Selama data Search Console belum dua kali panjang periodenya, kartu menulis "belum cukup data"; itu wajar untuk situs baru.
+
+### K2. Kebijakan Privasi lebih dulu
+
+Salin ulang bagian Kebijakan Privasi dari dokumen "point.lat · Draf halaman wajib" (sudah menyebut form kontak, newsletter, pencegahan spam, dan kode pihak ketiga), isi bagian dalam [kurung siku], lalu terbitkan. Form newsletter dan Kode sematan jenis "Butuh persetujuan" bergantung pada halaman ini.
+
+### K3. Form kontak
+
+1. Admin, Halaman, Kontak: tambahkan blok **Form kontak** di bawah blok Teks, lalu Terbitkan.
+2. Pengaturan, **Fitur**: centang Form kontak, Simpan.
+3. Buka `https://point.lat/kontak`, kirim satu pesan uji.
+
+**Hasil yang diharapkan:** "Pesanmu sudah kami terima. Terima kasih." tampil, pesan muncul di Pembaca, Pesan masuk dengan status Baru, dan angka merah di menu Pesan masuk. Ubah statusnya ke Selesai atau hapus pesan uji.
+
+### K4. Newsletter
+
+1. Tampilan, Newsletter: Cara **Form point.**; centang "Tampilkan juga di akhir artikel" bila mau.
+2. Pengaturan, Fitur: centang Newsletter, Simpan.
+3. Daftar dengan email sendiri dari beranda, lalu buka Pembaca, Pelanggan newsletter dan klik **Unduh CSV**.
+4. Coba `https://point.lat/newsletter/berhenti` dengan email yang sama: barisnya hilang dari daftar.
+
+Pengiriman email belum ada: saat memilih penyedia (Kit, Mailchimp, atau Brevo), impor CSV ke sana dan nyalakan konfirmasi dua langkah di penyedia.
+
+### K5. Tombol bagikan dan Kode sematan (opsional)
+
+Tombol bagikan: centang di Pengaturan, Fitur. Kode sematan: Pengaturan, Kode sematan, tambah kode (misalnya Google Analytics, posisi "Di dalam <head>", jenis Butuh persetujuan, cookie `_ga, _ga_*`). Buka situs di jendela privat: banner cookie menyebut layanan itu, dan kodenya baru jalan setelah "Izinkan semua". Setiap kode menambah waktu muat; periksa Lighthouse (I4) setelah memasangnya.
+
 ## Verifikasi
 
 - [ ] Deploy Production terakhir **Ready** dan log build memuat `Lingkungan produksi siap: env dan database cocok.`
@@ -538,5 +571,6 @@ Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sud
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
+| 9 November 2026 | Sesi Claude (v1.2.0) | Ditambah bagian K: beranda admin, Kebijakan Privasi lebih dulu, form kontak, newsletter tersimpan, tombol bagikan, dan Kode sematan. |
 | 9 November 2026 | Sesi Claude (v1.1.0) | Runbook disesuaikan keputusan pemilik: Vercel paket gratis, tanpa Docker dan tanpa `psql` (pemeriksaan di SQL Editor Supabase), proyek pratinjau juga untuk `npm run dev`, Supabase Cron 10 menit opsional (H5). Langkah di layanan luar belum dijalankan ulang. |
 | 7 November 2026 | Probe Rencana 8C (Postgres 16 lokal, PgBouncer mode transaksi dengan TLS dan CA tiruan sebagai pengganti Supabase) | C5 diuji: `npm run migrate` dan `npm run seed` dari shell dengan `DATABASE_URL` dan `DATABASE_CA` ter-export (nilai lewat `read -rs`) mengenai database pooler, bukan database di `.env` lokal; tanpa baris push `dev`; admin hasil seed bisa login dengan `PAYLOAD_SECRET` lain (seperti runtime Vercel), password salah ditolak. D1 diuji tanpa `.env`: dengan `VERCEL_ENV=production` dan tanpa env lain `pnpm periksa:rilis` menolak dengan enam butir yang diawali `DATABASE_URL belum diisi.`; tanpa `VERCEL_ENV` galatnya `missing secret key`. D4 diuji dengan `pnpm build:vercel` ber-`VERCEL_ENV=production` setelah C5: penanda `produksi`, migrasi hanya `Done.`, build berhasil, server menjawab 200 untuk beranda, rubrik, `/tools`, robots, sitemap, dan login admin dengan menu pilar dari seed, header keamanan, dan robots persis seperti I2. Penjaga, header, migrasi, dan backup juga diuji di task kode Rencana 8C. Langkah di layanan luar belum dijalankan. |

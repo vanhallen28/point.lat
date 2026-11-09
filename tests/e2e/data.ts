@@ -40,7 +40,13 @@ export const SLUG_SUB = { pajak: 'pajak' } as const
 export const PAGINASI_E2E = { pilar: 'belajar', sub: 'persiapan-ujian', namaSub: 'Persiapan ujian', jumlah: 50 } as const
 
 /** Halaman statis dari seed yang diterbitkan `siapkan.ts`; halaman seed lain tetap draf. */
-export const SLUG_HALAMAN = { tentang: 'tentang', kebijakanRedaksi: 'kebijakan-redaksi', kebijakanPrivasi: 'kebijakan-privasi', draf: 'pasang-iklan' } as const
+export const SLUG_HALAMAN = {
+  tentang: 'tentang',
+  kebijakanRedaksi: 'kebijakan-redaksi',
+  kebijakanPrivasi: 'kebijakan-privasi',
+  kontak: 'kontak',
+  draf: 'pasang-iklan',
+} as const
 
 /** Video contoh: dua terbit (PPh 21 lebih dulu dibuat), satu draf. */
 export const SLUG_VIDEO = { pph21: 'pph-21-satu-slip-gaji', otp: 'kode-otp-jangan-dibagikan', draf: 'video-draf' } as const

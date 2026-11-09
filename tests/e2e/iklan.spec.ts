@@ -227,9 +227,9 @@ test('tidak ada iklan di kotak Intinya atau di atas H1; iklan tengah setelah par
   await cegatIklan(page)
   await page.goto(`/${SLUG.panduan}`)
   await expect(page.locator('[data-slot-iklan]')).toHaveCount(2)
-  await expect(page.getByRole('region', { name: 'Intinya' }).locator('[data-slot-iklan]')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Intinya', exact: true }).locator('[data-slot-iklan]')).toHaveCount(0)
   const h1 = (await page.getByRole('heading', { level: 1 }).boundingBox())!
-  const intinya = (await page.getByRole('region', { name: 'Intinya' }).boundingBox())!
+  const intinya = (await page.getByRole('region', { name: 'Intinya', exact: true }).boundingBox())!
   for (const slot of await page.locator('[data-slot-iklan]').all()) {
     expect((await slot.boundingBox())!.y).toBeGreaterThan(Math.max(h1.y + h1.height, intinya.y + intinya.height))
   }

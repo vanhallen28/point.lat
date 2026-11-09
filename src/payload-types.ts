@@ -67,16 +67,17 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    pengguna: Pengguna;
+    artikel: Artikel;
+    video: Video;
+    halaman: Halaman;
     media: Media;
     pilar: Pilar;
     subkategori: Subkategori;
     penulis: Penuli;
-    artikel: Artikel;
+    'pesan-masuk': PesanMasuk;
+    'pelanggan-newsletter': PelangganNewsletter;
     tools: Tool;
     'parameter-tools': ParameterTool;
-    video: Video;
-    halaman: Halaman;
     redirect: Redirect;
     'log-404': Log404;
     'antrean-indexing': AntreanIndexing;
@@ -87,6 +88,7 @@ export interface Config {
     'tugas-seo': TugasSeo;
     'temuan-tautan': TemuanTautan;
     'tautan-luar': TautanLuar;
+    pengguna: Pengguna;
     'log-ai': LogAi;
     'pemakaian-ai': PemakaianAi;
     'payload-kv': PayloadKv;
@@ -97,16 +99,17 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    pengguna: PenggunaSelect<false> | PenggunaSelect<true>;
+    artikel: ArtikelSelect<false> | ArtikelSelect<true>;
+    video: VideoSelect<false> | VideoSelect<true>;
+    halaman: HalamanSelect<false> | HalamanSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pilar: PilarSelect<false> | PilarSelect<true>;
     subkategori: SubkategoriSelect<false> | SubkategoriSelect<true>;
     penulis: PenulisSelect<false> | PenulisSelect<true>;
-    artikel: ArtikelSelect<false> | ArtikelSelect<true>;
+    'pesan-masuk': PesanMasukSelect<false> | PesanMasukSelect<true>;
+    'pelanggan-newsletter': PelangganNewsletterSelect<false> | PelangganNewsletterSelect<true>;
     tools: ToolsSelect<false> | ToolsSelect<true>;
     'parameter-tools': ParameterToolsSelect<false> | ParameterToolsSelect<true>;
-    video: VideoSelect<false> | VideoSelect<true>;
-    halaman: HalamanSelect<false> | HalamanSelect<true>;
     redirect: RedirectSelect<false> | RedirectSelect<true>;
     'log-404': Log404Select<false> | Log404Select<true>;
     'antrean-indexing': AntreanIndexingSelect<false> | AntreanIndexingSelect<true>;
@@ -117,6 +120,7 @@ export interface Config {
     'tugas-seo': TugasSeoSelect<false> | TugasSeoSelect<true>;
     'temuan-tautan': TemuanTautanSelect<false> | TemuanTautanSelect<true>;
     'tautan-luar': TautanLuarSelect<false> | TautanLuarSelect<true>;
+    pengguna: PenggunaSelect<false> | PenggunaSelect<true>;
     'log-ai': LogAiSelect<false> | LogAiSelect<true>;
     'pemakaian-ai': PemakaianAiSelect<false> | PemakaianAiSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -130,22 +134,26 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
+    beranda: Beranda;
     header: Header;
     footer: Footer;
-    beranda: Beranda;
-    'pengaturan-seo': PengaturanSeo;
     newsletter: Newsletter;
-    'asisten-ai': AsistenAi;
     iklan: Iklan;
+    'pengaturan-seo': PengaturanSeo;
+    fitur: Fitur;
+    'kode-sematan': KodeSematan;
+    'asisten-ai': AsistenAi;
   };
   globalsSelect: {
+    beranda: BerandaSelect<false> | BerandaSelect<true>;
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
-    beranda: BerandaSelect<false> | BerandaSelect<true>;
-    'pengaturan-seo': PengaturanSeoSelect<false> | PengaturanSeoSelect<true>;
     newsletter: NewsletterSelect<false> | NewsletterSelect<true>;
-    'asisten-ai': AsistenAiSelect<false> | AsistenAiSelect<true>;
     iklan: IklanSelect<false> | IklanSelect<true>;
+    'pengaturan-seo': PengaturanSeoSelect<false> | PengaturanSeoSelect<true>;
+    fitur: FiturSelect<false> | FiturSelect<true>;
+    'kode-sematan': KodeSematanSelect<false> | KodeSematanSelect<true>;
+    'asisten-ai': AsistenAiSelect<false> | AsistenAiSelect<true>;
   };
   locale: null;
   widgets: {
@@ -180,198 +188,6 @@ export interface PenggunaAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pengguna".
- */
-export interface Pengguna {
-  id: number;
-  nama: string;
-  peran?: ('admin' | 'editor') | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'pengguna';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  /**
-   * Jelaskan isi gambar untuk pembaca layar. Wajib untuk gambar.
-   */
-  alt?: string | null;
-  caption?: string | null;
-  /**
-   * Contoh: Foto: Nama Fotografer / Sumber
-   */
-  kredit?: string | null;
-  publicId?: string | null;
-  jenis?: ('gambar' | 'video') | null;
-  durasi?: number | null;
-  _objectKey?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pilar".
- */
-export interface Pilar {
-  id: number;
-  nama: string;
-  /**
-   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
-   */
-  slug?: string | null;
-  warna: 'hijau' | 'oranye' | 'kuning' | 'koral';
-  deskripsi: string;
-  intro?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  /**
-   * Tampil di akhir setiap artikel pilar ini (wajib untuk Uang & Karier dan Sehat). Kosongkan bila tidak perlu.
-   */
-  disclaimer?: string | null;
-  urutan?: number | null;
-  seo?: {
-    keyphrase?: string | null;
-    keyphraseSekunder?: string[] | null;
-    /**
-     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
-     */
-    judulSEO?: string | null;
-    /**
-     * Ideal 150-160 karakter.
-     */
-    metaDeskripsi?: string | null;
-    /**
-     * Kosongkan untuk dibuat otomatis.
-     */
-    gambarOG?: (number | null) | Media;
-    canonical?: string | null;
-    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
-    noindex?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subkategori".
- */
-export interface Subkategori {
-  id: number;
-  nama: string;
-  /**
-   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
-   */
-  slug?: string | null;
-  pilar: number | Pilar;
-  deskripsi?: string | null;
-  seo?: {
-    keyphrase?: string | null;
-    keyphraseSekunder?: string[] | null;
-    /**
-     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
-     */
-    judulSEO?: string | null;
-    /**
-     * Ideal 150-160 karakter.
-     */
-    metaDeskripsi?: string | null;
-    /**
-     * Kosongkan untuk dibuat otomatis.
-     */
-    gambarOG?: (number | null) | Media;
-    canonical?: string | null;
-    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
-    noindex?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "penulis".
- */
-export interface Penuli {
-  id: number;
-  nama: string;
-  /**
-   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
-   */
-  slug?: string | null;
-  foto?: (number | null) | Media;
-  bio: string;
-  keahlian?: string[] | null;
-  tautan?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  seo?: {
-    keyphrase?: string | null;
-    keyphraseSekunder?: string[] | null;
-    /**
-     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
-     */
-    judulSEO?: string | null;
-    /**
-     * Ideal 150-160 karakter.
-     */
-    metaDeskripsi?: string | null;
-    /**
-     * Kosongkan untuk dibuat otomatis.
-     */
-    gambarOG?: (number | null) | Media;
-    canonical?: string | null;
-    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
-    noindex?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -492,6 +308,37 @@ export interface Artikel {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  /**
+   * Jelaskan isi gambar untuk pembaca layar. Wajib untuk gambar.
+   */
+  alt?: string | null;
+  caption?: string | null;
+  /**
+   * Contoh: Foto: Nama Fotografer / Sumber
+   */
+  kredit?: string | null;
+  publicId?: string | null;
+  jenis?: ('gambar' | 'video') | null;
+  durasi?: number | null;
+  _objectKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "video".
  */
 export interface Video {
@@ -535,6 +382,61 @@ export interface Video {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pilar".
+ */
+export interface Pilar {
+  id: number;
+  nama: string;
+  /**
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
+   */
+  slug?: string | null;
+  warna: 'hijau' | 'oranye' | 'kuning' | 'koral';
+  deskripsi: string;
+  intro?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Tampil di akhir setiap artikel pilar ini (wajib untuk Uang & Karier dan Sehat). Kosongkan bila tidak perlu.
+   */
+  disclaimer?: string | null;
+  urutan?: number | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -628,43 +530,80 @@ export interface Tool {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Untuk mengganti angka yang berubah (misalnya batas upah JP tahun depan), buat dokumen baru dengan kunci yang sama dan tanggal berlaku baru, lalu isi tanggal akhir dokumen lama.
- *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "parameter-tools".
+ * via the `definition` "subkategori".
  */
-export interface ParameterTool {
+export interface Subkategori {
   id: number;
-  toolId: 'gaji-bersih' | 'thr' | 'cicilan-kpr' | 'dana-darurat' | 'bmi-kalori' | 'ipk';
+  nama: string;
   /**
-   * Nama parameter di modul hitung, misalnya ptkp-dasar atau ter-a. Kunci yang tidak dikenal ditolak beserta daftar kunci yang benar.
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
    */
-  kunci: string;
+  slug?: string | null;
+  pilar: number | Pilar;
+  deskripsi?: string | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "penulis".
+ */
+export interface Penuli {
+  id: number;
+  nama: string;
   /**
-   * Untuk parameter satu angka. Persen ditulis seperti di peraturan: 1,5 berarti 1,5%.
+   * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
    */
-  nilai?: number | null;
-  /**
-   * Untuk parameter berbentuk tabel: tarif TER, lapisan Pasal 17, kategori IMT, faktor aktivitas, kelipatan dana darurat, konversi nilai. Batas berarti "sampai dengan"; kosongkan batas baris terakhir untuk tanpa batas.
-   */
-  tabel?:
+  slug?: string | null;
+  foto?: (number | null) | Media;
+  bio: string;
+  keahlian?: string[] | null;
+  tautan?:
     | {
-        label?: string | null;
-        batas?: number | null;
-        nilai?: number | null;
+        label: string;
+        url: string;
         id?: string | null;
       }[]
     | null;
-  berlakuMulai: string;
-  /**
-   * Kosongkan bila masih berlaku.
-   */
-  berlakuSampai?: string | null;
-  sumber?: {
-    judul?: string | null;
-    url?: string | null;
+  seo?: {
+    keyphrase?: string | null;
+    keyphraseSekunder?: string[] | null;
+    /**
+     * Ideal 50-60 karakter. Kosongkan untuk memakai judul.
+     */
+    judulSEO?: string | null;
+    /**
+     * Ideal 150-160 karakter.
+     */
+    metaDeskripsi?: string | null;
+    /**
+     * Kosongkan untuk dibuat otomatis.
+     */
+    gambarOG?: (number | null) | Media;
+    canonical?: string | null;
+    tipeSchema?: ('otomatis' | 'Article' | 'NewsArticle') | null;
+    noindex?: boolean | null;
   };
-  catatan?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -679,7 +618,7 @@ export interface Halaman {
    * Dibuat otomatis dari judul. Mengubahnya setelah terbit membuat redirect 301.
    */
   slug?: string | null;
-  tataLetak?: (BlokHero | BlokTeks | BlokKartu | BlokCta | BlokFaq | BlokEmbedTool)[] | null;
+  tataLetak?: (BlokHero | BlokTeks | BlokKartu | BlokCta | BlokFaq | BlokEmbedTool | BlokFormKontak)[] | null;
   seo?: {
     keyphrase?: string | null;
     keyphraseSekunder?: string[] | null;
@@ -794,6 +733,94 @@ export interface BlokEmbedTool {
   id?: string | null;
   blockName?: string | null;
   blockType: 'embedTool';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokFormKontak".
+ */
+export interface BlokFormKontak {
+  judul?: string | null;
+  /**
+   * Form tampil di situs bila Form kontak dinyalakan di Pengaturan, Fitur. Pesan masuk ke Pembaca, Pesan masuk.
+   */
+  pengantar?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'formKontak';
+}
+/**
+ * Pesan dari form kontak situs. Tidak ada email pemberitahuan: cek halaman ini atau beranda admin.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pesan-masuk".
+ */
+export interface PesanMasuk {
+  id: number;
+  status: 'baru' | 'dibaca' | 'selesai';
+  nama: string;
+  email: string;
+  topik: 'koreksi' | 'hak-jawab' | 'kerja-sama' | 'lainnya';
+  pesan: string;
+  asal?: string | null;
+  sidik?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Email yang mendaftar lewat form newsletter situs, dengan persetujuan. Unduh CSV untuk diimpor ke penyedia email (Kit, Mailchimp, Brevo).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pelanggan-newsletter".
+ */
+export interface PelangganNewsletter {
+  id: number;
+  email: string;
+  sumber?: string | null;
+  disetujuiPada: string;
+  sidik?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Untuk mengganti angka yang berubah (misalnya batas upah JP tahun depan), buat dokumen baru dengan kunci yang sama dan tanggal berlaku baru, lalu isi tanggal akhir dokumen lama.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parameter-tools".
+ */
+export interface ParameterTool {
+  id: number;
+  toolId: 'gaji-bersih' | 'thr' | 'cicilan-kpr' | 'dana-darurat' | 'bmi-kalori' | 'ipk';
+  /**
+   * Nama parameter di modul hitung, misalnya ptkp-dasar atau ter-a. Kunci yang tidak dikenal ditolak beserta daftar kunci yang benar.
+   */
+  kunci: string;
+  /**
+   * Untuk parameter satu angka. Persen ditulis seperti di peraturan: 1,5 berarti 1,5%.
+   */
+  nilai?: number | null;
+  /**
+   * Untuk parameter berbentuk tabel: tarif TER, lapisan Pasal 17, kategori IMT, faktor aktivitas, kelipatan dana darurat, konversi nilai. Batas berarti "sampai dengan"; kosongkan batas baris terakhir untuk tanpa batas.
+   */
+  tabel?:
+    | {
+        label?: string | null;
+        batas?: number | null;
+        nilai?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  berlakuMulai: string;
+  /**
+   * Kosongkan bila masih berlaku.
+   */
+  berlakuSampai?: string | null;
+  sumber?: {
+    judul?: string | null;
+    url?: string | null;
+  };
+  catatan?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -997,6 +1024,34 @@ export interface TautanLuar {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pengguna".
+ */
+export interface Pengguna {
+  id: number;
+  nama: string;
+  peran?: ('admin' | 'editor') | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'pengguna';
+}
+/**
  * Setiap permintaan ke asisten AI: siapa, tugas apa, model, token, dan perkiraan biaya. Disimpan 13 bulan.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1154,8 +1209,16 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'pengguna';
-        value: number | Pengguna;
+        relationTo: 'artikel';
+        value: number | Artikel;
+      } | null)
+    | ({
+        relationTo: 'video';
+        value: number | Video;
+      } | null)
+    | ({
+        relationTo: 'halaman';
+        value: number | Halaman;
       } | null)
     | ({
         relationTo: 'media';
@@ -1174,8 +1237,12 @@ export interface PayloadLockedDocument {
         value: number | Penuli;
       } | null)
     | ({
-        relationTo: 'artikel';
-        value: number | Artikel;
+        relationTo: 'pesan-masuk';
+        value: number | PesanMasuk;
+      } | null)
+    | ({
+        relationTo: 'pelanggan-newsletter';
+        value: number | PelangganNewsletter;
       } | null)
     | ({
         relationTo: 'tools';
@@ -1184,14 +1251,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'parameter-tools';
         value: number | ParameterTool;
-      } | null)
-    | ({
-        relationTo: 'video';
-        value: number | Video;
-      } | null)
-    | ({
-        relationTo: 'halaman';
-        value: number | Halaman;
       } | null)
     | ({
         relationTo: 'redirect';
@@ -1232,6 +1291,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tautan-luar';
         value: number | TautanLuar;
+      } | null)
+    | ({
+        relationTo: 'pengguna';
+        value: number | Pengguna;
       } | null)
     | ({
         relationTo: 'log-ai';
@@ -1285,28 +1348,217 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pengguna_select".
+ * via the `definition` "artikel_select".
  */
-export interface PenggunaSelect<T extends boolean = true> {
-  nama?: T;
-  peran?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
+export interface ArtikelSelect<T extends boolean = true> {
+  judul?: T;
+  deck?: T;
+  intinya?:
     | T
     | {
+        poin?: T;
         id?: T;
-        createdAt?: T;
-        expiresAt?: T;
       };
+  gambarUtama?: T;
+  isi?: T;
+  faq?:
+    | T
+    | {
+        pertanyaan?: T;
+        jawaban?: T;
+        id?: T;
+      };
+  sumber?:
+    | T
+    | {
+        judul?: T;
+        url?: T;
+        penerbit?: T;
+        diaksesPada?: T;
+        id?: T;
+      };
+  videoTerkait?: T;
+  toolsTerkait?: T;
+  artikelTerkait?: T;
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  slug?: T;
+  tipe?: T;
+  pilar?: T;
+  subkategori?: T;
+  penulis?: T;
+  perubahanBesar?: T;
+  pakaiDrafAi?: T;
+  reviewAi?:
+    | T
+    | {
+        sumberDicek?: T;
+        angkaDicek?: T;
+        pengalamanDitambah?: T;
+      };
+  briefAi?: T;
+  terbitPada?: T;
+  diperbaruiBesar?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "video_select".
+ */
+export interface VideoSelect<T extends boolean = true> {
+  judul?: T;
+  slug?: T;
+  file?: T;
+  poster?: T;
+  pilar?: T;
+  durasiDetik?: T;
+  transkrip?: T;
+  takarir?: T;
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "halaman_select".
+ */
+export interface HalamanSelect<T extends boolean = true> {
+  judul?: T;
+  slug?: T;
+  tataLetak?:
+    | T
+    | {
+        hero?: T | BlokHeroSelect<T>;
+        teks?: T | BlokTeksSelect<T>;
+        kartu?: T | BlokKartuSelect<T>;
+        cta?: T | BlokCtaSelect<T>;
+        faqBlok?: T | BlokFaqSelect<T>;
+        embedTool?: T | BlokEmbedToolSelect<T>;
+        formKontak?: T | BlokFormKontakSelect<T>;
+      };
+  seo?:
+    | T
+    | {
+        keyphrase?: T;
+        keyphraseSekunder?: T;
+        judulSEO?: T;
+        metaDeskripsi?: T;
+        gambarOG?: T;
+        canonical?: T;
+        tipeSchema?: T;
+        noindex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokHero_select".
+ */
+export interface BlokHeroSelect<T extends boolean = true> {
+  judul?: T;
+  subjudul?: T;
+  gambar?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokTeks_select".
+ */
+export interface BlokTeksSelect<T extends boolean = true> {
+  isi?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokKartu_select".
+ */
+export interface BlokKartuSelect<T extends boolean = true> {
+  judul?: T;
+  kartu?:
+    | T
+    | {
+        judul?: T;
+        teks?: T;
+        tautan?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokCta_select".
+ */
+export interface BlokCtaSelect<T extends boolean = true> {
+  judul?: T;
+  teks?: T;
+  labelTombol?: T;
+  tautan?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokFaq_select".
+ */
+export interface BlokFaqSelect<T extends boolean = true> {
+  judul?: T;
+  faq?:
+    | T
+    | {
+        pertanyaan?: T;
+        jawaban?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokEmbedTool_select".
+ */
+export interface BlokEmbedToolSelect<T extends boolean = true> {
+  tool?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokFormKontak_select".
+ */
+export interface BlokFormKontakSelect<T extends boolean = true> {
+  judul?: T;
+  pengantar?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1417,70 +1669,30 @@ export interface PenulisSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "artikel_select".
+ * via the `definition` "pesan-masuk_select".
  */
-export interface ArtikelSelect<T extends boolean = true> {
-  judul?: T;
-  deck?: T;
-  intinya?:
-    | T
-    | {
-        poin?: T;
-        id?: T;
-      };
-  gambarUtama?: T;
-  isi?: T;
-  faq?:
-    | T
-    | {
-        pertanyaan?: T;
-        jawaban?: T;
-        id?: T;
-      };
-  sumber?:
-    | T
-    | {
-        judul?: T;
-        url?: T;
-        penerbit?: T;
-        diaksesPada?: T;
-        id?: T;
-      };
-  videoTerkait?: T;
-  toolsTerkait?: T;
-  artikelTerkait?: T;
-  seo?:
-    | T
-    | {
-        keyphrase?: T;
-        keyphraseSekunder?: T;
-        judulSEO?: T;
-        metaDeskripsi?: T;
-        gambarOG?: T;
-        canonical?: T;
-        tipeSchema?: T;
-        noindex?: T;
-      };
-  slug?: T;
-  tipe?: T;
-  pilar?: T;
-  subkategori?: T;
-  penulis?: T;
-  perubahanBesar?: T;
-  pakaiDrafAi?: T;
-  reviewAi?:
-    | T
-    | {
-        sumberDicek?: T;
-        angkaDicek?: T;
-        pengalamanDitambah?: T;
-      };
-  briefAi?: T;
-  terbitPada?: T;
-  diperbaruiBesar?: T;
+export interface PesanMasukSelect<T extends boolean = true> {
+  status?: T;
+  nama?: T;
+  email?: T;
+  topik?: T;
+  pesan?: T;
+  asal?: T;
+  sidik?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pelanggan-newsletter_select".
+ */
+export interface PelangganNewsletterSelect<T extends boolean = true> {
+  email?: T;
+  sumber?: T;
+  disetujuiPada?: T;
+  sidik?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1560,142 +1772,6 @@ export interface ParameterToolsSelect<T extends boolean = true> {
   catatan?: T;
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "video_select".
- */
-export interface VideoSelect<T extends boolean = true> {
-  judul?: T;
-  slug?: T;
-  file?: T;
-  poster?: T;
-  pilar?: T;
-  durasiDetik?: T;
-  transkrip?: T;
-  takarir?: T;
-  seo?:
-    | T
-    | {
-        keyphrase?: T;
-        keyphraseSekunder?: T;
-        judulSEO?: T;
-        metaDeskripsi?: T;
-        gambarOG?: T;
-        canonical?: T;
-        tipeSchema?: T;
-        noindex?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "halaman_select".
- */
-export interface HalamanSelect<T extends boolean = true> {
-  judul?: T;
-  slug?: T;
-  tataLetak?:
-    | T
-    | {
-        hero?: T | BlokHeroSelect<T>;
-        teks?: T | BlokTeksSelect<T>;
-        kartu?: T | BlokKartuSelect<T>;
-        cta?: T | BlokCtaSelect<T>;
-        faqBlok?: T | BlokFaqSelect<T>;
-        embedTool?: T | BlokEmbedToolSelect<T>;
-      };
-  seo?:
-    | T
-    | {
-        keyphrase?: T;
-        keyphraseSekunder?: T;
-        judulSEO?: T;
-        metaDeskripsi?: T;
-        gambarOG?: T;
-        canonical?: T;
-        tipeSchema?: T;
-        noindex?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokHero_select".
- */
-export interface BlokHeroSelect<T extends boolean = true> {
-  judul?: T;
-  subjudul?: T;
-  gambar?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokTeks_select".
- */
-export interface BlokTeksSelect<T extends boolean = true> {
-  isi?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokKartu_select".
- */
-export interface BlokKartuSelect<T extends boolean = true> {
-  judul?: T;
-  kartu?:
-    | T
-    | {
-        judul?: T;
-        teks?: T;
-        tautan?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokCta_select".
- */
-export interface BlokCtaSelect<T extends boolean = true> {
-  judul?: T;
-  teks?: T;
-  labelTombol?: T;
-  tautan?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokFaq_select".
- */
-export interface BlokFaqSelect<T extends boolean = true> {
-  judul?: T;
-  faq?:
-    | T
-    | {
-        pertanyaan?: T;
-        jawaban?: T;
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BlokEmbedTool_select".
- */
-export interface BlokEmbedToolSelect<T extends boolean = true> {
-  tool?: T;
-  id?: T;
-  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1849,6 +1925,31 @@ export interface TautanLuarSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pengguna_select".
+ */
+export interface PenggunaSelect<T extends boolean = true> {
+  nama?: T;
+  peran?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "log-ai_select".
  */
 export interface LogAiSelect<T extends boolean = true> {
@@ -1951,53 +2052,6 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "header".
- */
-export interface Header {
-  id: number;
-  menu?:
-    | {
-        label: string;
-        jenis: 'pilar' | 'tautan';
-        pilar?: (number | null) | Pilar;
-        url?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  tombolTools?: {
-    label?: string | null;
-    url?: string | null;
-  };
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "footer".
- */
-export interface Footer {
-  id: number;
-  tautan?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  sosial?:
-    | {
-        platform: 'instagram' | 'tiktok' | 'youtube' | 'x' | 'facebook' | 'threads' | 'linkedin';
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  saluranWhatsApp?: string | null;
-  teksHakCipta?: string | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "beranda".
  */
 export interface Beranda {
@@ -2089,6 +2143,98 @@ export interface BlokSlotIklan {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header".
+ */
+export interface Header {
+  id: number;
+  menu?:
+    | {
+        label: string;
+        jenis: 'pilar' | 'tautan';
+        pilar?: (number | null) | Pilar;
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  tombolTools?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer".
+ */
+export interface Footer {
+  id: number;
+  tautan?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  sosial?:
+    | {
+        platform: 'instagram' | 'tiktok' | 'youtube' | 'x' | 'facebook' | 'threads' | 'linkedin';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  saluranWhatsApp?: string | null;
+  teksHakCipta?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter".
+ */
+export interface Newsletter {
+  id: number;
+  aktif?: boolean | null;
+  /**
+   * Form point.: pembaca mendaftar di situs dan email tersimpan di Pembaca, Pelanggan newsletter (unduh CSV untuk penyedia). Nyalakan newsletter di Pengaturan, Fitur.
+   */
+  cara: 'form' | 'penyedia';
+  diArtikel?: boolean | null;
+  penyedia?: ('belum' | 'kit' | 'mailchimp' | 'brevo' | 'lainnya') | null;
+  urlForm?: string | null;
+  judul?: string | null;
+  deskripsi?: string | null;
+  tautanArsip?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "iklan".
+ */
+export interface Iklan {
+  id: number;
+  aktif?: boolean | null;
+  penyedia: 'adsense';
+  idPenerbit?: string | null;
+  modeUji?: boolean | null;
+  slot?:
+    | {
+        idSlot: string;
+        posisi: 'artikel-tengah' | 'artikel-akhir' | 'rubrik' | 'tools' | 'beranda';
+        setelahParagraf?: number | null;
+        ukuran: 'persegi' | 'persegi-besar' | 'banner';
+        unit: string;
+        aktif?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  adsTxtTambahan?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pengaturan-seo".
  */
 export interface PengaturanSeo {
@@ -2146,17 +2292,70 @@ export interface PengaturanSeo {
   createdAt?: string | null;
 }
 /**
+ * Nyalakan atau matikan fitur situs tanpa menyentuh kode. Perubahan tampil di situs setelah disimpan.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "newsletter".
+ * via the `definition` "fitur".
  */
-export interface Newsletter {
+export interface Fitur {
   id: number;
-  aktif?: boolean | null;
-  penyedia?: ('belum' | 'kit' | 'mailchimp' | 'brevo' | 'lainnya') | null;
-  urlForm?: string | null;
-  judul?: string | null;
-  deskripsi?: string | null;
-  tautanArsip?: string | null;
+  /**
+   * Blok "Form kontak" di halaman statis (misalnya halaman Kontak) tampil dan menerima pesan. Pesan masuk ke Pembaca, Pesan masuk, tanpa email.
+   */
+  formKontak?: boolean | null;
+  /**
+   * Kotak newsletter di beranda (dan di akhir artikel bila dipilih di Tampilan, Newsletter). Caranya diatur di Tampilan, Newsletter.
+   */
+  newsletter?: boolean | null;
+  /**
+   * WhatsApp, Telegram, X, Facebook, dan Salin tautan di akhir artikel. Tanpa skrip pihak ketiga.
+   */
+  tombolBagikan?: boolean | null;
+  /**
+   * Daftar subjudul di awal artikel yang panjang.
+   */
+  daftarIsi?: boolean | null;
+  /**
+   * Perkiraan "N menit baca" di bawah judul artikel.
+   */
+  waktuBaca?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Kode dari layanan lain (Google Analytics, Meta Pixel, widget chat). Setiap kode memperlambat situs dan bisa membaca isi halaman: tempel hanya kode dari layanan yang kamu percaya.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kode-sematan".
+ */
+export interface KodeSematan {
+  id: number;
+  kode?:
+    | {
+        /**
+         * Misalnya "Google Analytics".
+         */
+        nama: string;
+        aktif?: boolean | null;
+        /**
+         * Ikuti petunjuk layanannya. Kebanyakan kode analitik di dalam <head>.
+         */
+        posisi: 'head' | 'bodyAwal' | 'bodyAkhir';
+        /**
+         * Analitik, iklan, dan pelacak wajib "Butuh persetujuan" (UU PDP). "Wajib" hanya untuk kode yang tidak memakai cookie atau data pembaca.
+         */
+        jenis: 'persetujuan' | 'wajib';
+        /**
+         * Nama cookie dipisah koma, misalnya _ga, _ga_* , _fbp. Dihapus saat pembaca menarik persetujuan. Tanda * untuk awalan.
+         */
+        kuki?: string | null;
+        /**
+         * Tempel persis seperti dari layanannya, termasuk tag <script>.
+         */
+        kode: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2205,80 +2404,6 @@ export interface AsistenAi {
   frasaKlise?: string[] | null;
   updatedAt?: string | null;
   createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "iklan".
- */
-export interface Iklan {
-  id: number;
-  aktif?: boolean | null;
-  penyedia: 'adsense';
-  idPenerbit?: string | null;
-  modeUji?: boolean | null;
-  slot?:
-    | {
-        idSlot: string;
-        posisi: 'artikel-tengah' | 'artikel-akhir' | 'rubrik' | 'tools' | 'beranda';
-        setelahParagraf?: number | null;
-        ukuran: 'persegi' | 'persegi-besar' | 'banner';
-        unit: string;
-        aktif?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
-  adsTxtTambahan?: string | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "header_select".
- */
-export interface HeaderSelect<T extends boolean = true> {
-  menu?:
-    | T
-    | {
-        label?: T;
-        jenis?: T;
-        pilar?: T;
-        url?: T;
-        id?: T;
-      };
-  tombolTools?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "footer_select".
- */
-export interface FooterSelect<T extends boolean = true> {
-  tautan?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-        id?: T;
-      };
-  sosial?:
-    | T
-    | {
-        platform?: T;
-        url?: T;
-        id?: T;
-      };
-  saluranWhatsApp?: T;
-  teksHakCipta?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2363,6 +2488,97 @@ export interface BlokSlotIklanSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header_select".
+ */
+export interface HeaderSelect<T extends boolean = true> {
+  menu?:
+    | T
+    | {
+        label?: T;
+        jenis?: T;
+        pilar?: T;
+        url?: T;
+        id?: T;
+      };
+  tombolTools?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer_select".
+ */
+export interface FooterSelect<T extends boolean = true> {
+  tautan?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  sosial?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  saluranWhatsApp?: T;
+  teksHakCipta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter_select".
+ */
+export interface NewsletterSelect<T extends boolean = true> {
+  aktif?: T;
+  cara?: T;
+  diArtikel?: T;
+  penyedia?: T;
+  urlForm?: T;
+  judul?: T;
+  deskripsi?: T;
+  tautanArsip?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "iklan_select".
+ */
+export interface IklanSelect<T extends boolean = true> {
+  aktif?: T;
+  penyedia?: T;
+  idPenerbit?: T;
+  modeUji?: T;
+  slot?:
+    | T
+    | {
+        idSlot?: T;
+        posisi?: T;
+        setelahParagraf?: T;
+        ukuran?: T;
+        unit?: T;
+        aktif?: T;
+        id?: T;
+      };
+  adsTxtTambahan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pengaturan-seo_select".
  */
 export interface PengaturanSeoSelect<T extends boolean = true> {
@@ -2400,15 +2616,34 @@ export interface PengaturanSeoSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "newsletter_select".
+ * via the `definition` "fitur_select".
  */
-export interface NewsletterSelect<T extends boolean = true> {
-  aktif?: T;
-  penyedia?: T;
-  urlForm?: T;
-  judul?: T;
-  deskripsi?: T;
-  tautanArsip?: T;
+export interface FiturSelect<T extends boolean = true> {
+  formKontak?: T;
+  newsletter?: T;
+  tombolBagikan?: T;
+  daftarIsi?: T;
+  waktuBaca?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kode-sematan_select".
+ */
+export interface KodeSematanSelect<T extends boolean = true> {
+  kode?:
+    | T
+    | {
+        nama?: T;
+        aktif?: T;
+        posisi?: T;
+        jenis?: T;
+        kuki?: T;
+        kode?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -2437,31 +2672,6 @@ export interface AsistenAiSelect<T extends boolean = true> {
         id?: T;
       };
   frasaKlise?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "iklan_select".
- */
-export interface IklanSelect<T extends boolean = true> {
-  aktif?: T;
-  penyedia?: T;
-  idPenerbit?: T;
-  modeUji?: T;
-  slot?:
-    | T
-    | {
-        idSlot?: T;
-        posisi?: T;
-        setelahParagraf?: T;
-        ukuran?: T;
-        unit?: T;
-        aktif?: T;
-        id?: T;
-      };
-  adsTxtTambahan?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

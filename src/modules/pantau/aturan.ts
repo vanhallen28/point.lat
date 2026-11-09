@@ -176,6 +176,20 @@ export function ringkasSitus(hari: HariSitus[], akhir: string, jumlah = HARI_RIN
   return { klik, impresi, ctr: impresi ? klik / impresi : 0, posisi: impresi ? bobot / impresi : null, seri }
 }
 
+/** Periode Dashboard SEO yang bisa dipilih (spesifikasi §23). */
+export const PERIODE_DASHBOARD = [7, 28, 90] as const
+
+/**
+ * Ringkasan `jumlah` hari sebelum periode yang berakhir di `akhir`, untuk perbandingan. `null` bila data tersimpan
+ * paling lama lebih baru dari awal periode itu (belum cukup data, misalnya situs baru).
+ */
+export function ringkasSebelumnya(hari: HariSitus[], akhir: string, jumlah = HARI_RINGKASAN): Omit<RingkasanSitus, 'seri'> | null {
+  const tertua = hari.reduce<string | null>((m, h) => (m === null || h.tanggal < m ? h.tanggal : m), null)
+  if (tertua === null || tertua > geserTanggal(akhir, -(2 * jumlah - 1))) return null
+  const { seri: _seri, ...ringkas } = ringkasSitus(hari, geserTanggal(akhir, -jumlah), jumlah)
+  return ringkas
+}
+
 export type HasilTugas = 'berhasil' | 'dilewati' | 'gagal' | 'kuota-habis'
 
 /**

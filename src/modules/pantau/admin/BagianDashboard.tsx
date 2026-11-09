@@ -1,4 +1,6 @@
 import { urlAdmin } from '@/lib/admin'
+import { bandingkan } from '@/modules/redaksi/aturan'
+import { Perubahan } from '@/modules/redaksi/admin/Perubahan'
 
 import type { DataDashboard, InfoTugas, TautanBermasalah } from '../dashboard'
 import { teksJumlah, teksPersen, teksPosisi, teksRingkas, teksTanggal, teksWaktu } from '../format'
@@ -47,7 +49,8 @@ function KosongSearchConsole({ info }: { info: InfoTugas | null }) {
 }
 
 export function BagianSearchConsole({ analitik, tugas }: Pick<DataDashboard, 'analitik' | 'tugas'>) {
-  const { situs, sampai, halaman } = analitik
+  const { situs, sampai, halaman, periode, sebelumnya: lalu } = analitik
+  const persen = (n: number) => teksPersen(n)
   return (
     <section className="pantau-bagian pantau-bagian--lebar" aria-labelledby="pantau-google">
       <h2 id="pantau-google">Performa di Google</h2>
@@ -55,24 +58,42 @@ export function BagianSearchConsole({ analitik, tugas }: Pick<DataDashboard, 'an
       {situs && sampai ? (
         <>
           <p className="pantau-keterangan">
-            28 hari sampai {teksTanggal(sampai)}. Data Search Console baru final 2 sampai 3 hari kemudian.
+            {periode} hari sampai {teksTanggal(sampai)}, dibanding {periode} hari sebelumnya. Data Search Console baru final 2 sampai 3
+            hari kemudian.
           </p>
           <dl className="pantau-angka">
-            <div>
+            <div className="pantau-angka--biru">
               <dt>Klik</dt>
               <dd>{teksRingkas(situs.klik)}</dd>
+              <dd>
+                <Perubahan b={bandingkan(situs.klik, lalu?.klik ?? null)} satuan="klik" />
+              </dd>
             </div>
-            <div>
+            <div className="pantau-angka--hijau">
               <dt>Impresi</dt>
               <dd>{teksRingkas(situs.impresi)}</dd>
+              <dd>
+                <Perubahan b={bandingkan(situs.impresi, lalu?.impresi ?? null)} satuan="impresi" format={teksRingkas} />
+              </dd>
             </div>
-            <div>
+            <div className="pantau-angka--kuning">
               <dt>CTR</dt>
               <dd>{teksPersen(situs.ctr)}</dd>
+              <dd>
+                <Perubahan b={bandingkan(situs.ctr, lalu && lalu.impresi ? lalu.ctr : null)} satuan="" format={persen} />
+              </dd>
             </div>
-            <div>
+            <div className="pantau-angka--oranye">
               <dt>Posisi rata-rata</dt>
               <dd>{teksPosisi(situs.posisi)}</dd>
+              <dd>
+                <Perubahan
+                  b={bandingkan(situs.posisi ?? 0, lalu && lalu.posisi !== null && situs.posisi !== null ? lalu.posisi : null)}
+                  satuan=""
+                  terbalik
+                  format={(n) => teksPosisi(n)}
+                />
+              </dd>
             </div>
           </dl>
           <GrafikKlik seri={situs.seri} />
@@ -200,7 +221,7 @@ const LABEL_TAUTAN: Record<TautanBermasalah['jenis'], string> = {
  */
 export function BagianTautan({ tautan, tugas, pindai }: Pick<DataDashboard, 'tautan' | 'tugas' | 'pindai'>) {
   return (
-    <section className="pantau-bagian pantau-bagian--lebar" aria-labelledby="pantau-tautan">
+    <section id="tautan-rusak" className="pantau-bagian pantau-bagian--lebar" aria-labelledby="pantau-tautan">
       <h2 id="pantau-tautan">Tautan rusak</h2>
       <StatusTugas jenis="tautan" info={tugas.tautan} />
       <TombolPindaiUlang batas={pindai} />

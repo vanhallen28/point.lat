@@ -33,7 +33,8 @@ describe('beranda dari global', () => {
     const pilihan = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
     const draf = await payload.create({ collection: 'artikel', draft: true, data: { ...dataArtikelTerbit(relasi), _status: 'draft' } })
     const baru = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
-    await payload.updateGlobal({ slug: 'newsletter', data: { aktif: true, urlForm: 'https://contoh.kit.com/point', judul: 'Intinya, tiap Senin.' } })
+    await payload.updateGlobal({ slug: 'newsletter', data: { cara: 'penyedia', urlForm: 'https://contoh.kit.com/point', judul: 'Intinya, tiap Senin.' } })
+    await payload.updateGlobal({ slug: 'fitur', data: { newsletter: true } })
     await payload.updateGlobal({
       slug: 'beranda',
       data: {
@@ -51,10 +52,11 @@ describe('beranda dari global', () => {
     const [, mozaik, terbaru] = bagian
     expect(mozaik.jenis === 'mozaik' && mozaik.artikel.map((k) => k.id)).toEqual([pilihan.id])
     expect(mozaik).toMatchObject({ tools: expect.any(Array) })
-    expect(terbaru).toMatchObject({ judul: 'Tulisan terbaru', newsletter: { href: 'https://contoh.kit.com/point' } })
+    expect(terbaru).toMatchObject({ judul: 'Tulisan terbaru', newsletter: { cara: 'penyedia', href: 'https://contoh.kit.com/point' } })
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel[0].id).toBe(baru.id)
     expect(terbaru.jenis === 'terbaru' && terbaru.artikel.map((k) => k.id)).not.toContain(pilihan.id)
-    await payload.updateGlobal({ slug: 'newsletter', data: { aktif: false } })
+    await payload.updateGlobal({ slug: 'newsletter', data: { cara: 'form' } })
+    await payload.updateGlobal({ slug: 'fitur', data: { newsletter: false } })
   })
 
   it('paling dibaca pekan ini: artikel terbit dengan klik 7 hari terbanyak, tanpa draf, glosarium, dan path lain', async () => {

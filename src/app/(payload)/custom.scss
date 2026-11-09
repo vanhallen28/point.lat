@@ -1,6 +1,374 @@
+// Tema admin point. (spesifikasi §23, Rencana 9 Task 1): mengikuti gambar referensi pemilik (menu kiri gelap,
+// bidang terang, kartu putih) dengan warna dan huruf merek. Aturan di file ini di luar `@layer payload-default`,
+// jadi menang atas gaya bawaan Payload. Komponen admin buatan sendiri memakai token `--redaksi-*`.
+@use 'ikon-menu';
+
+// Archivo variable, file yang sama dengan situs (`src/app/(frontend)/font.ts`).
+@font-face {
+  font-family: 'Archivo';
+  src: url('../../../node_modules/@fontsource-variable/archivo/files/archivo-latin-standard-normal.woff2') format('woff2');
+  font-weight: 400 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+:root {
+  --font-body: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+
+  // Skala abu Payload dibuat sedikit hangat (selaras krem merek); terang-gelapnya sama dengan bawaan,
+  // jadi kontras teks tidak berubah.
+  --color-base-50: rgb(247, 245, 241);
+  --color-base-100: rgb(237, 235, 231);
+  --color-base-150: rgb(223, 221, 216);
+  --color-base-200: rgb(210, 208, 203);
+  --color-base-250: rgb(197, 195, 190);
+  --color-base-300: rgb(183, 181, 176);
+  --color-base-350: rgb(170, 168, 163);
+  --color-base-400: rgb(156, 154, 149);
+  --color-base-450: rgb(143, 141, 136);
+  --color-base-500: rgb(130, 128, 123);
+  --color-base-550: rgb(116, 114, 109);
+  --color-base-600: rgb(103, 101, 96);
+  --color-base-650: rgb(89, 87, 82);
+  --color-base-700: rgb(76, 74, 69);
+  --color-base-750: rgb(62, 60, 56);
+  --color-base-800: rgb(48, 47, 44);
+  --color-base-850: rgb(35, 34, 32);
+  --color-base-900: rgb(21, 20, 19);
+  --color-base-950: rgb(8, 7, 7);
+
+  --style-radius-s: 6px;
+  --style-radius-m: 8px;
+  --style-radius-l: 14px;
+
+  // Menu kiri: selalu gelap (tema terang dan gelap).
+  --redaksi-nav: #141414;
+  --redaksi-nav-kartu: #1f1f1f;
+  --redaksi-nav-garis: #2c2c2a;
+  --redaksi-nav-teks: #ecebe7;
+  --redaksi-nav-redup: #b0aca4;
+
+  // Biru: merek `#2f6bff` untuk grafik dan penanda; aksi `#265fe8` untuk tombol berteks putih (5,4:1).
+  --redaksi-merek: #2f6bff;
+  --redaksi-aksi: #265fe8;
+  --redaksi-aksi-tekan: #1d4fd0;
+
+  // Warna pilar (sama dengan situs) dan status (selalu bersama ikon dan label).
+  --redaksi-hijau: #1f7a4d;
+  --redaksi-kuning: #f2c230;
+  --redaksi-kuning-tua: #a87b00;
+  --redaksi-oranye: #c2410c;
+  --redaksi-koral: #ff8a80;
+  --redaksi-baik: #0ca30c;
+  --redaksi-waspada: #fab219;
+  --redaksi-kritis: #d03b3b;
+}
+
+html[data-theme='light'] {
+  --theme-bg: #f4f1ec;
+  --redaksi-bidang: #f4f1ec;
+  --redaksi-kartu: #ffffff;
+  --redaksi-garis: #e6e2db;
+  --redaksi-garis-lembut: #f0ece6;
+  --redaksi-teks: #111111;
+  --redaksi-redup: #5c5852;
+  --redaksi-redup-2: #6b675f;
+  --redaksi-isi-meter: #ece8e1;
+  --redaksi-bayang: 0 1px 2px rgba(17, 17, 17, 0.04), 0 4px 14px rgba(17, 17, 17, 0.04);
+  --redaksi-baik-teks: #006300;
+  --redaksi-baik-latar: #e3f4e1;
+  --redaksi-waspada-teks: #6e4a00;
+  --redaksi-waspada-latar: #fdf1d6;
+  --redaksi-kritis-teks: #a02525;
+  --redaksi-kritis-latar: #fbe7e7;
+  --redaksi-sorot: rgba(38, 95, 232, 0.05);
+}
+
+html[data-theme='dark'] {
+  --redaksi-bidang: var(--theme-bg);
+  --redaksi-kartu: #1c1c1b;
+  --redaksi-garis: #2f2e2c;
+  --redaksi-garis-lembut: #262624;
+  --redaksi-teks: #f0efec;
+  --redaksi-redup: #c3c2b7;
+  --redaksi-redup-2: #a9a79f;
+  --redaksi-isi-meter: #2f2e2c;
+  --redaksi-bayang: none;
+  --redaksi-baik-teks: #5fd35f;
+  --redaksi-baik-latar: rgba(12, 163, 12, 0.16);
+  --redaksi-waspada-teks: #f5c451;
+  --redaksi-waspada-latar: rgba(250, 178, 25, 0.14);
+  --redaksi-kritis-teks: #f08a8a;
+  --redaksi-kritis-latar: rgba(208, 59, 59, 0.18);
+  --redaksi-sorot: rgba(47, 107, 255, 0.1);
+}
+
 // Deskripsi field bawaan Payload (`admin.description`) memakai `--theme-elevation-400`, yang gagal kontras
-// WCAG AA di tema terang. Aturan ini di luar `@layer payload-default`, jadi berlaku di semua form admin
-// (Rencana 8A); tema gelap ikut karena Payload membalik skala elevation.
+// WCAG AA di tema terang. Aturan ini berlaku di semua form admin (Rencana 8A); tema gelap ikut karena Payload
+// membalik skala elevation.
 .field-description {
   color: var(--theme-elevation-650);
+}
+
+// Tombol utama Payload (Simpan, Publikasikan, Buat baru): biru aksi merek, teks putih.
+.btn--style-primary:not(.btn--disabled) {
+  --bg-color: var(--redaksi-aksi);
+  --hover-bg: var(--redaksi-aksi-tekan);
+  --color: #ffffff;
+  --hover-color: #ffffff;
+}
+
+// Logo di halaman masuk dan tanda di remah roti (`admin.components.graphics`).
+.redaksi-logo {
+  display: block;
+  width: auto;
+  height: 44px;
+  color: var(--theme-text);
+}
+
+.redaksi-ikon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  color: var(--theme-text);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Menu kiri gelap. Variabel tema Payload ditimpa di dalam `.nav`, jadi grup, tombol pengaturan, dan keluar
+// bawaan Payload ikut terbaca di latar gelap tanpa menyalin komponennya.
+.nav {
+  --theme-text: var(--redaksi-nav-teks);
+  --theme-elevation-0: var(--redaksi-nav);
+  --theme-elevation-50: var(--redaksi-nav-kartu);
+  --theme-elevation-100: var(--redaksi-nav-garis);
+  --theme-elevation-150: #383735;
+  --theme-elevation-400: var(--redaksi-nav-redup);
+  --theme-elevation-500: var(--redaksi-nav-redup);
+  --theme-elevation-800: var(--redaksi-nav-teks);
+  --theme-elevation-1000: #ffffff;
+  --accessibility-outline: 2px solid #ffffff;
+  background: var(--redaksi-nav);
+  color: var(--redaksi-nav-teks);
+  border-inline: 0;
+}
+
+.nav__scroll {
+  --nav-padding-inline-start: 14px;
+  --nav-padding-inline-end: 14px;
+}
+
+.nav-group {
+  margin-bottom: 14px;
+}
+
+.nav-group__toggle {
+  padding: 0 10px;
+  color: var(--redaksi-nav-redup);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav__link {
+  gap: 0;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: var(--redaksi-nav-teks);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 1px;
+  }
+}
+
+// Menu yang sedang dibuka: latar kartu dan garis biru merek di tepi kiri.
+.nav__link:has(.nav__link-indicator),
+.nav__link[aria-current='page'] {
+  background: var(--redaksi-nav-kartu);
+  font-weight: 700;
+}
+
+.nav__link-indicator {
+  inset-inline-start: -14px;
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: var(--redaksi-merek);
+}
+
+// Jumlah pesan baru (nilai `content` dari `MenuRingkasan`).
+#nav-pesan-masuk::after {
+  margin-inline-start: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--redaksi-kritis);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+.redaksi-menu {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.redaksi-menu__merek {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 10px 22px;
+  color: var(--redaksi-nav-redup);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  text-transform: uppercase;
+
+  &:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+}
+
+.redaksi-logo-menu {
+  display: block;
+  width: auto;
+  height: 22px;
+}
+
+.redaksi-menu__grup {
+  margin: 0 10px 6px;
+  color: var(--redaksi-nav-redup);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.redaksi-kaki {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.redaksi-kaki__sinkron {
+  padding: 12px 14px;
+  border: 1px solid var(--redaksi-nav-garis);
+  border-radius: 14px;
+  background: var(--redaksi-nav-kartu);
+  font-size: 12.5px;
+  line-height: 1.45;
+
+  p {
+    margin: 0;
+  }
+}
+
+.redaksi-kaki__judul {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px !important;
+  color: #8fe08f;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  [data-status='gagal'] & {
+    color: #f6a3a3;
+  }
+
+  [data-status='belum'] & {
+    color: var(--redaksi-nav-redup);
+  }
+}
+
+.redaksi-kaki__titik {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--redaksi-baik);
+  box-shadow: 0 0 0 3px rgba(12, 163, 12, 0.25);
+
+  [data-status='gagal'] & {
+    background: var(--redaksi-kritis);
+    box-shadow: 0 0 0 3px rgba(208, 59, 59, 0.3);
+  }
+
+  [data-status='belum'] & {
+    background: var(--redaksi-nav-redup);
+    box-shadow: none;
+  }
+}
+
+.redaksi-kaki__redup {
+  color: var(--redaksi-nav-redup);
+}
+
+.redaksi-kaki__pengguna {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 6px 0;
+  border-top: 1px solid var(--redaksi-nav-garis);
+}
+
+.redaksi-kaki__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--redaksi-nav-garis);
+  font-weight: 800;
+}
+
+.redaksi-kaki__nama {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.redaksi-kaki__peran {
+  display: block;
+  color: var(--redaksi-nav-redup);
+  font-size: 12px;
+}
+
+// Tombol tutup menu (milik templat Payload) menempel di atas menu yang gelap saat menu terbuka.
+.template-default--nav-open .template-default__nav-toggler .hamburger,
+.nav__mobile-close .hamburger {
+  --theme-bg: var(--redaksi-nav-kartu);
+  --theme-text: var(--redaksi-nav-teks);
+  --theme-elevation-100: var(--redaksi-nav-garis);
+  --theme-elevation-150: var(--redaksi-nav-garis);
+  --theme-elevation-500: var(--redaksi-nav-redup);
+}
+
+// Menu bawah layar laptop: ruang di atas logo untuk tombol tutup menu.
+.redaksi-menu__merek {
+  margin-top: 6px;
+}
+
+// Tema gelap: bidang hampir sewarna menu, jadi menu diberi garis tepi.
+html[data-theme='dark'] .nav {
+  border-inline-end: 1px solid var(--redaksi-nav-garis);
 }

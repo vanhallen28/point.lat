@@ -1,0 +1,42 @@
+/* Tombol bagikan akhir artikel: pil bergaris tinta, target sentuh 44px, tanpa ikon merek layanan. */
+.bagikan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-3);
+}
+
+.judul {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.daftar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruang-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tombol {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
+  min-height: var(--sentuh-min);
+  padding: 0 var(--ruang-4);
+  border: var(--garis-tipis) solid var(--garis);
+  border-radius: var(--radius-pil);
+  background: var(--latar);
+  color: var(--teks);
+  font-size: var(--teks-kecil);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tombol:hover {
+  background: var(--permukaan);
+}

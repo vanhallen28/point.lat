@@ -18,7 +18,7 @@ test('artikel panduan: urutan bagian sesuai spesifikasi §4', async ({ page }) =
   await expect(page.getByText(/^Diperbarui \d{1,2} \w+ 20\d\d$/)).toBeVisible()
   await expect(page.getByText('1 menit baca')).toBeVisible()
 
-  const intinya = page.getByRole('region', { name: 'Intinya' })
+  const intinya = page.getByRole('region', { name: 'Intinya', exact: true })
   await expect(intinya.getByRole('listitem')).toHaveCount(3)
 
   const daftarIsi = page.getByRole('navigation', { name: 'Daftar isi' })
@@ -73,17 +73,24 @@ test('artikel pilar Sehat menampilkan disclaimer pilarnya', async ({ page }) => 
   await expect(page.getByRole('note').filter({ hasText: 'Catatan' })).toContainText('bukan pengganti diagnosis')
 })
 
-test('jarak FAQ ke "Baca juga" sama di 768 dan 1440 px, tidak bergantung jumlah blok isi', async ({ page }) => {
-  const jarak: number[] = []
+test('jarak FAQ, tombol bagikan, newsletter, dan "Baca juga" sama di 768 dan 1440 px, tidak bergantung jumlah blok isi', async ({ page }) => {
+  const jarak: number[][] = []
   for (const lebar of [768, 1440]) {
     await page.setViewportSize({ width: lebar, height: 900 })
     await page.goto(`/${SLUG.panduan}`)
-    const faq = await page.getByRole('region', { name: 'Pertanyaan yang sering muncul' }).boundingBox()
-    const terkait = await page.getByRole('region', { name: 'Baca juga' }).boundingBox()
-    jarak.push(Math.round(terkait!.y - (faq!.y + faq!.height)))
+    const kotak = async (nama: string) => (await page.getByRole('region', { name: nama }).boundingBox())!
+    const [faq, bagikan, newsletter, terkait] = await Promise.all(
+      ['Pertanyaan yang sering muncul', 'Bagikan tulisan ini', 'Intinya, tiap Senin.', 'Baca juga'].map(kotak),
+    )
+    const antara = (a: { y: number; height: number }, b: { y: number }) => Math.round(b.y - (a.y + a.height))
+    jarak.push([antara(faq, bagikan), antara(bagikan, newsletter), antara(newsletter, terkait)])
   }
-  // --ruang-16 di atas bagian "Baca juga"; tanpa baris grid kosong dari kolom daftar isi.
-  expect(jarak).toEqual([64, 64])
+  // --ruang-10 antarblok kolom isi (fitur dari Pengaturan, Fitur), --ruang-16 di atas "Baca juga"; tanpa baris grid
+  // kosong dari kolom daftar isi.
+  expect(jarak).toEqual([
+    [40, 40, 64],
+    [40, 40, 64],
+  ])
 })
 
 test('draf dan path yang tidak ada menjawab 404', async ({ request }) => {

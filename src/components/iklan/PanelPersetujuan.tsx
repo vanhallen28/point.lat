@@ -4,20 +4,21 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
 import { Tautan } from '@/components/dasar/Tautan'
 import { simpanPilihan } from '@/modules/iklan/peramban'
-import { ATRIBUT_BUKA, ATRIBUT_PANEL, ATRIBUT_PERSETUJUAN, type PilihanPersetujuan } from '@/modules/iklan/persetujuan'
+import { ATRIBUT_BUKA, ATRIBUT_PANEL, ATRIBUT_PERSETUJUAN, teksPersetujuan, type PilihanPersetujuan } from '@/modules/iklan/persetujuan'
 
 import gaya from './Persetujuan.module.css'
 
 const LABEL: Record<PilihanPersetujuan, string> = { perlu: 'Hanya yang perlu', semua: 'Izinkan semua' }
 
 /**
- * Banner persetujuan cookie (spesifikasi §11, UU PDP No. 27/2022) di atas header, dalam alur halaman
+ * Banner persetujuan cookie (spesifikasi §11 dan §23, UU PDP No. 27/2022) di atas header, dalam alur halaman
  * (tidak menutupi isi). Tampil atau tersembunyi lewat CSS dari atribut `<html>` yang ditulis skrip awal,
  * jadi markup sama untuk semua pengunjung (halaman tetap ISR) dan tidak ada pergeseran tata letak saat
  * halaman dimuat. Dua pilihan setara; tombol "Pengaturan cookie" di footer membukanya lagi, dengan fokus
  * pindah ke banner dan kembali ke tombol itu setelah memilih atau menekan Escape.
  */
-export function PanelPersetujuan({ kebijakan }: { kebijakan: string }) {
+export function PanelPersetujuan({ kebijakan, iklan = true, layanan = [] }: { kebijakan: string; iklan?: boolean; layanan?: string[] }) {
+  const teks = teksPersetujuan({ iklan, layanan })
   const panel = useRef<HTMLElement>(null)
   const pembuka = useRef<HTMLElement | null>(null)
   const [sekarang, setSekarang] = useState<PilihanPersetujuan | null>(null)
@@ -58,13 +59,9 @@ export function PanelPersetujuan({ kebijakan }: { kebijakan: string }) {
       <div className={`kontainer ${gaya.isi}`}>
         <div className={gaya.teks}>
           <p id="persetujuan-judul" className={gaya.judul}>
-            Cookie dan iklan
+            {teks.judul}
           </p>
-          <p>
-            point. memakai cookie yang perlu supaya situs berjalan, termasuk untuk mengingat pilihanmu. Bila kamu pilih Izinkan semua,
-            Google AdSense memakai cookie untuk menampilkan iklan, termasuk iklan yang disesuaikan dengan minatmu. Dengan Hanya yang
-            perlu, iklan tidak dimuat.
-          </p>
+          <p>{teks.isi}</p>
           <p>
             Pilihanmu disimpan 12 bulan dan bisa kamu ubah kapan saja lewat Pengaturan cookie di bagian bawah halaman.{' '}
             <Tautan href={kebijakan}>Baca Kebijakan Privasi</Tautan>
