@@ -29,7 +29,7 @@ test('rubrik subkategori di bawah pilarnya; subkategori di pilar lain menjawab 4
   await expect(page).toHaveTitle('Pajak · point.')
   await expect(page.getByRole('navigation', { name: 'Remah roti' }).getByRole('link')).toHaveText(['Beranda', 'Uang & Karier'])
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Pajak')
-  await expect(page.getByRole('link', { name: 'Pajak', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('navigation', { name: /^Subkategori/ }).getByRole('link', { name: 'Pajak', exact: true })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('region', { name: 'Tulisan terbaru' }).getByRole('link')).toHaveCount(2)
   for (const path of [`/tekno/${SLUG_SUB.pajak}`, '/uang-karier/tidak-ada', `/uang-karier/${SLUG_SUB.pajak}/lagi`]) {
     expect((await request.get(path)).status(), path).toBe(404)

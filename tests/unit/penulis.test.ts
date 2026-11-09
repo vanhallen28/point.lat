@@ -36,6 +36,9 @@ const kartu: KartuArtikel = {
   tipe: 'panduan',
   pilar: { nama: 'Uang & Karier', slug: 'uang-karier', href: '/uang-karier', warna: 'hijau', disclaimer: null },
   intinya: 'Gaji kotor dikurangi PPh 21 dan BPJS.',
+  gambar: null,
+  terbit: null,
+  penulis: null,
 }
 
 describe('susunPenulis', () => {

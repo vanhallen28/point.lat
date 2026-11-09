@@ -44,7 +44,26 @@ export const HALAMAN_AWAL = [
   { judul: 'Kebijakan Privasi', slug: 'kebijakan-privasi' },
   { judul: 'Pasang Iklan', slug: 'pasang-iklan' },
   { judul: 'Kontak', slug: 'kontak' },
+  { judul: 'Redaksi', slug: 'redaksi' },
 ] as const
+
+/**
+ * Isi awal halaman yang butuh kerangka, bukan satu kalimat pengingat. Halaman Redaksi (spesifikasi §25) memuat
+ * susunan redaksi seperti kotak redaksi media: UU Pers Pasal 12 mewajibkan perusahaan pers mengumumkan nama,
+ * alamat, dan penanggung jawabnya. Bagian dalam kurung siku diisi pemilik sebelum terbit.
+ */
+export const ISI_HALAMAN_AWAL: Partial<Record<(typeof HALAMAN_AWAL)[number]['slug'], string[]>> = {
+  redaksi: [
+    'point. adalah media edukasi praktis berbahasa Indonesia tentang uang, karier, teknologi, pendidikan, dan kesehatan.',
+    'Penanggung jawab: [nama lengkap]',
+    'Pemimpin redaksi: [nama lengkap]',
+    'Penulis: [nama penulis, satu per baris]',
+    'Alamat redaksi: [alamat lengkap]',
+    'Email redaksi: [alamat email]',
+    'Badan hukum: [nama badan hukum dan nomor pengesahan, bila sudah ada]',
+    'Koreksi dan hak jawab: kirim lewat halaman Kontak. Tulisan yang dikoreksi diberi catatan koreksi di bagian bawahnya, sesuai Pedoman Media Siber.',
+  ],
+}
 
 export type OpsiSeed = { emailAdmin?: string; passwordAdmin?: string }
 
@@ -106,7 +125,10 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
         data: {
           ...halaman,
           tataLetak: [
-            { blockType: 'teks', isi: paragrafLexical([`Tulis isi halaman ${halaman.judul} di sini sebelum terbit.`]) },
+            {
+              blockType: 'teks',
+              isi: paragrafLexical(ISI_HALAMAN_AWAL[halaman.slug] ?? [`Tulis isi halaman ${halaman.judul} di sini sebelum terbit.`]),
+            },
           ],
         },
       })
@@ -139,7 +161,9 @@ export async function seed(payload: Payload, opsi: OpsiSeed = {}): Promise<Hasil
           subjudul: 'Uang, karier, teknologi, pendidikan, dan kesehatan. Dijelaskan dari intinya, lalu bisa langsung kamu hitung.',
           placeholderCari: 'misal: cara hitung THR',
         },
-        { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 4 },
+        { blockType: 'palingDibaca', judul: 'Paling dicari pekan ini', jumlah: 6 },
+        { blockType: 'stripTools', judul: 'Hitung sendiri' },
+        { blockType: 'barisRubrik', jumlah: 4 },
         { blockType: 'newsletterBlok', judul: 'Intinya, tiap Senin.' },
       ],
     },

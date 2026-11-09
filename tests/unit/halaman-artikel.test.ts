@@ -21,6 +21,7 @@ const data: DataArtikel = {
   href: '/cara-hitung-gaji-bersih',
   deck: 'Gaji kotor dikurangi PPh 21 dan BPJS.',
   intinya: ['Poin satu.', 'Poin dua.'],
+  terbit: '2026-11-01T02:00:00.000Z',
   diperbarui: '2026-11-03T18:30:00.000Z',
   waktuBaca: 7,
   pilar,
@@ -34,7 +35,7 @@ const data: DataArtikel = {
   ],
   faq: [{ pertanyaan: 'Apakah THR kena pajak?', jawaban: 'Ya.' }],
   sumber: [{ judul: 'DJP', url: 'https://www.pajak.go.id/', penerbit: 'DJP', diaksesPada: null }],
-  terkait: [{ id: 11, judul: 'Apa itu TER', href: '/apa-itu-ter', tipe: 'explainer', pilar, intinya: 'TER adalah tarif efektif.' }],
+  terkait: [{ id: 11, judul: 'Apa itu TER', href: '/apa-itu-ter', tipe: 'explainer', pilar, intinya: 'TER adalah tarif efektif.', gambar: null, terbit: null, penulis: null }],
   seo: dokumen,
 }
 

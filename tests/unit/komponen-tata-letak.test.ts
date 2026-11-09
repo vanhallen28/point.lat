@@ -31,10 +31,14 @@ describe('Header', () => {
             { label: 'Tentang', href: '/tentang', warna: null },
           ],
           tools: { label: 'Tools', href: '/tools' },
+          topik: [{ label: 'Gaji & Pajak', href: '/uang-karier/gaji-pajak' }],
         },
       }),
     )
     expect(html).toContain('<nav aria-label="Rubrik"')
+    expect(html).toMatch(/<nav aria-label="Topik hangat"[^>]*>.*href="\/uang-karier\/gaji-pajak"[^>]*>Gaji &amp; Pajak<\/a>/)
+    // Tanggal hari ini ditulis skrip sebaris ke atribut, bukan dirender server (header ISR).
+    expect(html).toMatch(/<p id="tanggal-hari-ini" class="[^"]*"><\/p><script>\(function\(\)\{var e=document\.getElementById\("tanggal-hari-ini"\)/)
     expect(html).toMatch(/<a [^>]*href="\/"[^>]*>.*point\..*, ke beranda/)
     expect(html).toMatch(/href="\/uang-karier"[^>]*><span [^>]*data-warna="hijau" aria-hidden="true"><\/span>Uang &amp; Karier/)
     expect(html).toMatch(/href="\/tentang"[^>]*>Tentang<\/a>/)
@@ -48,6 +52,7 @@ describe('Header', () => {
         { label: 'Sehat', href: '/sehat', warna: 'koral' as const },
       ],
       tools: { label: 'Tools', href: '/tools' },
+      topik: [],
     }
     path.sekarang = '/uang-karier/pajak'
     expect(renderToStaticMarkup(h(Header, { data })).match(/aria-current="[^"]*"/g)).toEqual(['aria-current="true"'])
@@ -57,7 +62,7 @@ describe('Header', () => {
   })
 
   it('tanpa menu tidak merender nav kosong', () => {
-    const html = renderToStaticMarkup(h(Header, { data: { menu: [], tools: { label: 'Tools', href: '/tools' } } }))
+    const html = renderToStaticMarkup(h(Header, { data: { menu: [], tools: { label: 'Tools', href: '/tools' }, topik: [] } }))
     expect(html).not.toContain('<nav')
   })
 })
@@ -86,9 +91,26 @@ describe('Footer', () => {
         },
       }),
     )
-    expect(html).toContain('<nav aria-label="Tentang point."')
+    expect(html).toMatch(/<nav aria-labelledby="kaki-tentang-point" class="[^"]*"><p id="kaki-tentang-point" class="[^"]*">Tentang point\.<\/p>/)
+    expect(html).toContain('<p id="kaki-ikuti-point" class="')
+    expect(html).not.toContain('kaki-jelajahi')
+    expect(html).not.toContain('<h2')
     expect(html).toContain('<a href="https://instagram.com/point.lat" rel="noopener">Instagram</a>')
     expect(html).toContain('<a href="https://whatsapp.com/channel/abc" rel="noopener">Saluran WhatsApp</a>')
     expect(html).toContain('© 2026 point.lat')
+  })
+
+  it('kolom Rubrik dari menu header bila diberikan', () => {
+    const html = renderToStaticMarkup(
+      h(Footer, {
+        data: { tautan: [], sosial: [], whatsapp: null, hakCipta: '© 2026 point.lat' },
+        rubrik: [
+          { label: 'Uang & Karier', href: '/uang-karier' },
+          { label: 'Tools', href: '/tools' },
+        ],
+      }),
+    )
+    expect(html).toMatch(/<p id="kaki-jelajahi" class="[^"]*">Jelajahi<\/p><ul class="[^"]*"><li><a href="\/uang-karier">Uang &amp; Karier<\/a><\/li><li><a href="\/tools">Tools<\/a>/)
+    expect(html).not.toContain('kaki-tentang')
   })
 })

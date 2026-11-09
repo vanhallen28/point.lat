@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.3.1): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.4.0): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -17,6 +17,7 @@
 | 2026-11-09 | v1.2.1 | Menu admin: grup yang bisa dilipat berupa baris berikon, jadi ikon setiap bagian tetap terlihat saat grup dilipat (§23, permintaan pemilik) |
 | 2026-11-10 | v1.3.0 | Paket konten awal supaya situs tidak sepi: 12 artikel draf Uang & Karier dan Belajar dengan kartu sampul bergaya point., penjelasan enam kalkulator diperluas, dan tombol Impor paket konten di beranda admin (§24) |
 | 2026-11-10 | v1.3.1 | Pembaruan keamanan: Next.js 16.4.5 dan sharp 0.35.5 (celah Next.js Oktober dan November 2026). Tanpa perubahan perilaku |
+| 2026-11-10 | v1.4.0 | Tampilan media: kartu artikel bergambar bertanggal dan berpenulis, beranda bergaya portal (blok Strip kalkulator dan Baris rubrik), header dengan tanggal dan Topik hangat, pilar kosong disembunyikan, footer berkolom, tanggal terbit di artikel, dan draf halaman Redaksi (§25, permintaan pemilik) |
 
 ---
 
@@ -760,6 +761,120 @@ Penjelasan keenam kalkulator (`src/seed/tools.ts`) diperluas menjadi sekitar 600
   - unit untuk aturan tools dan mozaik;
   - integrasi untuk impor, impor ulang, terbit tanpa review, galat pilar, kunci, dan endpoint;
   - E2E untuk kartu dan tombol, dengan jawaban server ditiru supaya database E2E tetap.
+
+## 25. Tampilan media (v1.4.0)
+
+Permintaan pemilik 10 November 2026:
+- "apa lagi yang kurang agar terlihat benar benar seperti media ?";
+- lalu "kerjakan yang belum dikerjakan dan belum berfungsi".
+
+Arah 3 "Kartu Intinya" tetap menjadi dasar: Archivo, ink, paper, sand, warna pilar yang selalu bersama namanya, dan Intinya di setiap kartu. Yang berubah adalah kepadatan dan sinyal media: gambar, tanggal, penulis, dan beranda yang dibuka dengan berita utama.
+
+Rencana implementasi: `docs/superpowers/plans/2026-11-10-rencana-11-tampilan-media.md`.
+
+### Kartu artikel
+
+- **Susunan (`KartuArtikel`):**
+  1. gambar utama 16:9 bersudut 16 px;
+  2. baris pilar (titik warna dan nama) dan jenis tulisan;
+  3. judul (heading);
+  4. Intinya, paling banyak tiga baris;
+  5. tanggal terbit dan nama penulis.
+
+  Seluruh kartu satu tautan.
+- **Tanpa gambar utama:** panel warna pilar dengan dua cincin dari tanda logo dan nama pilar besar (dekoratif, `aria-hidden`), jadi daftar tetap rapi.
+- **Ukuran:**
+  - biasa: daftar rubrik, penulis, cari, terkait, dan 404;
+  - `besar`: berita utama beranda, gambar dimuat lebih dulu untuk LCP;
+  - `sedang`: kartu samping berita utama;
+  - `baris`: daftar ringkas dengan gambar kecil 4:3 di kiri, tanpa Intinya.
+- **Gambar:**
+  - lewat `propsGambar`: preset `hero` 16:9, atau `kartu` 4:3 untuk ukuran `baris`;
+  - teks alt kosong, karena judul sudah ada di kartu;
+  - `sizes` per ukuran.
+- **Hover:** gambar membesar 4% (transform), judul bergaris bawah. Semuanya mati saat reduced motion.
+- **Data:** `kartuArtikel` membaca `gambarUtama`, `terbitPada`, dan `penulis` bila query memuatnya (`SELECT_KARTU` dan `POPULATE_KARTU` di `data.ts`). Gambar berupa video tidak dipakai.
+
+### Beranda bergaya portal
+
+Urutan bawaan, diatur editor di Tampilan, Beranda:
+
+1. **Kop:** judul "Intinya dulu." lebih kecil (sampai 92 px). Di layar lebar, judul di kiri dan kalimat pembuka serta pencarian di kanan, ditutup garis tebal.
+2. **Pilihan redaksi:** label kecil, kartu `besar` (2fr), dan kolom samping berisi dua kartu `sedang`, dipisah garis tipis di layar lebar. Sisanya menjadi baris kedua.
+3. **Paling dicari atau Tulisan terbaru:** kartu `baris` bergaris, dua kolom di layar lebar bila tanpa newsletter. Paling dicari berupa `ol` dengan nomor peringkat besar.
+4. **Strip kalkulator (blok `stripTools`):**
+   - pita sand selebar layar dengan judul besar dan teks dari editor;
+   - kartu putih per kalkulator terbit, berisi titik dan nama pilar, nama, ringkasan, dan "Hitung";
+   - tautan "Semua kalkulator";
+   - tidak tampil bila belum ada kalkulator terbit.
+5. **Baris rubrik (blok `barisRubrik`):**
+   - satu bagian per pilar dengan garis atas 4 px warna pilar, judul bertitik, dan tautan "Semua tulisan {pilar}";
+   - kartu biasa sebanyak `jumlah` (bawaan 4, 2 sampai 8);
+   - pilar bisa dipilih editor (urutan editor) atau semua pilar (urutan `urutan`);
+   - tulisan yang sudah tampil di Pilihan redaksi tidak diulang, dan pilar tanpa tulisan dilewati (`susunBarisRubrik`);
+   - data dari satu query per pilar (`MAKS_RUBRIK_BERANDA` = 13 tulisan), hanya bila tata letak memuat blok ini.
+6. **Newsletter.**
+
+Blok lama (strip video, slot iklan) tetap bisa disisipkan di mana saja.
+
+**Pemasangan di situs yang sudah berjalan.** `pasangBerandaPortal` (`src/modules/paket/beranda.ts`, aturan murni `rencanaBeranda`) menambahkan blok yang belum ada:
+- mozaik berisi artikel pilihan paket tepat setelah hero, `tampilkanTools` mati karena ada strip kalkulator;
+- strip kalkulator setelah Paling dicari;
+- baris rubrik setelahnya.
+
+Aturannya:
+- Blok lain tidak dipindah.
+- Beranda diterbitkan hanya bila tata letak versi terakhir sama dengan versi yang tampil (`adaPerubahanTertunda`), supaya perubahan editor yang belum terbit tidak ikut terbit.
+- Dipakai impor paket konten dan migrasi `beranda_portal`.
+- Sejak aturan ini, beranda dari data awal (berstatus draf tanpa perubahan tertunda) juga ikut dipasang.
+
+### Header
+
+- **Baris atas:**
+  - tanggal hari ini (WIB, disembunyikan di HP). Header ISR, jadi tanggal ditulis di browser oleh skrip sebaris `skripTanggal` ke atribut `data-tanggal` dan ditampilkan CSS. Tanpa berkas JavaScript, karena anggaran JavaScript halaman tools sudah di batas;
+  - navigasi **Topik hangat**: subkategori dari 20 tulisan terbit terbaru, tanpa duplikat, paling banyak lima (`susunTopik`), bisa digeser di HP.
+- **Menu pilar** hanya menampilkan pilar yang punya tulisan terbit selain glosarium (`susunHeader` dengan `pilarTerisi`). Tautan biasa tetap tampil.
+- **Cache:** `muatHeader` ikut bertag `artikel` dan `subkategori`.
+
+### Footer
+
+- Merek (logo, tagline, kalimat ringkas) dan kolom berjudul. Judul kolom berupa paragraf, bukan heading:
+  - Jelajahi: menu header yang tampil ditambah Tools;
+  - Tentang point.: tautan footer;
+  - Ikuti point.: akun sosial dan Saluran WhatsApp.
+- Kolom tanpa isi tidak dirender.
+- Grid empat kolom di layar lebar.
+
+### Artikel
+
+Byline memuat "Terbit {tanggal}". "Diperbarui {tanggal}" hanya bila tanggalnya berbeda dari tanggal terbit.
+
+### Halaman Redaksi
+
+- Data awal dan migrasi membuat draf halaman `redaksi` (hanya di situs yang sudah punya halaman awal) dengan kerangka kotak redaksi:
+  - penanggung jawab;
+  - pemimpin redaksi;
+  - penulis;
+  - alamat;
+  - email;
+  - badan hukum;
+  - koreksi dan hak jawab.
+- UU Pers Pasal 12 mewajibkan perusahaan pers mengumumkan nama, alamat, dan penanggung jawab.
+- Tautan footer ditambahkan pemilik setelah halaman terbit.
+
+### Perbaikan paket konten
+
+- **Tabel tanpa judul kolom.** Blok Tabel perbandingan mewajibkan label kolom dan teks sel. Tabel PPh 21 artikel THR v1.3.0 punya kolom pertama tanpa judul, jadi drafnya gagal diterbitkan.
+  - `markdownKeLexical` kini menolak kolom tanpa judul dan sel kosong.
+  - Tes integrasi menerbitkan setiap artikel paket.
+  - Migrasi memperbaiki draf yang sudah masuk (`perbaikiDrafPaket`, label kosong menjadi "Komponen").
+- **Penjelasan kalkulator.** `alasanLewatiTools` membandingkan teks per blok (`teksIsi`), bukan JSON, karena Payload menambah properti bawaan saat menyimpan.
+
+### Batasan teknis
+
+- Tanpa dependensi baru.
+- Migrasi `beranda_portal` hanya menambah tabel dan kolom, lalu langkah data lewat Local API dalam transaksi migrasi. Hak Data API Supabase dicabut dari tabel baru.
+- Tanpa komponen klien baru: tanggal header berupa skrip sebaris. Anggaran JavaScript §12 tetap dijaga `motion.spec.ts`.
 
 ## Sumber riset
 

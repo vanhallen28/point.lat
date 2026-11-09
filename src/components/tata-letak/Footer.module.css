@@ -12,11 +12,31 @@
 
 .merek {
   display: grid;
-  gap: var(--ruang-1);
+  align-content: start;
+  gap: var(--ruang-2);
 }
 
 .tagline {
+  font-weight: 800;
+}
+
+.ringkas {
+  max-width: 36ch;
   color: var(--teks-sekunder);
+  line-height: 1.5;
+}
+
+.kolom {
+  display: grid;
+  align-content: start;
+  gap: var(--ruang-1);
+}
+
+.judulKolom {
+  font-size: var(--teks-label);
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
 }
 
 .daftar {
@@ -69,18 +89,34 @@
   display: inline-flex;
 }
 
-@media (min-width: 64rem) {
+@media (min-width: 48rem) {
   .isi {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     align-items: start;
     column-gap: var(--ruang-10);
   }
 
-  .tautan {
-    justify-self: center;
+  .merek {
+    grid-column: 1 / -1;
+  }
+
+  .daftar {
+    flex-direction: column;
   }
 
   .bawah {
     grid-column: 1 / -1;
+    padding-top: var(--ruang-4);
+    border-top: var(--garis-tipis) solid var(--garis);
+  }
+}
+
+@media (min-width: 64rem) {
+  .isi {
+    grid-template-columns: 1.6fr repeat(3, 1fr);
+  }
+
+  .merek {
+    grid-column: auto;
   }
 }

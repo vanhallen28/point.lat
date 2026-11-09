@@ -59,6 +59,29 @@ describe('beranda dari global', () => {
     await payload.updateGlobal({ slug: 'fitur', data: { newsletter: false } })
   })
 
+  it('baris rubrik pilar pilihan: tulisan terbit pilarnya di luar mozaik, kartu membawa gambar, tanggal, dan penulis', async () => {
+    const payload = await getTestPayload()
+    const relasi = await siapkanRelasiArtikel(payload)
+    const pilihan = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
+    const lain = await payload.create({ collection: 'artikel', data: dataArtikelTerbit(relasi) })
+    await payload.updateGlobal({
+      slug: 'beranda',
+      data: {
+        tataLetak: [
+          { blockType: 'heroBeranda', judul: 'Intinya dulu.' },
+          { blockType: 'mozaikPilihan', artikel: [pilihan.id] },
+          { blockType: 'barisRubrik', pilar: [relasi.pilar.id], jumlah: 4 },
+        ],
+      },
+    })
+    const bagian = await ambilBeranda(payload)
+    const rubrik = bagian.find((b) => b.jenis === 'rubrik')
+    expect(rubrik?.jenis === 'rubrik' && rubrik.baris.map((b) => b.pilar.slug)).toEqual([relasi.pilar.slug])
+    const kartu = rubrik?.jenis === 'rubrik' ? rubrik.baris[0].artikel : []
+    expect(kartu.map((k) => k.id)).toEqual([lain.id])
+    expect(kartu[0]).toMatchObject({ gambar: { publicId: expect.any(String), width: 1600 }, terbit: expect.any(String), penulis: relasi.penulis.nama })
+  })
+
   it('paling dibaca pekan ini: artikel terbit dengan klik 7 hari terbanyak, tanpa draf, glosarium, dan path lain', async () => {
     const payload = await getTestPayload()
     await payload.delete({ collection: 'analitik-halaman', where: { id: { exists: true } } })

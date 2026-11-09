@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { AnchorHTMLAttributes } from 'react'
 
-import { tautanInternal } from '@/modules/konten/tampilan'
+import { tautanInternal } from '@/modules/konten/tautan'
 
 type Props = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }
 

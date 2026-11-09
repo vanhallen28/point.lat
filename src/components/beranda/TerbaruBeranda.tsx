@@ -1,33 +1,29 @@
-import { Tautan } from '@/components/dasar/Tautan'
+import { KartuArtikel } from '@/components/kartu/KartuArtikel'
 import type { BagianBeranda } from '@/modules/konten/tipe'
 
 import gaya from './Beranda.module.css'
 import { KotakNewsletter } from './KotakNewsletter'
 
 /**
- * Blok "Paling dicari pekan ini" (klik Google 7 hari), atau tulisan terbaru selama datanya belum cukup:
- * daftar bertitik warna pilar, dengan newsletter di kolom samping bila editor meletakkannya tepat setelahnya.
+ * Blok "Paling dicari pekan ini" (klik Google 7 hari, bernomor peringkat), atau tulisan terbaru selama datanya
+ * belum cukup: daftar kartu ringkas bergambar kecil dengan tanggal terbit, dua kolom di layar lebar, dengan
+ * newsletter di kolom samping bila editor meletakkannya tepat setelahnya.
  */
 export function TerbaruBeranda({ terbaru }: { terbaru: Extract<BagianBeranda, { jenis: 'terbaru' }> }) {
+  const Daftar = terbaru.peringkat ? 'ol' : 'ul'
   return (
     <div className={`kontainer ${gaya.bagian} ${gaya.terbaruBaris}`}>
       <section aria-labelledby={`${terbaru.id}-judul`} className={gaya.terbaru}>
         <h2 id={`${terbaru.id}-judul`} className={gaya.subjudul}>
           {terbaru.judul}
         </h2>
-        <ul className={gaya.daftar}>
+        <Daftar className={`${gaya.daftar} ${terbaru.newsletter ? '' : gaya.daftarLebar} ${terbaru.peringkat ? gaya.peringkat : ''}`}>
           {terbaru.artikel.map((k) => (
-            <li key={k.id}>
-              <Tautan href={k.href} className={gaya.item}>
-                <span className={gaya.titik} data-warna={k.pilar?.warna} aria-hidden="true" />
-                <span className={gaya.itemTeks}>
-                  <span className={gaya.itemJudul}>{k.judul}</span>
-                  {k.pilar && <span className={gaya.itemPilar}>{k.pilar.nama}</span>}
-                </span>
-              </Tautan>
+            <li key={k.id} className={gaya.item}>
+              <KartuArtikel kartu={k} ukuran="baris" />
             </li>
           ))}
-        </ul>
+        </Daftar>
       </section>
       {terbaru.newsletter && (
         <aside className={gaya.samping} aria-label="Newsletter">

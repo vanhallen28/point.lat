@@ -52,7 +52,7 @@ describe('halaman 404', () => {
       h(TidakDitemukan, {
         daftar: {
           judul: 'Paling dicari pekan ini',
-          artikel: [{ id: 1, judul: 'Cara hitung THR', href: '/cara-hitung-thr', tipe: 'panduan', pilar: null, intinya: null }],
+          artikel: [{ id: 1, judul: 'Cara hitung THR', href: '/cara-hitung-thr', tipe: 'panduan', pilar: null, intinya: null, gambar: null, terbit: null, penulis: null }],
         },
       }),
     )

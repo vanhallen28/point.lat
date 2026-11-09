@@ -2,6 +2,91 @@
   border-bottom: var(--garis-tebal) solid var(--garis);
 }
 
+/* Baris atas seperti kop media: tanggal hari ini dan Topik hangat yang bisa digeser di HP. */
+.atas {
+  border-bottom: var(--garis-tipis) solid var(--garis);
+  font-size: var(--teks-label);
+}
+
+.atasIsi {
+  display: flex;
+  align-items: center;
+  gap: var(--ruang-5);
+  min-height: 40px;
+}
+
+.tanggal {
+  display: none;
+  flex: none;
+  color: var(--teks-sekunder);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Tanggal ditulis skrip sebaris ke atribut `data-tanggal`; tanpa itu paragrafnya tidak tampil. */
+.tanggal[data-tanggal] {
+  display: block;
+}
+
+.tanggal::after {
+  content: attr(data-tanggal);
+}
+
+.topik {
+  display: flex;
+  align-items: center;
+  gap: var(--ruang-3);
+  min-width: 0;
+  margin-right: calc(var(--gutter) * -1);
+  padding-right: var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.topikLabel {
+  flex: none;
+  font-weight: 800;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
+}
+
+.topikDaftar {
+  display: flex;
+  gap: var(--ruang-1) var(--ruang-4);
+  width: max-content;
+  padding: 0;
+  list-style: none;
+}
+
+.topikTautan {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sentuh-min);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.topikTautan:hover,
+.topikTautan[aria-current] {
+  text-decoration: underline;
+  text-decoration-thickness: var(--garis-tipis);
+  text-underline-offset: 0.2em;
+}
+
+@media (max-width: 47.99rem) {
+  .tanggal[data-tanggal] {
+    display: none;
+  }
+}
+
+@media (min-width: 64rem) {
+  .topik {
+    margin-right: 0;
+    padding-right: 0;
+  }
+}
+
 /* HP dan tablet: logo dan tombol Tools di baris pertama, pill rubrik bisa digeser di baris kedua. */
 .baris {
   display: grid;

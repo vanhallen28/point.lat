@@ -15,7 +15,7 @@ test('artikel panduan: urutan bagian sesuai spesifikasi §4', async ({ page }) =
   await expect(remah.locator('[aria-current="page"]')).toHaveText(JUDUL_PANDUAN)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(JUDUL_PANDUAN)
   await expect(page.getByRole('article').locator('header').getByText('Panduan', { exact: true })).toBeVisible()
-  await expect(page.getByText(/^Diperbarui \d{1,2} \w+ 20\d\d$/)).toBeVisible()
+  await expect(page.getByText(/^Terbit \d{1,2} \w+ 20\d\d$/)).toBeVisible()
   await expect(page.getByText('1 menit baca')).toBeVisible()
 
   const intinya = page.getByRole('region', { name: 'Intinya', exact: true })

@@ -14,9 +14,9 @@ function urlDaftarPaket(slug: string[]): string {
 }
 
 const ALASAN_BERANDA = {
-  ditambah: 'Blok Pilihan redaksi ditambahkan ke beranda. Kartunya tampil setelah artikel pilihannya terbit.',
-  'sudah-ada': 'Beranda sudah punya blok Pilihan redaksi, jadi tidak diubah.',
-  dilewati: 'Beranda tidak diubah.',
+  ditambah: 'Tata letak portal dipasang di beranda (Pilihan redaksi, Strip kalkulator, Baris rubrik). Kartunya tampil setelah artikel dan kalkulatornya terbit.',
+  'sudah-ada': 'Beranda sudah punya semua blok portal, jadi tidak diubah.',
+  dilewati: 'Beranda tidak diubah karena ada perubahan beranda yang belum diterbitkan.',
 } as const
 
 /**

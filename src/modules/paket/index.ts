@@ -1,5 +1,6 @@
 export { endpointImporPaket, endpointStatusPaket, PATH_PAKET } from './endpoint'
-export { alasanLewatiTools, imporPaket, rencanaMozaik, type BacaSampul, type OpsiImpor } from './impor'
+export { adaPerubahanTertunda, pasangBerandaPortal, rencanaBeranda } from './beranda'
+export { alasanLewatiTools, imporPaket, type BacaSampul, type OpsiImpor } from './impor'
 export { ambilKunci, bacaHasil, lepasKunci, sedangBerjalan, simpanHasil } from './kunci'
 export { markdownKeLexical, GalatMarkdown, type CariDokumen } from './markdown'
 export { MOZAIK_PAKET, NAMA_PAKET, PAKET_AWAL } from './paket-awal'

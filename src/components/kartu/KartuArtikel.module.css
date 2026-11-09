@@ -1,105 +1,224 @@
+/*
+ * Kartu artikel bergambar (spesifikasi §25). Gambar 16:9 bersudut, atau panel warna pilar dengan cincin dari
+ * tanda logo bila artikel belum punya gambar, lalu teks di atas latar halaman: baris pilar, judul, Intinya,
+ * dan meta (tanggal terbit, penulis). Hover memperbesar gambar sedikit dan menggarisbawahi judul.
+ */
 .daftar {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: var(--ruang-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--ruang-8) var(--ruang-6);
   padding: 0;
   list-style: none;
 }
 
 .kartu {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
   gap: var(--ruang-3);
   height: 100%;
-  min-height: 220px;
-  padding: 26px;
-  border-radius: var(--radius-kartu);
-  background: var(--pilar, var(--permukaan));
-  color: var(--pilar-teks, var(--teks));
+  color: var(--teks);
   text-decoration: none;
-  transition: transform var(--durasi-cepat) var(--kurva);
 }
 
-.kartu:hover {
-  transform: translateY(-2px);
+.media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  background: var(--pilar, var(--permukaan));
 }
 
-.kartu:active {
-  transform: scale(0.99);
+.gambar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--durasi-sedang) var(--kurva);
 }
 
-.label {
+.kartu:hover .gambar {
+  transform: scale(1.04);
+}
+
+/* Panel pengganti gambar: warna pilar, dua cincin dari tanda logo, dan nama pilar besar di kiri bawah. */
+.panel {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  padding: var(--ruang-4) var(--ruang-5);
+  background:
+    radial-gradient(
+      circle at 82% 34%,
+      transparent 0 30%,
+      color-mix(in srgb, var(--pilar-teks, var(--teks-terbalik)) 24%, transparent) 30% 31.5%,
+      transparent 31.5% 47%,
+      color-mix(in srgb, var(--pilar-teks, var(--teks-terbalik)) 14%, transparent) 47% 48.5%,
+      transparent 48.5%
+    ),
+    var(--pilar, var(--latar-terbalik));
+  color: var(--pilar-teks, var(--teks-terbalik));
+  transition: transform var(--durasi-sedang) var(--kurva);
+}
+
+.kartu:hover .panel {
+  transform: scale(1.04);
+}
+
+.panelKata {
+  max-width: 80%;
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 900;
+  font-stretch: var(--lebar-display);
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.teks {
+  display: grid;
+  align-content: start;
+  gap: var(--ruang-2);
+}
+
+.kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruang-2);
   font-size: var(--teks-label);
   font-weight: 800;
   letter-spacing: var(--jarak-label);
   text-transform: uppercase;
 }
 
+.titik {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pilar);
+  box-shadow: inset 0 0 0 1px var(--garis);
+}
+
+.tipe {
+  color: var(--teks-sekunder);
+  font-weight: 700;
+}
+
+.pilar + .tipe::before,
+.meta > * + *::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin-right: var(--ruang-2);
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+}
+
 .judul {
-  font-size: 26px;
+  font-size: 21px;
   font-weight: 800;
   font-stretch: 85%;
-  line-height: var(--tinggi-judul);
+  line-height: 1.12;
+  text-wrap: pretty;
 }
 
 .kartu:hover .judul {
   text-decoration: underline;
   text-decoration-thickness: var(--garis-tebal);
+  text-underline-offset: 0.12em;
 }
 
 .intinya {
-  font-size: 16px;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
   line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.tipe {
-  margin-top: auto;
-  font-size: var(--teks-kecil);
+.intinya strong {
+  color: var(--teks);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruang-2);
+  color: var(--teks-sekunder);
+  font-size: var(--teks-label);
   font-weight: 600;
 }
 
-/* Kartu utama mozaik beranda: label pilar berupa pil, judul dan Intinya turun ke bawah kartu. */
+/* Berita utama beranda: gambar lebar, judul besar, Intinya utuh. */
 .besar {
-  min-height: 440px;
-  padding: var(--ruang-8);
   gap: var(--ruang-4);
 }
 
-.besar .label {
-  align-self: flex-start;
-  padding: 6px var(--ruang-3);
-  border-radius: var(--radius-pil);
-  background: var(--pilar-teks);
-  color: var(--pilar);
+.besar .media {
+  border-radius: 20px;
+}
+
+.besar .panelKata {
+  font-size: clamp(44px, 7vw, 96px);
 }
 
 .besar .judul {
-  margin-top: auto;
-  font-size: var(--teks-h1);
+  font-size: clamp(30px, 3.4vw, 46px);
   font-weight: 900;
   font-stretch: var(--lebar-h1);
-  line-height: var(--tinggi-h1);
-  letter-spacing: -0.02em;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 
 .besar .intinya {
-  max-width: 46ch;
+  max-width: 60ch;
+  font-size: 17px;
+  -webkit-line-clamp: 4;
+}
+
+/* Daftar ringkas: gambar kecil 4:3 di kiri, tanpa Intinya. */
+.baris {
+  grid-template-columns: 128px 1fr;
+  grid-template-rows: none;
+  align-items: start;
+  gap: var(--ruang-4);
+}
+
+.baris .media {
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+}
+
+.baris .panel {
+  padding: var(--ruang-2) var(--ruang-3);
+}
+
+.baris .panelKata {
+  font-size: 15px;
+}
+
+.baris .judul {
   font-size: 18px;
+  line-height: 1.2;
 }
 
-.besar .tipe {
-  margin-top: var(--ruang-2);
-}
+@media (max-width: 30rem) {
+  .baris {
+    grid-template-columns: 96px 1fr;
+    gap: var(--ruang-3);
+  }
 
-/* Kartu baris kedua mozaik beranda. */
-.sedang {
-  min-height: 300px;
-  padding: 28px;
-}
-
-.sedang .judul {
-  font-size: 34px;
-  font-weight: 900;
-  font-stretch: var(--lebar-h1);
-  line-height: 1.02;
+  .baris .judul {
+    font-size: 17px;
+  }
 }

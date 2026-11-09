@@ -542,6 +542,45 @@ Bila beranda belum punya blok Pilihan redaksi, impor menambahkannya setelah hero
 
 **Hasil yang diharapkan setelah semua terbit:** kartu Paket konten awal hilang dari beranda admin, rubrik Uang & Karier dan Belajar berisi subkategori baru, dan artikel saling menautkan.
 
+## M. Tampilan media (v1.4.0)
+
+Build Vercel menjalankan migrasi `beranda_portal`. Log build memuat baris "Migrasi beranda_portal: ...":
+- "tata letak beranda ditambah": blok Pilihan redaksi, Strip kalkulator, dan Baris rubrik dipasang;
+- "tata letak beranda dilewati": beranda punya perubahan yang belum diterbitkan, jadi tidak diubah;
+- "draf halaman Redaksi dibuat";
+- "tabel draf cara-menghitung-thr diperbaiki".
+
+### M1. Beranda
+
+Buka `https://point.lat` dan periksa susunannya:
+1. kop "Intinya dulu.";
+2. Pilihan redaksi dengan berita utama bergambar;
+3. Paling dicari atau Tulisan terbaru bergambar kecil;
+4. pita Hitung sendiri;
+5. satu baris per pilar.
+
+Pilihan redaksi dan baris rubrik hanya menampilkan tulisan yang sudah terbit, dan pita Hitung sendiri hanya kalkulator yang sudah terbit (bagian L3).
+
+Bila log menulis "dilewati", buka Tampilan, Beranda. Terbitkan atau buang perubahan yang tertunda, lalu tambahkan blok **Strip kalkulator** dan **Baris rubrik** (dan **Mozaik pilihan redaksi** bila belum ada) lewat tombol tambah blok, dan Publikasikan perubahan.
+
+### M2. Header dan menu
+
+- Baris atas menampilkan tanggal hari ini dan Topik hangat (subkategori tulisan terbaru).
+- Menu hanya menampilkan pilar yang punya tulisan terbit. Tekno dan Sehat muncul sendiri setelah tulisan pertamanya terbit.
+
+### M3. Halaman Redaksi
+
+1. Halaman, **Redaksi** (draf): ganti setiap bagian dalam [kurung siku], hapus baris yang tidak berlaku (misalnya badan hukum bila belum ada), lalu Terbitkan.
+2. Tampilan, Footer, Tautan: tambah label `Redaksi` dengan URL `/redaksi`, lalu Simpan.
+
+### M4. Akun sosial
+
+Tampilan, Footer, **Akun sosial** (dan Saluran WhatsApp bila ada): isi URL profil point. Kolom "Ikuti point." di footer muncul setelah ada isinya.
+
+### M5. Artikel THR
+
+Draf "Cara menghitung THR 2027" sudah diperbaiki migrasi (kolom pertama tabel PPh 21 kini berjudul "Komponen") dan bisa diterbitkan seperti artikel paket lain (bagian L2).
+
 ## Verifikasi
 
 - [ ] Deploy Production terakhir **Ready** dan log build memuat `Lingkungan produksi siap: env dan database cocok.`
@@ -605,6 +644,7 @@ Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sud
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
+| 10 November 2026 | Sesi Claude (v1.4.0) | Ditambah bagian M: tampilan media, beranda portal, header dan menu, halaman Redaksi, akun sosial, dan artikel THR. |
 | 10 November 2026 | Sesi Claude (v1.3.1) | Pemecahan masalah: push gagal HTTP 400 untuk kiriman di atas 1 MiB. |
 | 10 November 2026 | Sesi Claude (v1.3.0) | Ditambah bagian L: impor paket konten awal, review dan terbit bertahap, penjelasan kalkulator, dan blok Pilihan redaksi di beranda. |
 | 9 November 2026 | Sesi Claude (v1.2.0) | Ditambah bagian K: beranda admin, Kebijakan Privasi lebih dulu, form kontak, newsletter tersimpan, tombol bagikan, dan Kode sematan. |

@@ -13,7 +13,7 @@ const pilar: Pilar = { id: 1, nama: 'Uang & Karier', slug: 'uang-karier', warna:
 const artikel = (id: number, status: 'published' | 'draft' = 'published'): Artikel =>
   ({ id, judul: `Artikel ${id}`, slug: `artikel-${id}`, tipe: 'panduan', pilar, intinya: [{ poin: `Intinya ${id}.` }], _status: status, ...waktu }) as Artikel
 
-const kartu = (id: number): KartuArtikel => ({ id, judul: `Artikel ${id}`, href: `/artikel-${id}`, tipe: 'panduan', pilar: null, intinya: null })
+const kartu = (id: number): KartuArtikel => ({ id, judul: `Artikel ${id}`, href: `/artikel-${id}`, tipe: 'panduan', pilar: null, intinya: null, gambar: null, terbit: null, penulis: null })
 
 const file: Media = { id: 30, publicId: 'point/video/a', jenis: 'video', alt: null, width: 1080, height: 1920, durasi: 40, ...waktu }
 const video = (id: number, status: 'published' | 'draft' = 'published'): Video =>

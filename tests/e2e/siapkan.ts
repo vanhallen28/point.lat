@@ -411,6 +411,8 @@ await payload.updateGlobal({
       { blockType: 'newsletterBlok' },
       // Setelah newsletter: slot di antara tulisan terbaru dan newsletter akan memisahkan kolom samping newsletter.
       { blockType: 'slotIklan', idSlot: 'beranda-samping' },
+      { blockType: 'stripTools', judul: 'Kalkulator point.', teks: 'Rumus dan sumber aturannya ada di setiap kalkulator.' },
+      { blockType: 'barisRubrik', jumlah: 3 },
     ],
   },
 })

@@ -16,7 +16,8 @@ export type Tautan = { label: string; href: string }
 
 export type ItemMenu = Tautan & { warna: WarnaPilar | null }
 
-export type DataHeader = { menu: ItemMenu[]; tools: Tautan }
+/** `topik`: baris "Topik hangat" di header (subkategori tulisan terbaru); kosong berarti barisnya tidak tampil. */
+export type DataHeader = { menu: ItemMenu[]; tools: Tautan; topik: Tautan[] }
 
 export type DataFooter = { tautan: Tautan[]; sosial: Tautan[]; whatsapp: string | null; hakCipta: string }
 
@@ -48,6 +49,12 @@ export type KartuArtikel = {
   tipe: TipeArtikel
   pilar: PilarRingkas | null
   intinya: string | null
+  /** Gambar utama untuk kartu bergambar (spesifikasi §25); `null` berarti kartu memakai panel warna pilar. */
+  gambar: MediaTampil | null
+  /** Tanggal terbit ISO untuk baris meta kartu. */
+  terbit: string | null
+  /** Nama penulis untuk baris meta kartu. */
+  penulis: string | null
 }
 
 /** Subjudul H2 untuk daftar isi; `id` sama dengan atribut `id` heading di isi. */
@@ -65,6 +72,9 @@ export type DataArtikel = {
   href: string
   deck: string
   intinya: string[]
+  /** Tanggal terbit pertama (ISO). */
+  terbit: string | null
+  /** Tanggal perubahan besar terakhir; sama dengan `terbit` bila belum pernah diperbarui besar. */
   diperbarui: string | null
   waktuBaca: number
   pilar: PilarRingkas | null
@@ -165,11 +175,19 @@ export type DataTool = {
  */
 export type DataNewsletter = { judul: string; teks: string | null } & ({ cara: 'form' } | { cara: 'penyedia'; href: string })
 
+/** Satu baris blok Baris rubrik di beranda: pilar dan tulisan terbit terbarunya. */
+export type BarisRubrik = { pilar: PilarRingkas; artikel: KartuArtikel[] }
+
+/** Kalkulator terbit dengan pilarnya (warna dan nama) untuk strip kalkulator beranda. */
+export type ItemToolsPilar = ItemTools & { pilar: PilarRingkas }
+
 /** Bagian beranda siap render, urut sesuai global `beranda`. `id` dari blok Payload. */
 export type BagianBeranda =
   | { jenis: 'hero'; id: string; judul: string; subjudul: string | null; placeholder: string }
   | { jenis: 'mozaik'; id: string; judul: string | null; artikel: KartuArtikel[]; tools: ItemTools[] }
   | { jenis: 'video'; id: string; judul: string; video: KartuVideo[] }
-  | { jenis: 'terbaru'; id: string; judul: string; artikel: KartuArtikel[]; newsletter: DataNewsletter | null }
+  | { jenis: 'terbaru'; id: string; judul: string; artikel: KartuArtikel[]; newsletter: DataNewsletter | null; peringkat: boolean }
+  | { jenis: 'rubrik'; id: string; baris: BarisRubrik[] }
+  | { jenis: 'tools'; id: string; judul: string; teks: string | null; tools: ItemToolsPilar[] }
   | { jenis: 'newsletter'; id: string; newsletter: DataNewsletter }
   | { jenis: 'iklan'; id: string; slot: SlotSiap }

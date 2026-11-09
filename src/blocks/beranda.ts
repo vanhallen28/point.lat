@@ -89,12 +89,43 @@ export const BlokSlotIklan: Block = {
   ],
 }
 
+export const BlokBarisRubrik: Block = {
+  slug: 'barisRubrik',
+  interfaceName: 'BlokBarisRubrik',
+  labels: { singular: 'Baris rubrik', plural: 'Baris rubrik' },
+  fields: [
+    {
+      name: 'pilar',
+      type: 'relationship',
+      relationTo: 'pilar',
+      hasMany: true,
+      admin: {
+        description:
+          'Satu baris per pilar berisi tulisan terbarunya. Kosongkan untuk semua pilar sesuai urutan pilar. Pilar tanpa tulisan terbit tidak ditampilkan.',
+      },
+    },
+    { name: 'jumlah', type: 'number', defaultValue: 4, min: 2, max: 8, admin: { description: 'Jumlah tulisan per pilar.' } },
+  ],
+}
+
+export const BlokStripTools: Block = {
+  slug: 'stripTools',
+  interfaceName: 'BlokStripTools',
+  labels: { singular: 'Strip kalkulator', plural: 'Strip kalkulator' },
+  fields: [
+    { name: 'judul', type: 'text', defaultValue: 'Hitung sendiri' },
+    { name: 'teks', type: 'textarea', defaultValue: 'Kalkulator dengan rumus dan sumber aturannya, gratis dan tanpa daftar.' },
+  ],
+}
+
 /** Blok yang menyusun beranda. Urutannya bisa diubah editor. */
 export const blokBeranda: Block[] = [
   BlokHeroBeranda,
   BlokMozaikPilihan,
   BlokStripVideo,
   BlokPalingDibaca,
+  BlokBarisRubrik,
+  BlokStripTools,
   BlokNewsletter,
   BlokSlotIklan,
 ]

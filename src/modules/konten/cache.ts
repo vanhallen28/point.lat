@@ -35,9 +35,13 @@ const SEJAM = 3600
 
 const payload = () => getPayload({ config })
 
-/** Menu header memakai nama, slug, dan warna pilar, jadi ikut dibuang saat pilar mana pun berubah. */
+/**
+ * Menu header memakai nama, slug, dan warna pilar, jadi ikut dibuang saat pilar mana pun berubah. Pilar tanpa
+ * tulisan terbit disembunyikan dan baris "Topik hangat" dari subkategori tulisan terbaru, jadi ikut dibuang saat
+ * artikel atau subkategori berubah.
+ */
 export const muatHeader = unstable_cache(async () => ambilHeader(await payload()), ['konten', 'header'], {
-  tags: [TAG.header, TAG.koleksi('pilar')],
+  tags: [TAG.header, TAG.koleksi('pilar'), TAG.koleksi('artikel'), TAG.koleksi('subkategori')],
   revalidate: SEJAM,
 })
 

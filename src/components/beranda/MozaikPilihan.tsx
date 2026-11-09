@@ -30,9 +30,9 @@ function KotakTools({ tools, tingkat }: { tools: ItemTools[]; tingkat: 'h2' | 'h
 }
 
 /**
- * Mozaik pilihan redaksi: kartu pertama paling besar, dua berikutnya bertumpuk di sampingnya, sisanya
- * di baris kedua bersama kotak "Hitung sendiri". Baris memakai flex-wrap, jadi jumlah kartu berapa pun
- * (1-5) tidak meninggalkan sel grid kosong.
+ * Berita utama beranda (mozaik pilihan redaksi, spesifikasi §25): kartu pertama bergambar besar, dua berikutnya
+ * di kolom samping, sisanya di baris kedua bersama kotak "Hitung sendiri". Baris memakai flex-wrap, jadi jumlah
+ * kartu berapa pun (1-5) tidak meninggalkan sel grid kosong. Gambar kartu utama dimuat lebih dulu (LCP).
  */
 export function MozaikPilihan({ mozaik }: { mozaik: Extract<BagianBeranda, { jenis: 'mozaik' }> }) {
   const [utama, ...lain] = mozaik.artikel
@@ -52,12 +52,14 @@ export function MozaikPilihan({ mozaik }: { mozaik: Extract<BagianBeranda, { jen
       )}
       <div className={gaya.baris}>
         <div className={gaya.utama}>
-          <KartuArtikel kartu={utama} tingkat={tingkat} ukuran="besar" />
+          <KartuArtikel kartu={utama} tingkat={tingkat} ukuran="besar" utama />
         </div>
         {samping.length > 0 && (
           <div className={gaya.kolom}>
             {samping.map((k) => (
-              <KartuArtikel key={k.id} kartu={k} tingkat={tingkat} />
+              <div key={k.id} className={gaya.sel}>
+                <KartuArtikel kartu={k} tingkat={tingkat} ukuran="sedang" />
+              </div>
             ))}
           </div>
         )}
@@ -66,7 +68,7 @@ export function MozaikPilihan({ mozaik }: { mozaik: Extract<BagianBeranda, { jen
         <div className={`${gaya.baris} ${gaya.bawah}`}>
           {bawah.map((k) => (
             <div key={k.id} className={gaya.sedang} data-masuk="">
-              <KartuArtikel kartu={k} tingkat={tingkat} ukuran="sedang" />
+              <KartuArtikel kartu={k} tingkat={tingkat} />
             </div>
           ))}
           {mozaik.tools.length > 0 && <KotakTools tools={mozaik.tools} tingkat={tingkat} />}

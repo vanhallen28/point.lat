@@ -79,8 +79,45 @@ test('jarak antarbagian beranda tetap, tanpa celah kosong, di 375 dan 1440 px', 
     const strip = await kotak('Intinya dalam 45 detik')
     const populer = await kotak('Paling dicari pekan ini')
     const jarak = [mozaik.y - (hero.y + hero.height), strip.y - (mozaik.y + mozaik.height), populer.y - (strip.y + strip.height)]
-    expect(jarak.map(Math.round), `${lebar}px`).toEqual([40, 56, 56])
+    expect(jarak.map(Math.round), `${lebar}px`).toEqual([32, 56, 56])
+    // Strip kalkulator dan baris rubrik memakai jarak antarbagian yang sama (slot iklan tidak menempati ruang tanpa persetujuan).
+    const newsletter = (await page.getByRole('complementary', { name: 'Newsletter' }).boundingBox())!
+    const pita = await kotak('Kalkulator point.')
+    const rubrikPertama = await kotak('Uang & Karier')
+    expect(Math.round(pita.y - Math.max(populer.y + populer.height, newsletter.y + newsletter.height)), `${lebar}px`).toBe(56)
+    expect(Math.round(rubrikPertama.y - (pita.y + pita.height)), `${lebar}px`).toBe(56)
   }
+})
+
+test('strip kalkulator dan baris rubrik: kalkulator terbit per pilar, satu baris per pilar tanpa mengulang mozaik', async ({ page }) => {
+  await page.goto('/')
+  const pita = page.getByRole('region', { name: 'Kalkulator point.' })
+  await expect(pita).toHaveCSS('background-color', 'rgb(244, 241, 236)')
+  await expect(pita.getByText('Rumus dan sumber aturannya ada di setiap kalkulator.')).toBeVisible()
+  await expect(pita.getByRole('listitem')).toHaveCount(6)
+  await expect(pita.getByRole('link', { name: /Gaji Bersih/ })).toHaveAttribute('href', '/tools/gaji-bersih')
+  await expect(pita.getByRole('link', { name: 'Semua kalkulator' })).toHaveAttribute('href', '/tools')
+
+  const uang = page.getByRole('region', { name: 'Uang & Karier', exact: true })
+  await expect(uang.getByRole('link', { name: 'Semua tulisan Uang & Karier' })).toHaveAttribute('href', '/uang-karier')
+  const kartu = uang.getByRole('listitem')
+  expect(await kartu.count()).toBeGreaterThan(0)
+  expect(await kartu.count()).toBeLessThanOrEqual(3)
+  // Berita utama mozaik tidak muncul lagi di baris rubriknya.
+  await expect(uang.getByRole('link', { name: /Cara hitung gaji bersih/ })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Belajar', exact: true }).getByRole('link', { name: 'Semua tulisan Belajar' })).toHaveAttribute('href', '/belajar')
+})
+
+test('kartu artikel bergambar: gambar 16:9, tanggal terbit, dan penulis; kartu ringkas di Paling dicari', async ({ page }) => {
+  await page.goto('/')
+  const mozaik = page.getByRole('region', { name: 'Pilihan redaksi' })
+  const utama = mozaik.getByRole('link', { name: /Cara hitung gaji bersih/ })
+  await expect(utama.locator('time')).toHaveText(/^\d{1,2} \w+ 20\d\d$/)
+  const media = utama.locator('img').first()
+  const kotak = (await media.boundingBox())!
+  expect(Math.abs(kotak.width / kotak.height - 16 / 9)).toBeLessThan(0.05)
+  const populer = page.getByRole('region', { name: 'Paling dicari pekan ini' })
+  await expect(populer.getByRole('list')).toHaveJSProperty('tagName', 'OL')
 })
 
 for (const { lebar, tinggi } of UKURAN_LAYAR) {

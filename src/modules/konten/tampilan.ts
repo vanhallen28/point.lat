@@ -17,15 +17,43 @@ export const LABEL_SOSIAL: Record<NonNullable<Footer['sosial']>[number]['platfor
   linkedin: 'LinkedIn',
 }
 
+/** Jumlah topik paling banyak di baris "Topik hangat" header. */
+export const MAKS_TOPIK = 5
+
+/** Subkategori tulisan terbit terbaru, urut kemunculan pertama, tanpa duplikat. */
+export type SubkategoriTulisan = { nama: string; slug: string; pilarSlug: string }
+
+/**
+ * Baris "Topik hangat" header: subkategori dari tulisan terbaru (urutan terbaru dulu), paling banyak `MAKS_TOPIK`,
+ * jadi topiknya ikut bergeser setiap ada tulisan baru tanpa diatur editor.
+ */
+export function susunTopik(sub: SubkategoriTulisan[]): Tautan[] {
+  const hasil: Tautan[] = []
+  const terpakai = new Set<string>()
+  for (const s of sub) {
+    const href = pathFor({ jenis: 'subkategori', slug: s.slug, pilarSlug: s.pilarSlug })
+    if (terpakai.has(href)) continue
+    terpakai.add(href)
+    hasil.push({ label: s.nama, href })
+    if (hasil.length >= MAKS_TOPIK) break
+  }
+  return hasil
+}
+
 /**
  * Menu header dari global `header` (depth 1). Item pilar memakai path dan warna pilarnya; item yang
- * relasinya belum di-populate, pilarnya terhapus, atau tautannya kosong dilewati.
+ * relasinya belum di-populate, pilarnya terhapus, atau tautannya kosong dilewati. `pilarTerisi`: slug pilar
+ * yang punya tulisan terbit; bila diisi, pilar lain disembunyikan supaya pembaca tidak membuka rubrik kosong.
  */
-export function susunHeader(header: Pick<Header, 'menu' | 'tombolTools'>): DataHeader {
+export function susunHeader(
+  header: Pick<Header, 'menu' | 'tombolTools'>,
+  opsi: { pilarTerisi?: ReadonlySet<string>; topik?: Tautan[] } = {},
+): DataHeader {
   const menu: ItemMenu[] = []
   for (const item of header.menu ?? []) {
     if (item.jenis === 'pilar') {
       const pilar = item.pilar && typeof item.pilar === 'object' ? item.pilar : null
+      if (pilar?.slug && opsi.pilarTerisi && !opsi.pilarTerisi.has(pilar.slug)) continue
       if (pilar?.slug) menu.push({ label: item.label, href: pathFor({ jenis: 'pilar', slug: pilar.slug }), warna: pilar.warna })
     } else if (item.url?.trim()) {
       menu.push({ label: item.label, href: item.url.trim(), warna: null })
@@ -35,6 +63,7 @@ export function susunHeader(header: Pick<Header, 'menu' | 'tombolTools'>): DataH
   return {
     menu,
     tools: { label: tools?.label?.trim() || TOOLS_BAWAAN.label, href: tools?.url?.trim() || TOOLS_BAWAAN.href },
+    topik: opsi.topik ?? [],
   }
 }
 
@@ -47,18 +76,4 @@ export function susunFooter(footer: Pick<Footer, 'tautan' | 'sosial' | 'saluranW
   }
 }
 
-/**
- * Penanda tautan header untuk path yang sedang dibuka: `page` bila path sama persis, `true` bila path
- * berada di bawahnya (rubrik `/uang-karier` saat membuka `/uang-karier/pajak`, Tools saat membuka
- * `/tools/gaji-bersih`). Beranda dan URL luar tidak pernah ditandai sebagai induk.
- */
-export function tandaAktif(path: string | null, href: string): 'page' | 'true' | undefined {
-  if (!path || !tautanInternal(href)) return undefined
-  if (path === href) return 'page'
-  return href !== '/' && path.startsWith(`${href}/`) ? 'true' : undefined
-}
-
-/** Tautan internal (path situs) dirender dengan `next/link`; selain itu `<a>` biasa. */
-export function tautanInternal(href: string): boolean {
-  return href.startsWith('/') && !href.startsWith('//')
-}
+export { tandaAktif, tautanInternal } from './tautan'

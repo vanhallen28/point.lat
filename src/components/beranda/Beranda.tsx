@@ -8,11 +8,13 @@ import gaya from './Beranda.module.css'
 import { HeroBeranda } from './HeroBeranda'
 import { KotakNewsletter } from './KotakNewsletter'
 import { MozaikPilihan } from './MozaikPilihan'
+import { RubrikBeranda } from './RubrikBeranda'
+import { StripTools } from './StripTools'
 import { StripVideo } from './StripVideo'
 import { TerbaruBeranda } from './TerbaruBeranda'
 
 /**
- * Beranda "Kartu Intinya": bagian dirender sesuai urutan editor. Setiap bagian membawa kontainernya
+ * Beranda bergaya portal (spesifikasi §25, dari "Kartu Intinya"): bagian dirender sesuai urutan editor. Setiap bagian membawa kontainernya
  * sendiri (strip video selebar layar) dan jarak atas yang sama, jadi urutan apa pun tidak membuat
  * celah ganda. Slot iklan memakai kelas jarak yang sama dan tidak menempati ruang sebelum pengunjung
  * memilih Izinkan semua.
@@ -31,6 +33,10 @@ export function Beranda({ bagian, situs }: { bagian: BagianBeranda[]; situs: Sit
             return <StripVideo key={b.id} strip={b} cloudName={situs.cloudName} />
           case 'terbaru':
             return <TerbaruBeranda key={b.id} terbaru={b} />
+          case 'rubrik':
+            return <RubrikBeranda key={b.id} rubrik={b} />
+          case 'tools':
+            return <StripTools key={b.id} strip={b} />
           case 'newsletter':
             return (
               <div key={b.id} className={`kontainer ${gaya.bagian}`}>

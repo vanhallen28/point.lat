@@ -2057,7 +2057,17 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface Beranda {
   id: number;
   tataLetak?:
-    (BlokHeroBeranda | BlokMozaikPilihan | BlokStripVideo | BlokPalingDibaca | BlokNewsletter | BlokSlotIklan)[] | null;
+    | (
+        | BlokHeroBeranda
+        | BlokMozaikPilihan
+        | BlokStripVideo
+        | BlokPalingDibaca
+        | BlokBarisRubrik
+        | BlokStripTools
+        | BlokNewsletter
+        | BlokSlotIklan
+      )[]
+    | null;
   _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -2116,6 +2126,34 @@ export interface BlokPalingDibaca {
   id?: string | null;
   blockName?: string | null;
   blockType: 'palingDibaca';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokBarisRubrik".
+ */
+export interface BlokBarisRubrik {
+  /**
+   * Satu baris per pilar berisi tulisan terbarunya. Kosongkan untuk semua pilar sesuai urutan pilar. Pilar tanpa tulisan terbit tidak ditampilkan.
+   */
+  pilar?: (number | Pilar)[] | null;
+  /**
+   * Jumlah tulisan per pilar.
+   */
+  jumlah?: number | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'barisRubrik';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokStripTools".
+ */
+export interface BlokStripTools {
+  judul?: string | null;
+  teks?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'stripTools';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2417,6 +2455,8 @@ export interface BerandaSelect<T extends boolean = true> {
         mozaikPilihan?: T | BlokMozaikPilihanSelect<T>;
         stripVideo?: T | BlokStripVideoSelect<T>;
         palingDibaca?: T | BlokPalingDibacaSelect<T>;
+        barisRubrik?: T | BlokBarisRubrikSelect<T>;
+        stripTools?: T | BlokStripToolsSelect<T>;
         newsletterBlok?: T | BlokNewsletterSelect<T>;
         slotIklan?: T | BlokSlotIklanSelect<T>;
       };
@@ -2464,6 +2504,26 @@ export interface BlokStripVideoSelect<T extends boolean = true> {
 export interface BlokPalingDibacaSelect<T extends boolean = true> {
   judul?: T;
   jumlah?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokBarisRubrik_select".
+ */
+export interface BlokBarisRubrikSelect<T extends boolean = true> {
+  pilar?: T;
+  jumlah?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlokStripTools_select".
+ */
+export interface BlokStripToolsSelect<T extends boolean = true> {
+  judul?: T;
+  teks?: T;
   id?: T;
   blockName?: T;
 }

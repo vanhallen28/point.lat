@@ -3,7 +3,7 @@ import type { PengaturanIklan } from '@/modules/iklan/tipe'
 import type { Artikel, Beranda, Newsletter, Video } from '@/payload-types'
 
 import { kartuArtikel } from './artikel'
-import type { BagianBeranda, DataNewsletter, ItemTools, KartuArtikel, KartuVideo } from './tipe'
+import type { BagianBeranda, BarisRubrik, DataNewsletter, ItemTools, ItemToolsPilar, KartuArtikel, KartuVideo } from './tipe'
 import { kartuVideo } from './video'
 
 /** Hero bila editor menghapus blok hero: beranda tetap punya H1 dan pencarian. */
@@ -36,6 +36,11 @@ export const JUMLAH_TERBARU_BAWAAN = 4
 /** Kartu terbaru yang dimuat untuk beranda: blok terbaru terbesar (10) ditambah mozaik terbesar (5). */
 export const MAKS_TERBARU_BERANDA = 15
 
+export const JUMLAH_RUBRIK_BAWAAN = 4
+/** Tulisan per pilar yang dimuat untuk blok Baris rubrik: jumlah terbesar (8) ditambah mozaik terbesar (5). */
+export const MAKS_RUBRIK_BERANDA = 13
+export const JUDUL_TOOLS_BAWAAN = 'Hitung sendiri'
+
 /** Data yang tidak disimpan di global `beranda` tetapi ditampilkan bloknya. */
 export type SumberBeranda = {
   terbaru: KartuArtikel[]
@@ -43,6 +48,10 @@ export type SumberBeranda = {
   populer: KartuArtikel[]
   video: KartuVideo[]
   tools: ItemTools[]
+  /** Kalkulator terbit dengan pilarnya, untuk blok Strip kalkulator. */
+  toolsPilar?: ItemToolsPilar[]
+  /** Semua pilar (urut `urutan`) dengan tulisan terbit terbarunya, untuk blok Baris rubrik. */
+  rubrik?: BarisRubrik[]
   newsletter: DataNewsletter | null
   /** Global iklan: blok Slot iklan hanya menjadi bagian bila slotnya aktif (`pilihSlot`). */
   iklan?: PengaturanIklan | null
@@ -82,6 +91,23 @@ function kartuStrip(relasi: (number | Video)[] | null | undefined): KartuVideo[]
 }
 
 /**
+ * Baris blok Baris rubrik: pilar pilihan editor (urutan editor) atau semua pilar (urutan pilar), masing-masing
+ * `jumlah` tulisan terbaru yang belum tampil di mozaik. Pilar tanpa tulisan dilewati.
+ */
+export function susunBarisRubrik(
+  pilihan: (number | { id: number; slug?: string | null })[] | null | undefined,
+  jumlah: number,
+  rubrik: BarisRubrik[],
+  diMozaik: ReadonlySet<number>,
+): BarisRubrik[] {
+  const slugPilihan = (pilihan ?? []).flatMap((p) => (typeof p === 'object' && p.slug ? [p.slug] : []))
+  const urutan = slugPilihan.length > 0 ? slugPilihan.flatMap((slug) => rubrik.filter((r) => r.pilar.slug === slug)) : rubrik
+  return urutan
+    .map((r) => ({ pilar: r.pilar, artikel: r.artikel.filter((k) => !diMozaik.has(k.id)).slice(0, jumlah) }))
+    .filter((r) => r.artikel.length > 0)
+}
+
+/**
  * Blok global `beranda` (depth 2) menjadi bagian yang siap dirender, dengan urutan dari editor.
  *
  * - Hanya hero pertama yang dipakai (satu H1); tanpa hero, `HERO_BAWAAN` dipasang paling atas.
@@ -94,6 +120,8 @@ function kartuStrip(relasi: (number | Video)[] | null | undefined): KartuVideo[]
  *   kolom samping blok itu (seperti mockup).
  * - Slot iklan hanya bila ID slotnya aktif di global iklan dengan posisi beranda; selain itu dilewati,
  *   jadi blok slot yang tidak dipakai tidak memisahkan tulisan terbaru dari newsletter.
+ * - Baris rubrik: satu baris per pilar dengan tulisan terbarunya di luar mozaik (`susunBarisRubrik`).
+ * - Strip kalkulator: kalkulator terbit dengan warna pilarnya.
  * - Blok yang isinya kosong dilewati.
  */
 export function susunBeranda(tataLetak: Blok[], sumber: SumberBeranda): BagianBeranda[] {
@@ -131,7 +159,19 @@ export function susunBeranda(tataLetak: Blok[], sumber: SumberBeranda): BagianBe
       case 'palingDibaca': {
         const terbaru = sumber.terbaru.filter((k) => !diMozaik.has(k.id))
         const daftar = daftarPopuler(sumber.populer, terbaru, blok.jumlah ?? JUMLAH_TERBARU_BAWAAN, blok.judul?.trim() || JUDUL_POPULER)
-        if (daftar.artikel.length > 0) bagian.push({ jenis: 'terbaru', id, ...daftar, newsletter: null })
+        if (daftar.artikel.length > 0) bagian.push({ jenis: 'terbaru', id, ...daftar, newsletter: null, peringkat: daftar.judul !== JUDUL_TERBARU })
+        break
+      }
+      case 'barisRubrik': {
+        const baris = susunBarisRubrik(blok.pilar, blok.jumlah ?? JUMLAH_RUBRIK_BAWAAN, sumber.rubrik ?? [], diMozaik)
+        if (baris.length > 0) bagian.push({ jenis: 'rubrik', id, baris })
+        break
+      }
+      case 'stripTools': {
+        const tools = sumber.toolsPilar ?? []
+        if (tools.length > 0) {
+          bagian.push({ jenis: 'tools', id, judul: blok.judul?.trim() || JUDUL_TOOLS_BAWAAN, teks: blok.teks?.trim() || null, tools })
+        }
         break
       }
       case 'newsletterBlok': {

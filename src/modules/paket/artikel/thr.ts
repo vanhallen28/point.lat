@@ -79,7 +79,7 @@ THR adalah penghasilan, jadi dipotong PPh 21. Di bulan THR dibayar, kantor menju
 Contoh status TK/0, upah Rp5.500.000, ikut BPJS, masa kerja 12 bulan:
 
 Tabel: PPh 21 bulan biasa dan bulan THR
-| | Bulan biasa | Bulan THR |
+| Komponen | Bulan biasa | Bulan THR |
 |---|---|---|
 | Penghasilan bruto | Rp5.749.700 | Rp11.249.700 |
 | TER kategori A | 0,5% | 3,5% |

@@ -8,7 +8,7 @@ import { TidakDitemukan } from '@/components/galat/TidakDitemukan'
 import { kataKueri, MAKS_KUERI, rapikanKueri, urutkanHasil } from '@/modules/konten/cari'
 import type { KartuArtikel } from '@/modules/konten/tipe'
 
-const kartu = (id: number, judul: string): KartuArtikel => ({ id, judul, href: `/artikel-${id}`, tipe: 'panduan', pilar: null, intinya: null })
+const kartu = (id: number, judul: string): KartuArtikel => ({ id, judul, href: `/artikel-${id}`, tipe: 'panduan', pilar: null, intinya: null, gambar: null, terbit: null, penulis: null })
 
 describe('kueri pencarian', () => {
   it('nilai pertama, wildcard dibuang, spasi dirapikan, dan dipotong', () => {

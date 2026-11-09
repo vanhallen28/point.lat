@@ -73,9 +73,15 @@ export function HalamanArtikel({
               Oleh <Tautan href={artikel.penulis.href}>{artikel.penulis.nama}</Tautan>
             </span>
           )}
-          {artikel.diperbarui && (
+          {artikel.terbit && (
             <span>
               <Ikon nama="calendar" ukuran={18} />
+              Terbit <time dateTime={artikel.terbit}>{tanggalIndonesia(artikel.terbit)}</time>
+            </span>
+          )}
+          {artikel.diperbarui && tanggalIndonesia(artikel.diperbarui) !== (artikel.terbit && tanggalIndonesia(artikel.terbit)) && (
+            <span>
+              {!artikel.terbit && <Ikon nama="calendar" ukuran={18} />}
               Diperbarui <time dateTime={artikel.diperbarui}>{tanggalIndonesia(artikel.diperbarui)}</time>
             </span>
           )}

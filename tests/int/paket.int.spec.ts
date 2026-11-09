@@ -100,6 +100,33 @@ describe('impor paket konten', () => {
     expect(galat).toMatch(/reviewAi/)
   })
 
+  it('setiap artikel paket lolos validasi koleksi saat diterbitkan setelah checklist review dicentang', async () => {
+    const payload = await getTestPayload()
+    await siapkanPenulis()
+    const { paket } = await paketUji()
+    const [contoh] = paket
+    // Isi, FAQ, sumber, dan SEO asli setiap artikel paket, dengan slug dan pilar uji supaya tidak bergantung isi database.
+    const semua = PAKET_AWAL.map((a) => ({ ...a, slug: unik(`terbit-${a.slug}`).slice(0, 80), pilar: contoh.pilar, subkategori: contoh.subkategori, terkait: [] }))
+    const hasil = await imporPaket(payload, { bacaSampul, paket: semua, mozaik: [], perbaruiTools: false })
+    expect(hasil.galat).toEqual([])
+    const { docs } = await payload.find({ collection: 'artikel', draft: true, where: { slug: { in: semua.map((a) => a.slug) } }, limit: 20, depth: 0 })
+    expect(docs).toHaveLength(PAKET_AWAL.length)
+    const gagal: string[] = []
+    for (const doc of docs) {
+      try {
+        await payload.update({
+          collection: 'artikel',
+          id: doc.id,
+          data: { _status: 'published', reviewAi: { sumberDicek: true, angkaDicek: true, pengalamanDitambah: true } },
+        })
+      } catch (galat) {
+        const rinci = (galat as { data?: { errors?: { path?: string; message: string }[] } }).data?.errors
+        gagal.push(`${doc.slug}: ${rinci?.map((e) => `${e.path}: ${e.message}`).join(' | ') ?? (galat as Error).message}`)
+      }
+    }
+    expect(gagal).toEqual([])
+  })
+
   it('pilar atau penulis yang belum ada dicatat sebagai galat, tanpa dokumen setengah jadi', async () => {
     const payload = await getTestPayload()
     const { paket } = await paketUji()

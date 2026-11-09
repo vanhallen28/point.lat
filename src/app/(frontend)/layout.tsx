@@ -56,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
         <Header data={header} />
         <main id="isi">{children}</main>
-        <Footer data={footer} persetujuan={persetujuan} />
+        <Footer data={footer} rubrik={[...header.menu.map(({ label, href }) => ({ label, href })), header.tools]} persetujuan={persetujuan} />
         <PemicuMasuk />
         {adaIklan && <PemuatIklan />}
         <KodeSematan kode={sematan} />

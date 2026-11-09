@@ -2,8 +2,10 @@ import type { Payload } from 'payload'
 
 import type { ToolId } from '@/lib/konstanta'
 import type { Tool } from '@/payload-types'
+import { teksIsi, type IsiDokumen } from '@/modules/seo/lexical'
 import { TOOLS_AWAL } from '@/seed/tools'
 
+import { pasangBerandaPortal } from './beranda'
 import { markdownKeLexical, type CariDokumen } from './markdown'
 import { MOZAIK_PAKET, PAKET_AWAL } from './paket-awal'
 import type { ArtikelPaket, HasilImpor } from './tipe'
@@ -189,6 +191,15 @@ async function unggahSampul(payload: Payload, a: ArtikelPaket, baca: BacaSampul)
 }
 
 /**
+ * Penjelasan sama bila teks per blok sama. Payload menambah properti bawaan ke node Lexical saat menyimpan
+ * (misalnya `textFormat`), jadi JSON yang tersimpan tidak pernah sama persis dengan data awal.
+ */
+function samaIsi(a: unknown, b: unknown): boolean {
+  if (!a || !b) return a === b
+  return JSON.stringify(teksIsi(a as IsiDokumen)) === JSON.stringify(teksIsi(b as IsiDokumen))
+}
+
+/**
  * Alasan tools tidak diperbarui impor, atau `null` bila boleh diperbarui. Tools yang pernah terbit atau sudah
  * disunting pemilik tidak pernah ditimpa; versi lama tetap bisa dipulihkan dari riwayat versi Payload.
  */
@@ -199,7 +210,7 @@ export function alasanLewatiTools(
 ): string | null {
   if (!doc) return 'Belum ada. Jalankan data awal dulu.'
   if (doc._status === 'published' || pernahTerbit) return 'Sudah pernah terbit, jadi tidak ditimpa.'
-  if (JSON.stringify(doc.penjelasan) === JSON.stringify(penjelasanBaru)) return 'Isinya sudah terbaru.'
+  if (samaIsi(doc.penjelasan, penjelasanBaru)) return 'Isinya sudah terbaru.'
   if (Date.parse(doc.updatedAt) - Date.parse(doc.createdAt) > JEDA_SUNTING_MS) return 'Sudah kamu sunting, jadi tidak ditimpa.'
   return null
 }
@@ -239,34 +250,15 @@ async function pernahTerbit(payload: Payload, id: Id): Promise<boolean> {
 }
 
 /**
- * Blok "Mozaik pilihan redaksi" setelah hero beranda, berisi artikel pilihan paket. Hanya bila beranda belum
- * punya mozaik dan tidak ada perubahan beranda yang belum diterbitkan. Mozaik baru tampil di situs setelah
- * artikel pilihannya terbit (`susunBeranda` hanya memakai artikel terbit).
+ * Tata letak beranda bergaya portal (`pasangBerandaPortal`): mozaik "Pilihan redaksi" berisi artikel pilihan paket,
+ * strip kalkulator, dan baris rubrik, hanya yang belum ada dan hanya bila beranda tidak punya perubahan yang belum
+ * diterbitkan. Mozaik baru tampil di situs setelah artikel pilihannya terbit (`susunBeranda` hanya memakai artikel terbit).
  */
-export type RencanaMozaik<B> = { jenis: 'sudah-ada' | 'dilewati' } | { jenis: 'tambah'; tataLetak: (B | BlokMozaikBaru)[] }
-type BlokMozaikBaru = { blockType: 'mozaikPilihan'; judul: string; artikel: Id[]; tampilkanTools: boolean }
-
-/**
- * Rencana perubahan tata letak beranda: mozaik baru tepat setelah hero (atau paling atas bila tidak ada hero),
- * hanya bila belum ada mozaik, tidak ada perubahan beranda yang belum diterbitkan, dan ada artikel pilihan.
- */
-export function rencanaMozaik<B extends { blockType: string }>(tata: B[], statusBeranda: string | null | undefined, artikel: Id[]): RencanaMozaik<B> {
-  if (tata.some((b) => b.blockType === 'mozaikPilihan')) return { jenis: 'sudah-ada' }
-  if (statusBeranda === 'draft' || artikel.length === 0) return { jenis: 'dilewati' }
-  const posisi = tata.findIndex((b) => b.blockType === 'heroBeranda') + 1
-  const blok: BlokMozaikBaru = { blockType: 'mozaikPilihan', judul: 'Pilihan redaksi', artikel, tampilkanTools: true }
-  return { jenis: 'tambah', tataLetak: [...tata.slice(0, posisi), blok, ...tata.slice(posisi)] }
-}
-
 async function tambahMozaik(payload: Payload, mozaik: string[], idArtikel: Map<string, Id>, hasil: HasilImpor): Promise<HasilImpor['beranda']> {
   if (mozaik.length === 0) return 'dilewati'
-  const beranda = await payload.findGlobal({ slug: 'beranda', draft: true, depth: 0 })
   const artikel = mozaik.map((s) => idArtikel.get(s)).filter((id): id is Id => id !== undefined)
-  const rencana = rencanaMozaik(beranda.tataLetak ?? [], beranda._status, artikel)
-  if (rencana.jenis !== 'tambah') return rencana.jenis
   try {
-    await payload.updateGlobal({ slug: 'beranda', data: { tataLetak: rencana.tataLetak as never } })
-    return 'ditambah'
+    return await pasangBerandaPortal(payload, artikel)
   } catch (galat) {
     hasil.galat.push(`Beranda: ${(galat as Error).message}`)
     return 'dilewati'

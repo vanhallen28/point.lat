@@ -88,6 +88,9 @@ describe('markdown paket ke Lexical', () => {
     expect(() => markdownKeLexical('> [!catatan] X\n> isi', cari)).toThrow(GalatMarkdown)
     expect(() => markdownKeLexical('> [!info] X\n> lihat [ini](/ptkp-2026)', cari)).toThrow(GalatMarkdown)
     expect(() => markdownKeLexical('| A | B |\n|---|---|\n| [x](/ptkp-2026) | 2 |', cari)).toThrow(GalatMarkdown)
+    // Label kolom dan teks sel wajib di blok Tabel perbandingan: draf tersimpan, tapi gagal saat diterbitkan.
+    expect(() => markdownKeLexical('| | B |\n|---|---|\n| 1 | 2 |', cari)).toThrow(/kolom tabel harus berjudul/)
+    expect(() => markdownKeLexical('| A | B |\n|---|---|\n| 1 |  |', cari)).toThrow(/sel tabel harus berisi/)
   })
 
   it('teks tanpa format tetap satu node', () => {

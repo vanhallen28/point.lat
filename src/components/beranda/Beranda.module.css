@@ -1,9 +1,9 @@
 /*
- * Beranda (mockup Arah 3 "Kartu Intinya"). Jarak antarbagian hanya dari `margin-top` `.bagian`
- * (56px, 40px tepat setelah hero), jadi editor bisa mengubah urutan blok tanpa celah ganda.
+ * Beranda bergaya portal (spesifikasi §25, dari mockup Arah 3 "Kartu Intinya"). Jarak antarbagian hanya dari
+ * `margin-top` `.bagian` (56px, 32px tepat setelah hero), jadi editor bisa mengubah urutan blok tanpa celah ganda.
  */
 .hero {
-  padding-top: var(--ruang-10);
+  padding-top: var(--ruang-8);
 }
 
 .bagian {
@@ -11,11 +11,12 @@
 }
 
 .hero + .bagian {
-  margin-top: var(--ruang-10);
+  margin-top: var(--ruang-8);
 }
 
+/* Judul beranda seukuran kop media: tetap besar, tapi berita utama terlihat di layar pertama. */
 .judulRaksasa {
-  font-size: var(--teks-display);
+  font-size: clamp(48px, 6.4vw, 92px);
   font-stretch: var(--lebar-display);
   line-height: var(--tinggi-display);
   letter-spacing: -0.035em;
@@ -46,7 +47,46 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--ruang-6);
-  margin-top: var(--ruang-6);
+  margin-top: var(--ruang-5);
+  padding-bottom: var(--ruang-6);
+  border-bottom: var(--garis-tebal) solid var(--garis);
+}
+
+/* Layar lebar: judul di kiri, kalimat pembuka dan pencarian bertumpuk di kanan, satu baris kop. */
+@media (min-width: 64rem) {
+  .hero {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    column-gap: var(--ruang-12);
+  }
+
+  /* Garis bawah kop selebar isi (bukan selebar kontainer dengan gutter-nya). */
+  .hero::after {
+    content: '';
+    grid-column: 1 / -1;
+    margin-top: var(--ruang-6);
+    border-bottom: var(--garis-tebal) solid var(--garis);
+  }
+
+  .heroBaris {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ruang-4);
+    margin-top: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .heroBaris .pembuka {
+    flex: none;
+    max-width: 46ch;
+    font-size: 18px;
+  }
+
+  .heroBaris .heroCari {
+    flex: none;
+  }
 }
 
 .pembuka {
@@ -66,16 +106,26 @@
   font-stretch: var(--lebar-h2);
 }
 
-/* Mozaik: baris flex-wrap seperti mockup, bukan grid kartu seragam. */
+/* Berita utama: baris flex-wrap (kartu besar dan kolom samping), bukan grid kartu seragam. */
 .mozaik {
   display: grid;
-  gap: var(--ruang-4);
+  gap: var(--ruang-10);
+}
+
+/* Judul mozaik berupa label kecil di atas berita utama: judul berita utama yang paling menonjol. */
+.mozaik > .subjudul {
+  margin-bottom: calc(var(--ruang-6) * -1);
+  font-size: var(--teks-label);
+  font-weight: 800;
+  font-stretch: 100%;
+  letter-spacing: var(--jarak-label);
+  text-transform: uppercase;
 }
 
 .baris {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ruang-4);
+  gap: var(--ruang-8) var(--ruang-6);
 }
 
 .utama {
@@ -84,29 +134,36 @@
 }
 
 .utama > *,
-.sedang > * {
+.sedang > *,
+.sel > * {
   flex: 1;
 }
 
-/* Dua kartu samping bertumpuk saat kolomnya sempit (desktop, HP) dan berdampingan saat kolom
-   selebar layar (tablet). Baris yang membungkus ikut meregang mengisi tinggi kartu utama. */
+/* Dua kartu samping bertumpuk saat kolomnya sempit (desktop, HP) dan berdampingan saat kolom selebar layar
+   (tablet). Garis tipis memisahkan kolom samping dari berita utama di layar lebar. */
 .kolom {
   flex: 1 1 320px;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ruang-4);
+  align-content: flex-start;
+  gap: var(--ruang-8) var(--ruang-6);
 }
 
-/* Kartu memakai `height: 100%` (KartuArtikel); di sini tinggi diatur baris flex, jadi selektornya
-   lebih spesifik supaya tidak bergantung urutan file CSS. */
-.mozaik .kolom > * {
+.sel {
   flex: 1 1 280px;
-  height: auto;
+  display: flex;
 }
 
 .sedang {
   flex: 1 1 280px;
   display: flex;
+}
+
+@media (min-width: 64rem) {
+  .utama + .kolom {
+    padding-left: var(--ruang-6);
+    border-left: var(--garis-tipis) solid var(--garis);
+  }
 }
 
 .tools {
@@ -203,7 +260,7 @@
   text-transform: uppercase;
 }
 
-/* Tulisan terbaru dan kolom samping (newsletter). */
+/* Tulisan terbaru atau paling dicari: daftar kartu ringkas bergaris, dua kolom di layar lebar bila tanpa newsletter. */
 .terbaruBaris {
   display: flex;
   flex-wrap: wrap;
@@ -216,54 +273,204 @@
 }
 
 .terbaru .subjudul {
-  margin-bottom: var(--ruang-3);
+  margin-bottom: var(--ruang-4);
 }
 
 .daftar {
+  display: grid;
+  column-gap: var(--ruang-8);
   padding: 0;
   list-style: none;
   border-bottom: var(--garis-tipis) solid var(--garis);
 }
 
+@media (min-width: 64rem) {
+  .daftarLebar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .item {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
   padding-block: var(--ruang-4);
   border-top: var(--garis-tipis) solid var(--garis);
-  text-decoration: none;
 }
 
-.item:hover .itemJudul {
-  text-decoration: underline;
+/* Paling dicari: nomor peringkat besar di kiri setiap kartu (daftar `ol`). */
+.peringkat {
+  counter-reset: peringkat;
 }
 
-.titik {
+.peringkat .item {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: start;
+  counter-increment: peringkat;
+}
+
+.peringkat .item::before {
+  content: counter(peringkat);
+  font-size: 34px;
+  font-weight: 900;
+  font-stretch: var(--lebar-display);
+  line-height: 0.9;
+}
+
+/* Baris rubrik: satu bagian per pilar dengan garis atas warna pilar. */
+.rubrik {
+  display: grid;
+  gap: var(--ruang-14);
+}
+
+.rubrikBaris {
+  display: grid;
+  gap: var(--ruang-5);
+  padding-top: var(--ruang-4);
+  border-top: 4px solid var(--pilar);
+}
+
+.rubrikKepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruang-2) var(--ruang-4);
+}
+
+.rubrikJudul {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-3);
+  font-size: var(--teks-h2);
+  font-stretch: var(--lebar-h2);
+}
+
+.rubrikTitik {
   flex: none;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--pilar, var(--teks));
+  background: var(--pilar);
   box-shadow: inset 0 0 0 1px var(--garis);
 }
 
-.itemTeks {
+.rubrikDaftar {
   display: grid;
-  gap: var(--ruang-1);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: var(--ruang-8) var(--ruang-6);
+  padding: 0;
+  list-style: none;
 }
 
-.itemJudul {
-  font-size: 21px;
-  font-weight: 700;
-  line-height: 1.25;
+/* Strip kalkulator: pita krem selebar layar dengan kartu putih per kalkulator. */
+.pitaTools {
+  background: var(--permukaan);
 }
 
-.itemPilar {
+.pitaIsi {
+  display: grid;
+  gap: var(--ruang-6);
+  padding-block: var(--ruang-12) var(--ruang-14);
+}
+
+.pitaKepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ruang-3) var(--ruang-6);
+}
+
+.pitaJudul {
+  font-size: clamp(36px, 5vw, 64px);
+  font-stretch: var(--lebar-display);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.pitaTeks {
+  max-width: 52ch;
+  margin-top: var(--ruang-2);
   color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+  line-height: 1.5;
+}
+
+.pitaDaftar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--ruang-4);
+  padding: 0;
+  list-style: none;
+}
+
+.alat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruang-2);
+  height: 100%;
+  min-height: 200px;
+  padding: var(--ruang-5);
+  border-radius: 20px;
+  background: var(--latar);
+  color: var(--teks);
+  text-decoration: none;
+  transition: transform var(--durasi-cepat) var(--kurva);
+}
+
+.alat:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 47.99rem) {
+  .alat {
+    min-height: 0;
+  }
+}
+
+.alat:active {
+  transform: scale(0.99);
+}
+
+.alatPilar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-2);
   font-size: var(--teks-label);
   font-weight: 800;
   letter-spacing: var(--jarak-label);
   text-transform: uppercase;
+}
+
+.alatPilar .rubrikTitik {
+  width: 10px;
+  height: 10px;
+}
+
+.alatNama {
+  font-size: 22px;
+  font-weight: 800;
+  font-stretch: 85%;
+  line-height: 1.1;
+}
+
+.alatRingkas {
+  color: var(--teks-sekunder);
+  font-size: var(--teks-kecil);
+  line-height: 1.45;
+}
+
+.alatAksi {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruang-1);
+  margin-top: auto;
+  padding-top: var(--ruang-2);
+  font-size: var(--teks-kecil);
+  font-weight: 700;
+}
+
+.alat:hover .alatAksi {
+  text-decoration: underline;
 }
 
 .samping {

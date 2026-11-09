@@ -181,6 +181,12 @@ function tabel(baris: string[], benih: string): Node {
   for (const b of barisIsi) {
     if (b.length !== kolom.length) throw new GalatMarkdown(`Jumlah sel tidak sama dengan jumlah kolom: "${b.join(' | ')}"`)
   }
+  // Blok Tabel perbandingan mewajibkan label kolom dan teks sel: tabel dengan sel kosong tersimpan sebagai draf
+  // tetapi gagal saat diterbitkan.
+  if (kolom.some((k) => !k.trim())) throw new GalatMarkdown(`Setiap kolom tabel harus berjudul: "${isi[0]}"`)
+  for (const b of barisIsi) {
+    if (b.some((t) => !t.trim())) throw new GalatMarkdown(`Setiap sel tabel harus berisi (tulis "-" bila kosong): "${b.join(' | ')}"`)
+  }
   return blok(benih, {
     blockType: 'tabelPerbandingan',
     ...(judulTabel ? { judul: judulTabel } : {}),

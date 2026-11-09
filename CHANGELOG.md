@@ -8,6 +8,27 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.4.0 (10 November 2026)
+
+Tampilan seperti media: kartu bergambar, beranda bergaya portal, header dan footer lengkap. Ada juga perbaikan untuk artikel THR yang gagal diterbitkan.
+
+- **Kartu artikel bergambar:** setiap kartu kini menampilkan gambar utama, pilar dan jenis tulisan, judul, Intinya, tanggal terbit, dan penulis. Artikel tanpa gambar memakai panel warna pilar dengan cincin dari logo, jadi daftar tetap rapi.
+- **Beranda bergaya portal:**
+  - kop "Intinya dulu." lebih ringkas, jadi berita utama langsung terlihat;
+  - "Pilihan redaksi" tampil sebagai berita utama bergambar besar dengan dua berita di sampingnya;
+  - "Tulisan terbaru" dan "Paling dicari" berupa daftar bergambar kecil dan bertanggal. Paling dicari diberi nomor peringkat;
+  - blok baru **Strip kalkulator**: pita krem berisi kartu setiap kalkulator yang sudah terbit;
+  - blok baru **Baris rubrik**: satu baris per pilar berisi tulisan terbarunya, dengan tautan "Semua tulisan".
+
+  Blok baru ini dipasang otomatis di beranda saat deploy, selama beranda tidak punya perubahan yang belum diterbitkan. Urutannya tetap bisa diatur di Tampilan, Beranda.
+- **Header:** baris atas berisi tanggal hari ini dan **Topik hangat**, yaitu subkategori dari tulisan terbaru yang berganti sendiri. Pilar yang belum punya tulisan terbit (sekarang Tekno dan Sehat) disembunyikan dari menu sampai ada isinya.
+- **Footer lengkap:** logo, tagline, kolom Jelajahi, kolom Tentang, dan kolom Ikuti. Kolom Ikuti muncul setelah akun sosial diisi di Tampilan, Footer.
+- **Artikel:** tanggal terbit kini tampil di bawah judul. Tanggal diperbarui hanya muncul bila berbeda.
+- **Halaman Redaksi (draf):** kerangka kotak redaksi berisi penanggung jawab, pemimpin redaksi, penulis, alamat, email, badan hukum, serta koreksi dan hak jawab. Isi bagian dalam kurung siku, terbitkan, lalu tambahkan tautannya di Tampilan, Footer.
+- **Perbaikan artikel THR:** tabel PPh 21 di draf THR punya kolom tanpa judul, jadi drafnya gagal diterbitkan ("Isian ini wajib diisi"). Draf yang sudah masuk diperbaiki otomatis saat deploy, dan impor berikutnya menolak tabel dengan sel kosong.
+- **Penjelasan kalkulator:** impor ulang kini mengenali penjelasan yang sudah terbaru, bukan menganggapnya "sudah kamu sunting".
+- Database: migrasi `beranda_portal` menambah tabel kedua blok baru, lalu memasang tata letak beranda, membuat draf Redaksi, dan memperbaiki draf THR. Tanpa dependensi baru.
+
 ## v1.3.1 (10 November 2026)
 
 Pembaruan keamanan. Pasang secepatnya, juga bila v1.3.0 belum sempat di-push (zip ini sudah berisi v1.3.0).

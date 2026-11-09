@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 
 import { Tautan } from '@/components/dasar/Tautan'
-import { tandaAktif } from '@/modules/konten/tampilan'
+import { tandaAktif } from '@/modules/konten/tautan'
 
 /**
  * Tautan header yang menandai rubrik atau bagian yang sedang dibuka (`aria-current`). Path dibaca di

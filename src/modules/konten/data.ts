@@ -1,13 +1,13 @@
 import type { Payload, Where } from 'payload'
 
-import type { Artikel } from '@/payload-types'
+import type { Artikel, Beranda, Pilar } from '@/payload-types'
 import { validasiFormatSlug } from '@/lib/slug'
 import { ambilFitur } from '@/modules/fitur/data'
 import { sumberParameter } from '@/modules/hitung'
 import { ambilIklan } from '@/modules/iklan/data'
 
-import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, susunArtikel } from './artikel'
-import { MAKS_TERBARU_BERANDA, MAKS_VIDEO_BERANDA, susunBeranda, susunNewsletter } from './beranda'
+import { gabungTerkait, kartuArtikel, MAKS_TERKAIT, pilarRingkas, susunArtikel } from './artikel'
+import { MAKS_RUBRIK_BERANDA, MAKS_TERBARU_BERANDA, MAKS_VIDEO_BERANDA, susunBeranda, susunNewsletter } from './beranda'
 import { kataKueri, MAKS_HASIL_CARI, urutkanHasil } from './cari'
 import { kelompokkanIstilah } from './glosarium'
 import { susunHalaman } from './halaman'
@@ -16,11 +16,12 @@ import { susunPenulis } from './penulis'
 import { MAKS_PATH } from './log404'
 import type { RedirectTersimpan } from './redirect'
 import { susunRubrik } from './rubrik'
-import { susunFooter, susunHeader } from './tampilan'
+import { susunFooter, susunHeader, susunTopik, type SubkategoriTulisan } from './tampilan'
 import { kelompokkanTools, susunTool } from './tools'
 import { kartuVideo, MAKS_VIDEO_INDEKS, MAKS_VIDEO_LAIN, susunVideo } from './video'
 import type {
   BagianBeranda,
+  BarisRubrik,
   DataArtikel,
   DataFooter,
   DataHalaman,
@@ -46,7 +47,39 @@ export async function ambilHeader(payload: Payload): Promise<DataHeader> {
     depth: 1,
     populate: { pilar: { nama: true, slug: true, warna: true } },
   })
-  return susunHeader(header)
+  const pilarMenu = (header.menu ?? []).flatMap((m) => (m.jenis === 'pilar' && m.pilar && typeof m.pilar === 'object' ? [m.pilar] : []))
+  const terisi = await Promise.all(
+    pilarMenu.map(async (p) => {
+      const { totalDocs } = await payload.count({
+        collection: 'artikel',
+        where: { and: [terbit, { tipe: { not_equals: 'glosarium' } }, { pilar: { equals: p.id } }] },
+      })
+      return totalDocs > 0 ? p.slug : null
+    }),
+  )
+  return susunHeader(header, {
+    pilarTerisi: new Set(terisi.filter((s): s is string => Boolean(s))),
+    topik: susunTopik(await subkategoriTerbaru(payload)),
+  })
+}
+
+/** Subkategori dari 20 tulisan terbit terbaru (bukan glosarium), untuk baris "Topik hangat" header. */
+async function subkategoriTerbaru(payload: Payload): Promise<SubkategoriTulisan[]> {
+  const { docs } = await payload.find({
+    collection: 'artikel',
+    where: { and: [terbit, { tipe: { not_equals: 'glosarium' } }, { subkategori: { exists: true } }] },
+    sort: '-terbitPada',
+    limit: 20,
+    depth: 2,
+    pagination: false,
+    select: { subkategori: true },
+    populate: { subkategori: { nama: true, slug: true, pilar: true }, pilar: { slug: true } },
+  })
+  return docs.flatMap((d) => {
+    const sub = d.subkategori && typeof d.subkategori === 'object' ? d.subkategori : null
+    const pilar = sub?.pilar && typeof sub.pilar === 'object' ? sub.pilar : null
+    return sub?.slug && pilar?.slug ? [{ nama: sub.nama, slug: sub.slug, pilarSlug: pilar.slug }] : []
+  })
 }
 
 export async function ambilFooter(payload: Payload): Promise<DataFooter> {
@@ -62,13 +95,17 @@ const POPULATE_ARTIKEL = {
   subkategori: { nama: true, slug: true, pilar: true },
   penulis: { nama: true, slug: true, bio: true, keahlian: true, foto: true },
   media: { alt: true, publicId: true, jenis: true, width: true, height: true, caption: true, kredit: true },
-  artikel: { judul: true, slug: true, tipe: true, pilar: true, intinya: true, _status: true },
+  artikel: { judul: true, slug: true, tipe: true, pilar: true, intinya: true, gambarUtama: true, terbitPada: true, penulis: true, _status: true },
   tools: { nama: true, slug: true, ringkasan: true, _status: true },
   video: { judul: true, slug: true, file: true, poster: true, transkrip: true, takarir: true, _status: true },
   halaman: { judul: true, slug: true, _status: true },
 } as const
 
 const terbit: Where = { _status: { equals: 'published' } }
+
+/** Field dan relasi yang dibaca `kartuArtikel`: gambar utama, tanggal terbit, dan nama penulis untuk kartu bergambar. */
+const SELECT_KARTU = { judul: true, slug: true, tipe: true, pilar: true, intinya: true, gambarUtama: true, terbitPada: true, penulis: true } as const
+const POPULATE_KARTU = { pilar: POPULATE_ARTIKEL.pilar, media: POPULATE_ARTIKEL.media, penulis: { nama: true, slug: true } } as const
 
 /**
  * Artikel terbit dengan slug ini, siap dirender. `glosarium: true` hanya mencari tipe glosarium
@@ -117,8 +154,8 @@ async function ambilTerkait(payload: Payload, doc: Artikel): Promise<KartuArtike
     limit: MAKS_TERKAIT,
     depth: 1,
     pagination: false,
-    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
-    populate: { pilar: POPULATE_ARTIKEL.pilar },
+    select: SELECT_KARTU,
+    populate: POPULATE_KARTU,
   })
   return gabungTerkait(doc.id, manual, docs)
 }
@@ -162,8 +199,8 @@ async function kartuTerbit(payload: Payload, syarat: Where[], jumlah: number): P
     limit: jumlah,
     depth: 1,
     pagination: false,
-    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
-    populate: { pilar: POPULATE_ARTIKEL.pilar },
+    select: SELECT_KARTU,
+    populate: POPULATE_KARTU,
   })
   return docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null)
 }
@@ -181,8 +218,8 @@ async function halamanKartu(payload: Payload, syarat: Where[], nomor: number): P
     page: nomor,
     limit: UKURAN_HALAMAN,
     depth: 1,
-    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
-    populate: { pilar: POPULATE_ARTIKEL.pilar },
+    select: SELECT_KARTU,
+    populate: POPULATE_KARTU,
   })
   return { kartu: docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null), total: totalDocs }
 }
@@ -387,8 +424,8 @@ export async function cariArtikel(payload: Payload, kueri: string): Promise<Kart
     limit: MAKS_HASIL_CARI,
     depth: 1,
     pagination: false,
-    select: { judul: true, slug: true, tipe: true, pilar: true, intinya: true },
-    populate: { pilar: POPULATE_ARTIKEL.pilar },
+    select: SELECT_KARTU,
+    populate: POPULATE_KARTU,
   })
   return urutkanHasil(kueri, docs.map(kartuArtikel).filter((k): k is KartuArtikel => k !== null))
 }
@@ -408,15 +445,51 @@ const POPULATE_BERANDA = {
  */
 export async function ambilBeranda(payload: Payload): Promise<BagianBeranda[]> {
   const beranda = await payload.findGlobal({ slug: 'beranda', depth: 2, populate: POPULATE_BERANDA })
+  const tataLetak = beranda.tataLetak ?? []
   const newsletter = await payload.findGlobal({ slug: 'newsletter', depth: 0 })
-  return susunBeranda(beranda.tataLetak ?? [], {
+  const kelompokTools = await ambilTools(payload)
+  return susunBeranda(tataLetak, {
     terbaru: await kartuTerbit(payload, [], MAKS_TERBARU_BERANDA),
     populer: await ambilPopuler(payload, MAKS_TERBARU_BERANDA),
     video: await kartuVideoTerbit(payload, [], MAKS_VIDEO_BERANDA),
-    tools: (await ambilTools(payload)).flatMap((k) => k.tools),
+    tools: kelompokTools.flatMap((k) => k.tools),
+    toolsPilar: kelompokTools.flatMap((k) => k.tools.map((t) => ({ ...t, pilar: k.pilar }))),
+    rubrik: await ambilRubrikBeranda(payload, pilarBarisRubrik(tataLetak)),
     newsletter: susunNewsletter(newsletter, (await ambilFitur(payload)).newsletter),
     iklan: await ambilIklan(payload),
   })
+}
+
+/**
+ * Pilar yang dibutuhkan blok Baris rubrik: `null` bila ada blok tanpa pilihan (semua pilar), daftar id bila semua blok
+ * memilih pilar, dan `[]` bila tata letak tidak memuat blok itu.
+ */
+function pilarBarisRubrik(tataLetak: NonNullable<Beranda['tataLetak']>): number[] | null {
+  const blok = tataLetak.filter((b) => b.blockType === 'barisRubrik')
+  if (blok.some((b) => !b.pilar?.length)) return null
+  return [...new Set(blok.flatMap((b) => (b.pilar ?? []).map((p) => (typeof p === 'object' ? p.id : p))))]
+}
+
+/** Pilar (urut `urutan`) dengan tulisan terbit terbarunya, untuk blok Baris rubrik (satu query per pilar). */
+async function ambilRubrikBeranda(payload: Payload, idPilar: number[] | null): Promise<BarisRubrik[]> {
+  if (idPilar?.length === 0) return []
+  const { docs } = await payload.find({
+    collection: 'pilar',
+    where: idPilar ? { id: { in: idPilar } } : {},
+    sort: ['urutan', 'nama'],
+    depth: 0,
+    limit: idPilar ? idPilar.length : 20,
+    pagination: false,
+    select: { nama: true, slug: true, warna: true, disclaimer: true },
+  })
+  const baris = await Promise.all(
+    docs.map(async (doc) => {
+      const pilar = pilarRingkas(doc as Pilar)
+      if (!pilar) return null
+      return { pilar, artikel: await kartuTerbit(payload, [{ pilar: { equals: doc.id } }], MAKS_RUBRIK_BERANDA) }
+    }),
+  )
+  return baris.filter((b): b is BarisRubrik => b !== null && b.artikel.length > 0)
 }
 
 /** Isi takarir WebVTT video terbit dengan slug ini, `null` bila video tidak ada atau belum punya takarir. */

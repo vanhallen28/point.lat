@@ -104,10 +104,16 @@ export function penulisRingkas(relasi: Relasi<Penuli>): PenulisRingkas | null {
   }
 }
 
-type ArtikelUntukKartu = Pick<Artikel, 'id' | 'judul' | 'slug' | 'tipe' | 'pilar' | 'intinya'>
+type ArtikelUntukKartu = Pick<Artikel, 'id' | 'judul' | 'slug' | 'tipe' | 'pilar' | 'intinya'> &
+  Partial<Pick<Artikel, 'gambarUtama' | 'terbitPada' | 'penulis'>>
 
+/**
+ * Kartu artikel untuk semua daftar. Gambar, tanggal terbit, dan penulis dibaca bila query memuatnya
+ * (`SELECT_KARTU` di `data.ts`); tanpa itu kartu tetap sah dengan panel warna pilar.
+ */
 export function kartuArtikel(doc: ArtikelUntukKartu): KartuArtikel | null {
   if (!doc.slug) return null
+  const gambar = mediaTampil(doc.gambarUtama ?? null)
   return {
     id: doc.id,
     judul: doc.judul,
@@ -115,6 +121,9 @@ export function kartuArtikel(doc: ArtikelUntukKartu): KartuArtikel | null {
     tipe: doc.tipe,
     pilar: pilarRingkas(doc.pilar),
     intinya: doc.intinya?.[0]?.poin ?? null,
+    gambar: gambar?.jenis === 'gambar' ? gambar : null,
+    terbit: doc.terbitPada ?? null,
+    penulis: ambil(doc.penulis ?? null)?.nama ?? null,
   }
 }
 
@@ -150,6 +159,7 @@ export function susunArtikel(doc: Artikel, terkait: KartuArtikel[]): DataArtikel
     href: pathFor({ jenis: 'artikel', slug: doc.slug ?? '', tipe: doc.tipe }),
     deck: doc.deck,
     intinya: (doc.intinya ?? []).map((i) => i.poin),
+    terbit: doc.terbitPada ?? null,
     diperbarui: doc.diperbaruiBesar ?? doc.terbitPada ?? null,
     waktuBaca: waktuBaca(doc.isi as IsiDokumen),
     pilar: pilarRingkas(doc.pilar),

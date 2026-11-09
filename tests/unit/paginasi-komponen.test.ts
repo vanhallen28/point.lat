@@ -27,6 +27,9 @@ const kartu = {
   tipe: 'panduan' as const,
   pilar: { nama: 'Belajar', slug: 'belajar', href: '/belajar', warna: 'kuning' as const, disclaimer: null },
   intinya: 'Kerjakan satu paket soal setiap hari.',
+  gambar: null,
+  terbit: null,
+  penulis: null,
 }
 
 describe('Paginasi', () => {
