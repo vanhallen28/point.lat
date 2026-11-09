@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 November 2026 (v1.1.0 dan v1.2.0): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 November 2026 (v1.1.0, v1.2.0, dan v1.2.1): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -14,6 +14,7 @@
 | 2026-11-07 | v1.0.0 | Vercel Hobby dulu (cron sekali sehari), npm menggantikan pnpm, pembaruan dikirim sebagai zip bernomor versi |
 | 2026-11-09 | v1.1.0 | 1. Hosting **Vercel paket gratis (Hobby)**, bukan Pro (§2, §5, §18, §19). 2. **Full Next.js dengan perintah terminal npm** di semua dokumen. 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (§21). 4. **Tanpa Docker: hanya Next.js, Vercel, dan Supabase**; data tersambung ke Supabase lewat kredensial bawaan akun Supabase (§5 Koneksi database). Ditambah: logo resmi dari file pemilik (§3, §4), jadwal 10 menit opsional lewat Supabase Cron (§5), peta skill lengkap (§20), saran trafik (§22) |
 | 2026-11-09 | v1.2.0 | Admin lebih profesional mengikuti gambar referensi pemilik: tema bermerek, beranda admin baru, Dashboard SEO dengan perbandingan periode. Fitur mirip plugin WordPress lewat halaman Fitur dan Kode sematan (plugin unggahan tidak didukung). Form kontak disimpan di admin, pelanggan newsletter disimpan di Supabase dengan unduhan CSV, dan tombol bagikan (§23) |
+| 2026-11-09 | v1.2.1 | Menu admin: grup yang bisa dilipat berupa baris berikon, jadi ikon setiap bagian tetap terlihat saat grup dilipat (§23, permintaan pemilik) |
 
 ---
 
@@ -545,7 +546,8 @@ Rencana implementasi: `docs/superpowers/plans/2026-11-09-rencana-9-ruang-redaksi
 - **Merek.** Logo point. versi terbalik (tulisan putih, titik biru) dipasang di menu kiri, dan logo tinta di halaman masuk (`admin.components.graphics`). Hurufnya Archivo, dari file yang sama dengan situs.
 - **Menu kiri** gelap (`#141414`) di tema terang dan gelap.
   - Ikon Lucide per menu dipasang lewat CSS mask (tanpa paket ikon). Penanda menu aktif berupa garis biru merek.
-  - Grup menu: Ringkasan, Konten, Pembaca, Tools, SEO, Tampilan, Pengaturan.
+  - Grup menu: Ringkasan, lalu grup yang bisa dilipat Konten, Pembaca, Tools, SEO, Pengaturan, Tampilan (urutan pertama kali grup muncul di config).
+  - Sejak v1.2.1 setiap grup yang bisa dilipat berupa baris berikon (Konten `library-big`, Pembaca `book-open-text`, Tools `wrench`, SEO `search`, Pengaturan `settings`, Tampilan `palette`), jadi grup yang dilipat tetap menunjukkan bagiannya. Isi grup menjorok dengan garis pandu dari tengah ikon grup. Grup yang dilipat tetapi berisi halaman yang sedang dibuka ditandai seperti menu aktif, dan grup Pembaca yang dilipat membawa jumlah pesan baru.
   - Di bawah menu ada kartu "Sinkron Google" (sinkron terakhir dan tanggal data terakhir), hanya untuk admin.
 - **Bidang dan kartu.** Bidang krem `#f4f1ec`. Kartu putih bersudut 16 px dengan garis tipis.
 - **Tombol utama** memakai biru aksi `#265fe8` (teks putih 5,4:1). Biru merek `#2f6bff` hanya 4,50:1 dengan teks putih, jadi dipakai untuk grafik dan penanda, tidak untuk tombol berteks.

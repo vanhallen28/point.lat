@@ -7,7 +7,8 @@ import { LogoMenu } from './Grafik'
 
 /**
  * Bagian atas menu admin (`admin.components.beforeNavLinks`, spesifikasi §23): logo point. terbalik, grup
- * Ringkasan (Beranda admin dan, untuk admin, Dashboard SEO), dan jumlah pesan baru di samping menu Pesan masuk.
+ * Ringkasan (Beranda admin dan, untuk admin, Dashboard SEO), dan jumlah pesan baru di samping menu Pesan masuk
+ * (juga di baris grup Pembaca selama grup itu dilipat).
  * Angka itu dipasang lewat CSS `::after` pada tautan koleksi bawaan Payload (`#nav-pesan-masuk`), karena menu
  * koleksi dirender Payload; nilainya hanya angka dari database.
  */
@@ -16,6 +17,7 @@ export async function MenuRingkasan({ user, payload }: ServerProps) {
   const pesanBaru = user
     ? (await payload.count({ collection: 'pesan-masuk', where: { status: { equals: 'baru' } }, overrideAccess: true })).totalDocs
     : 0
+  const angka = `${Math.min(pesanBaru, 99)}${pesanBaru > 99 ? '+' : ''}`
   return (
     <div className="redaksi-menu">
       {/* Nama tautan dari isinya ("point. Ruang redaksi"), jadi sama dengan teks yang terlihat (WCAG 2.5.3). */}
@@ -27,7 +29,7 @@ export async function MenuRingkasan({ user, payload }: ServerProps) {
       <TautanNav href={PATH_ADMIN} label="Beranda admin" id="nav-beranda-admin" />
       {admin && <TautanNav href={`${PATH_ADMIN}/seo`} label="Dashboard SEO" id="nav-dashboard-seo" />}
       {pesanBaru > 0 && (
-        <style>{`#nav-pesan-masuk::after{content:"${Math.min(pesanBaru, 99)}${pesanBaru > 99 ? '+' : ''}" / ""}#nav-pesan-masuk .nav__link-label::after{content:", ${pesanBaru} baru";position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}`}</style>
+        <style>{`#nav-pesan-masuk::after{content:"${angka}" / ""}#nav-pesan-masuk .nav__link-label::after{content:", ${pesanBaru} baru";position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}#nav-group-Pembaca.nav-group--collapsed .nav-group__label::after{content:"${angka}" / ", ${pesanBaru} pesan baru"}`}</style>
       )}
     </div>
   )

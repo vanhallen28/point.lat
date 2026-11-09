@@ -36,7 +36,9 @@ describe('data beranda admin', () => {
 
   it('artikel terjadwal dihitung dari job schedulePublish yang belum selesai dan tampil di kolom pekannya', async () => {
     const payload = await getTestPayload()
-    const sekarang = new Date()
+    // Pekan di masa depan yang tidak berisi tulisan lain: database tes menyimpan ratusan artikel terbit dari run
+    // sebelumnya, dan sel pekan ini hanya menampilkan 3 chip pertama (sisanya "+N lagi").
+    const sekarang = new Date('2031-01-08T03:00:00.000Z')
     const sebelum = await ambilRuangRedaksi(payload, { peran: 'admin' }, { sekarang })
     // Pilar yang tampil di kalender (database tes bisa berisi banyak pilar buatan tes lain).
     const pilar = sebelum.kalender.baris[0].pilar
@@ -47,16 +49,22 @@ describe('data beranda admin', () => {
       draft: true,
       data: { judul, slug: judul.toLowerCase(), deck: 'Deck.', pilar: pilar.id as number, penulis: penulis.id, tipe: 'panduan', _status: 'draft' },
     })
-    const nanti = new Date(sekarang.getTime() + 60 * 60 * 1000)
-    await payload.jobs.queue({
+    const job = await payload.jobs.queue({
       task: 'schedulePublish',
       input: { type: 'publish', doc: { relationTo: 'artikel', value: draf.id } },
-      waitUntil: nanti,
+      waitUntil: new Date(sekarang.getTime() + 60 * 60 * 1000),
     })
-    const sesudah = await ambilRuangRedaksi(payload, { peran: 'admin' }, { sekarang })
-    expect(sesudah.artikel.terjadwal).toBe(sebelum.artikel.terjadwal + 1)
-    const baris = sesudah.kalender.baris.find((b) => b.pilar.id === pilar.id)!
-    const chip = baris.sel.flatMap((s) => s.chip).find((c) => c.id === draf.id)
-    expect(chip?.keadaan).toBe('terjadwal')
+    try {
+      const sesudah = await ambilRuangRedaksi(payload, { peran: 'admin' }, { sekarang })
+      expect(sesudah.artikel.terjadwal).toBe(sebelum.artikel.terjadwal + 1)
+      const baris = sesudah.kalender.baris.find((b) => b.pilar.id === pilar.id)!
+      const pekanIni = sesudah.kalender.kolom.findIndex((k) => k.jenis === 'pekan' && k.ini)
+      const chip = baris.sel[pekanIni].chip.find((c) => c.id === draf.id)
+      expect(chip?.keadaan).toBe('terjadwal')
+    } finally {
+      // Job dan draf dihapus supaya run berikutnya mulai dari pekan yang kosong lagi.
+      await payload.delete({ collection: 'payload-jobs', id: job.id, overrideAccess: true })
+      await payload.delete({ collection: 'artikel', id: draf.id, overrideAccess: true })
+    }
   })
 })

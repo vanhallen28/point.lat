@@ -8,6 +8,15 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.2.1 (9 November 2026)
+
+Menu kiri admin: ikon setiap bagian tetap terlihat saat grupnya dilipat.
+
+- **Grup berikon:** Konten, Pembaca, Tools, SEO, Pengaturan, dan Tampilan kini berupa baris dengan ikon, nama, dan panah. Saat grup dilipat, ikonnya tetap ada, jadi menu yang ringkas tetap mudah dikenali.
+- **Isi grup menjorok** dengan garis pandu, jadi jelas menu mana milik grup mana.
+- **Penanda halaman aktif:** grup yang dilipat tetapi berisi halaman yang sedang kamu buka ditandai garis biru.
+- **Pesan baru tetap terlihat:** angka pesan baru pindah ke baris Pembaca saat grup itu dilipat.
+
 ## v1.2.0 (9 November 2026)
 
 Admin yang lebih profesional mengikuti gambar referensi kamu, plus fitur yang biasanya dipasang lewat plugin WordPress.

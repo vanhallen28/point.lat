@@ -52,6 +52,32 @@ test('beranda admin: periode 28 hari, menu Ringkasan, dan baris Perlu perhatian 
   await tutup()
 })
 
+test('menu admin: setiap grup berikon, dan grup Pembaca yang dilipat tetap membawa jumlah pesan baru', async ({ browser, page: p }) => {
+  const { page, tutup } = await bukaAdmin(browser, ADMIN_E2E)
+  await page.goto('/admin')
+  for (const grup of ['Konten', 'Pembaca', 'Tools', 'SEO', 'Pengaturan', 'Tampilan']) {
+    const ikon = await page.locator(`#nav-group-${grup} > .nav-group__toggle`).evaluate((el) => getComputedStyle(el, '::before').maskImage)
+    expect(ikon, grup).toMatch(/^url\("data:image\/svg\+xml/)
+  }
+  await tutup()
+
+  // Lipatan grup tersimpan sebagai preferensi pengguna, jadi dicoba dengan editor baru (spec lain memakai admin E2E).
+  const email = `editor-menu-${Date.now()}@point.lat`
+  const password = 'editor-e2e-rahasia-panjang'
+  await p.request.post('/api/pengguna/login', { data: ADMIN_E2E })
+  expect((await p.request.post('/api/pengguna', { data: { email, password, nama: 'Editor Menu', peran: 'editor' } })).status()).toBe(201)
+  const editor = await bukaAdmin(browser, { email, password })
+  await editor.page.goto('/admin')
+  const pembaca = editor.page.locator('#nav-group-Pembaca')
+  await pembaca.locator('> .nav-group__toggle').click()
+  await expect(pembaca).toHaveClass(/nav-group--collapsed/)
+  expect(await pembaca.locator('> .nav-group__toggle').evaluate((el) => getComputedStyle(el, '::before').maskImage)).toMatch(/^url\(/)
+  const lencana = await pembaca.locator('.nav-group__label').evaluate((el) => getComputedStyle(el, '::after').content)
+  expect(lencana).toMatch(/^"\d+\+?"/)
+  await periksaAxe(editor.page, '.nav')
+  await editor.tutup()
+})
+
 test('beranda admin untuk editor: bagian konten saja, tanpa data Google, kode sematan, dan pelanggan newsletter', async ({ browser, page: p }) => {
   const email = `editor-${Date.now()}@point.lat`
   const password = 'editor-e2e-rahasia-panjang'
