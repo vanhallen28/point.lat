@@ -30,9 +30,12 @@ const daftar = (butir: string[], urut = false): Node => ({
 const isi = (...children: Node[]): IsiLexical => ({ root: { type: 'root', ...dasar, direction: 'ltr', format: '', children } })
 
 const DIAKSES = '2026-11-05T00:00:00.000Z'
+/** Sumber yang ditambahkan saat penjelasan dilengkapi untuk paket konten v1.3.0. */
+const DIAKSES_V130 = '2026-11-10T00:00:00.000Z'
 
 type Sumber = NonNullable<Tool['sumberAturan']>[number]
 const sumber = (judul: string, url: string, penerbit: string): Sumber => ({ judul, url, penerbit, diaksesPada: DIAKSES })
+const sumberBaru = (judul: string, url: string, penerbit: string): Sumber => ({ judul, url, penerbit, diaksesPada: DIAKSES_V130 })
 
 const S = {
   ter: sumber('Lampiran PP 58 Tahun 2023: tarif efektif PPh Pasal 21', 'https://www.pajak.go.id/sites/default/files/lampiran/Lampiran%20PP58TAHUN2023.pdf', 'DJP'),
@@ -87,10 +90,26 @@ const S = {
     'https://lldikti3.kemdiktisaintek.go.id/wp-content/uploads/2024/07/Permendikbud-No.-3-Tahun-2020-Standar-Nasional-Pendidikan-Tinggi.pdf',
     'LLDIKTI Wilayah III',
   ),
-  permen39: sumber(
-    'Materi Permendiktisaintek Nomor 39 Tahun 2025 tentang Penjaminan Mutu Pendidikan Tinggi',
-    'https://lldikti6.id/wp-content/uploads/2025/11/01.-MATERI-1-SNDIKTI-Permen-39-2025.pdf',
-    'LLDIKTI Wilayah VI',
+  permen39: sumberBaru(
+    'Permendiktisaintek Nomor 39 Tahun 2025 tentang Penjaminan Mutu Pendidikan Tinggi',
+    'https://peraturan.go.id/files/permendiktisaintek-no-39-tahun-2025.pdf',
+    'Kementerian Hukum',
+  ),
+  libur2027: sumberBaru(
+    'Inilah SKB 3 Menteri Libur Nasional dan Cuti Bersama 2027',
+    'https://setneg.go.id/baca/index/inilah_skb_3_menteri_libur_nasional_dan_cuti_bersama_2027',
+    'Kementerian Sekretariat Negara',
+  ),
+  uu27: sumberBaru(
+    'UU Pelindungan Ketenagakerjaan resmi berlaku sejak 28 Oktober 2026',
+    'https://sultra.antaranews.com/berita/545839/uu-pelindungan-ketenagakerjaan-resmi-berlaku-sejak-28-oktober-2026',
+    'ANTARA',
+  ),
+  tipsKprOjk: sumberBaru('Tips Memilih KPR dari OJK', 'https://momsmoney.kontan.co.id/news/tips-memilih-kpr-dari-ojk', 'Kontan'),
+  flpp2026: sumberBaru(
+    'KPR Subsidi Tenor 40 Tahun Resmi Berlaku, Bunga Tetap 5%',
+    'https://wartaekonomi.co.id/read618898/kpr-subsidi-tenor-40-tahun-resmi-berlaku-bunga-tetap-5',
+    'Warta Ekonomi',
   ),
   ugm: sumber('Grading System', 'https://admission.ugm.ac.id/wp-content/uploads/sites/330/2025/04/Grading-System.pdf', 'Universitas Gadjah Mada'),
 }
@@ -163,6 +182,17 @@ export const TOOLS_AWAL: ToolAwal[] = [
         'Pegawai di industri alas kaki, tekstil dan pakaian jadi, furnitur, kulit dan barang dari kulit, serta pariwisata yang penghasilan brutonya paling banyak Rp10 juta sebulan bisa mendapat PPh 21 ditanggung pemerintah selama 2026 (PMK 105 Tahun 2025). Kalkulator ini menghitung PPh 21 sebelum insentif itu.',
         'Angka di sini perkiraan. Slip gajimu bisa berbeda karena komponen lain, misalnya potongan koperasi.',
       ]),
+      h2('Cara memakai kalkulator ini'),
+      daftar(
+        [
+          'Isi gaji pokok ditambah tunjangan tetap per bulan, sebelum dipotong apa pun.',
+          'Pilih status PTKP sesuai keadaanmu pada 1 Januari tahun ini.',
+          'Buka pengaturan lanjutan bila kamu punya tunjangan tidak tetap, tidak ikut salah satu BPJS, atau membayar iuran pensiun lain dan zakat lewat kantor.',
+          'Baca rincian di bawah hasil: penghasilan bruto, tarif TER, setiap potongan, lalu hitungan ulang bulan Desember.',
+        ],
+        true,
+      ),
+      p('Cocokkan rincian itu dengan slip gajimu baris demi baris. Kalau ada selisih, biasanya datang dari lembur, bonus, atau tarif JKK yang berbeda.'),
     ),
     faq: [
       {
@@ -230,6 +260,34 @@ export const TOOLS_AWAL: ToolAwal[] = [
         'Masa kerja dihitung dalam bulan penuh sampai hari raya.',
         'Perkiraan PPh 21 memakai gaji bulanan yang sama dengan upah THR. Bila bulan itu ada lembur atau bonus, potongannya lebih besar.',
       ]),
+      h2('Siapa yang berhak'),
+      daftar([
+        'Pekerja tetap dan pekerja kontrak yang sudah bekerja minimal satu bulan terus-menerus.',
+        'Pekerja harian lepas yang memenuhi syarat masa kerja, dengan upah sebulan dari rata-rata upahnya.',
+        'Pekerja tetap yang terkena PHK dalam 30 hari sebelum hari raya.',
+      ]),
+      p('Pekerja kontrak yang kontraknya berakhir sebelum hari raya tidak berhak atas THR hari raya itu. THR dibayar dalam bentuk uang rupiah, bukan barang.'),
+      h2('Batas bayar THR Idul Fitri 2027'),
+      p(
+        'SKB tiga menteri tentang hari libur 2027 menetapkan Idul Fitri 1448 H pada 10 dan 11 Maret 2027. THR wajib dibayar paling lambat tujuh hari sebelum hari raya, jadi batasnya 3 Maret 2027. Tanggal pasti Idul Fitri tetap menunggu sidang isbat, dan batas THR ikut bergeser bila hari raya bergeser.',
+      ),
+      p(
+        'Permenaker 6 Tahun 2016 tetap berlaku setelah UU Nomor 27 Tahun 2026 tentang Pelindungan Ketenagakerjaan terbit, selama tidak bertentangan dengan undang-undang itu. Aturan pelaksana yang baru wajib terbit paling lama setahun sejak 28 Oktober 2026.',
+      ),
+      h2('Contoh THR proporsional'),
+      p('Untuk upah Rp5.000.000 sebulan:'),
+      daftar([
+        'Masa kerja 1 bulan: 1/12 x Rp5.000.000 = Rp416.667.',
+        'Masa kerja 3 bulan: Rp1.250.000.',
+        'Masa kerja 6 bulan: Rp2.500.000.',
+        'Masa kerja 9 bulan: Rp3.750.000.',
+        'Masa kerja 11 bulan: Rp4.583.333.',
+        'Masa kerja 12 bulan atau lebih: Rp5.000.000.',
+      ]),
+      h2('Kalau THR terlambat'),
+      p(
+        'Pengusaha yang terlambat membayar THR dikenai denda 5% dari total THR, dan denda itu tidak menghapus kewajiban membayar THR. Simpan slip gaji dan perjanjian kerjamu, tanyakan ke HR secara tertulis, lalu laporkan ke posko THR Kemnaker atau dinas ketenagakerjaan bila belum juga dibayar.',
+      ),
     ),
     faq: [
       {
@@ -242,7 +300,7 @@ export const TOOLS_AWAL: ToolAwal[] = [
         jawaban: 'Karena PPh 21 bulan itu dihitung dari gaji ditambah THR dengan tarif TER yang lebih tinggi. Selisihnya disesuaikan saat pajak setahun dihitung ulang di bulan Desember.',
       },
     ],
-    sumberAturan: [S.permenaker6, S.seThr, S.setneg, S.indonesiabaik, S.djpThr, S.ter],
+    sumberAturan: [S.permenaker6, S.seThr, S.setneg, S.indonesiabaik, S.djpThr, S.ter, S.libur2027, S.uu27],
     seo: {
       keyphrase: 'kalkulator THR',
       judulSEO: 'Kalkulator THR 2026: THR Proporsional dan Potongan PPh 21',
@@ -279,6 +337,49 @@ export const TOOLS_AWAL: ToolAwal[] = [
         'Hitung juga biaya lain: provisi, administrasi, asuransi, appraisal, dan notaris.',
         'Pastikan pemberi pinjaman berizin dan diawasi OJK.',
       ]),
+      h2('Cara memakai kalkulator ini'),
+      daftar(
+        [
+          'Isi harga rumah atau barang dan persentase uang muka.',
+          'Isi bunga per tahun dan lama cicilan sesuai penawaran bank atau leasing.',
+          'Pilih cara hitung bunga. KPR bank hampir selalu anuitas; kredit kendaraan dan pinjaman tanpa agunan sering flat.',
+          'Baca total bunga, bukan hanya cicilan per bulan, sebelum memutuskan.',
+        ],
+        true,
+      ),
+      h2('Bunga tetap lalu mengambang'),
+      p(
+        'Promosi KPR biasanya menawarkan bunga tetap selama 1 sampai 5 tahun pertama. Setelah itu bunga mengambang mengikuti suku bunga pasar, dan banyak bank memakai suku bunga dasar kredit (SBDK) yang diumumkan di situs bank masing-masing. Untuk memperkirakan cicilan setelah masa bunga tetap, hitung lagi dengan sisa pokok, sisa tenor, dan kisaran bunga mengambang bank itu.',
+      ),
+      h2('Pengaruh tenor dan bunga'),
+      p('Untuk pokok pinjaman Rp405.000.000 dengan bunga anuitas tetap:'),
+      daftar([
+        'Bunga 7,5%, tenor 15 tahun: cicilan Rp3.754.400, total bunga Rp270.792.000.',
+        'Bunga 7,5%, tenor 20 tahun: cicilan Rp3.262.652, total bunga Rp378.036.480.',
+        'Bunga 10,5%, tenor 20 tahun: cicilan Rp4.043.439, total bunga Rp565.425.360.',
+      ]),
+      p(
+        'Tenor yang lebih panjang membuat cicilan lebih ringan, tetapi total bunganya jauh lebih besar. Kenaikan bunga tiga persen setelah masa bunga tetap menaikkan cicilan sekitar 24%, jadi hitung juga skenario bunga mengambang sebelum akad.',
+      ),
+      h2('Berapa cicilan yang aman'),
+      p(
+        'Panduan OJK menyarankan total cicilan tidak lebih dari 30% penghasilan. Dengan gaji bersih Rp12.000.000, semua cicilan sebaiknya di bawah Rp3.600.000. Cicilan sebesar itu, dengan bunga 7,5% selama 20 tahun, cukup untuk pokok pinjaman sekitar Rp446 juta.',
+      ),
+      h2('Biaya di luar cicilan'),
+      daftar([
+        'Uang muka.',
+        'Provisi dan biaya administrasi bank.',
+        'Appraisal, asuransi jiwa, dan asuransi kebakaran.',
+        'Notaris atau PPAT, serta BPHTB yang tarifnya ditetapkan pemerintah daerah.',
+      ]),
+      h2('Pelunasan dipercepat'),
+      p(
+        'Melunasi sebagian pokok lebih cepat mengurangi total bunga, karena bunga anuitas dihitung dari sisa pokok. Tetapi banyak bank mengenakan penalti pelunasan dipercepat, terutama selama masa bunga tetap. Tanyakan besarnya sebelum akad, lalu bandingkan dengan bunga yang bisa kamu hemat.',
+      ),
+      h2('KPR subsidi'),
+      p(
+        'KPR subsidi FLPP memakai bunga tetap 5% sepanjang tenor untuk rumah tapak, dan sejak Juni 2026 tenornya bisa sampai 40 tahun. Kalkulator ini menerima tenor sampai 30 tahun. Contohnya, rumah Rp185.000.000 dengan uang muka 1% dan tenor 20 tahun: cicilan Rp1.208.709 per bulan.',
+      ),
     ),
     faq: [
       {
@@ -290,7 +391,7 @@ export const TOOLS_AWAL: ToolAwal[] = [
         jawaban: 'Bisa. Kredit kendaraan dan pinjaman tanpa agunan sering memakai bunga flat. Pilih Flat, lalu isi harga, uang muka, bunga, dan lama cicilannya.',
       },
     ],
-    sumberAturan: [S.kompasAnuitas],
+    sumberAturan: [S.kompasAnuitas, S.tipsKprOjk, S.flpp2026],
     seo: {
       keyphrase: 'kalkulator cicilan KPR',
       judulSEO: 'Kalkulator Cicilan KPR: Bunga Anuitas dan Flat per Bulan',
@@ -338,6 +439,54 @@ export const TOOLS_AWAL: ToolAwal[] = [
         ],
         true,
       ),
+      h2('Contoh untuk keluarga'),
+      p('Pengeluaran wajib Rp8.000.000 sebulan, menikah dengan anak, sudah punya Rp20.000.000, target terkumpul dalam 24 bulan:'),
+      daftar(
+        [
+          'Target: 12 x Rp8.000.000 = Rp96.000.000.',
+          'Kekurangan: Rp96.000.000 - Rp20.000.000 = Rp76.000.000.',
+          'Setoran: Rp76.000.000 / 24 = Rp3.166.667 per bulan.',
+        ],
+        true,
+      ),
+      p('Kalau setoran itu terlalu berat, perpanjang jangkanya. Target yang tercapai pelan-pelan lebih baik daripada target besar yang ditinggalkan di bulan ketiga.'),
+      h2('Cara mengumpulkannya'),
+      daftar([
+        'Pasang transfer otomatis ke rekening dana darurat setiap tanggal gajian, sebelum uangnya terpakai.',
+        'Sisihkan sebagian THR, bonus, atau penghasilan tambahan.',
+        'Mulai dari target satu bulan pengeluaran, lalu naikkan bertahap sampai target penuh.',
+      ]),
+      h2('Kapan boleh dipakai'),
+      p(
+        'Pakai dana darurat untuk kejadian yang tidak direncanakan dan tidak bisa ditunda: kehilangan penghasilan, biaya kesehatan yang tidak ditanggung, atau perbaikan rumah dan kendaraan yang mendesak. Setelah terpakai, isi ulang lebih dulu sebelum menabung untuk tujuan lain.',
+      ),
+      h2('Berapa lama mengumpulkannya'),
+      p(
+        'Tidak ada aturan baku. Jangka 12 sampai 24 bulan biasanya membuat setoran tetap terasa ringan tanpa membuat target terlalu jauh. Yang penting setorannya rutin. Setoran kecil yang konsisten setiap gajian lebih berguna daripada setoran besar sesekali yang mudah terlewat ketika ada kebutuhan lain.',
+      ),
+      h2('Dana darurat dan utang'),
+      p(
+        'Kalau kamu punya utang berbunga tinggi, seperti kartu kredit atau pinjaman online, kumpulkan dulu dana darurat kecil, misalnya satu bulan pengeluaran. Setelah itu fokus melunasi utang tersebut, lalu lanjutkan dana darurat sampai target penuh. Tanpa dana darurat sama sekali, kejadian mendadak berikutnya biasanya kembali dibayar dengan utang.',
+      ),
+      h2('Bukan untuk investasi'),
+      p(
+        'Dana darurat harus bisa dicairkan cepat tanpa rugi. Simpan di tabungan atau produk sejenis yang diawasi OJK. Simpanan di bank yang ikut program penjaminan LPS dijamin sampai Rp2 miliar per nasabah per bank, selama bunganya tidak melebihi tingkat bunga penjaminan LPS.',
+      ),
+      h2('Cara memakai kalkulator ini'),
+      daftar(
+        [
+          'Jumlahkan pengeluaran wajibmu sebulan: makan, tempat tinggal, transport, tagihan, cicilan, dan biaya anak.',
+          'Pilih kondisi yang paling sesuai.',
+          'Isi dana yang sudah terkumpul dan berapa bulan kamu ingin mencapainya.',
+        ],
+        true,
+      ),
+      h2('Batasan kalkulator'),
+      daftar([
+        'Target dihitung dari pengeluaran hari ini. Hitung ulang setahun sekali atau saat kondisimu berubah, misalnya menikah atau punya anak.',
+        'Bunga tabungan tidak dihitung, jadi setoran yang sebenarnya dibutuhkan sedikit lebih kecil.',
+        'Kelipatan 6, 9, dan 12 kali adalah patokan umum. Pekerja lepas atau yang penghasilannya tidak tetap sebaiknya memakai target lebih besar.',
+      ]),
     ),
     faq: [
       {
@@ -400,6 +549,44 @@ export const TOOLS_AWAL: ToolAwal[] = [
         'Tidak dipakai untuk ibu hamil.',
         'Angka kalori adalah perkiraan. Kebutuhan yang tepat, terutama bila kamu punya penyakit tertentu, sebaiknya ditentukan bersama dokter atau ahli gizi.',
       ]),
+      h2('Contoh lain'),
+      p('Laki-laki 30 tahun, berat 75 kg, tinggi 170 cm, aktivitas sedang:'),
+      daftar(
+        [
+          'IMT = 75 / (1,70 x 1,70) = 26,0, kategori gemuk menurut batas dewasa Indonesia, dan berat badan lebih menurut batas WHO.',
+          'BMR = 10 x 75 + 6,25 x 170 - 5 x 30 + 5 = 1.668 kkal.',
+          'Kebutuhan kalori = 1.667,5 x 1,76 = sekitar 2.935 kkal per hari.',
+          'Berat normal untuk tinggi 170 cm: 53,5 sampai 72,3 kg.',
+        ],
+        true,
+      ),
+      h2('Cara membaca hasilnya'),
+      p(
+        'IMT adalah alat skrining yang cepat, bukan diagnosis. Hasil di luar kategori normal adalah tanda untuk memeriksakan diri, bukan kesimpulan tentang kesehatanmu. Orang yang berotot bisa tergolong gemuk, sementara orang dengan IMT normal tetap bisa punya lemak perut berlebih.',
+      ),
+      h2('Cara memakai kalkulator ini'),
+      daftar(
+        [
+          'Isi berat badan dalam kilogram dan tinggi badan dalam sentimeter.',
+          'Isi usia dan jenis kelamin untuk menghitung energi basal.',
+          'Pilih tingkat aktivitas yang paling sesuai dengan keseharianmu.',
+        ],
+        true,
+      ),
+      h2('Kapan perlu ke tenaga kesehatan'),
+      p(
+        'Periksakan diri ke puskesmas atau dokter bila IMT-mu di luar kategori normal, berat badanmu berubah banyak tanpa sebab yang jelas, atau kamu ingin menurunkan maupun menaikkan berat badan dengan aman. Kebutuhan kalori untuk program penurunan berat badan sebaiknya ditentukan bersama tenaga kesehatan.',
+      ),
+      h2('Untuk anak dan remaja'),
+      p(
+        'Kalkulator ini hanya untuk usia 18 tahun ke atas. Pada anak dan remaja, angka IMT yang sama bisa berarti hal berbeda tergantung umur dan jenis kelamin, sehingga penilaiannya memakai grafik IMT menurut umur yang dipakai tenaga kesehatan di posyandu dan puskesmas.',
+      ),
+      h2('Supaya angkanya akurat'),
+      daftar([
+        'Timbang berat badan di pagi hari dengan pakaian ringan dan tanpa alas kaki.',
+        'Ukur tinggi badan sambil berdiri tegak tanpa alas kaki.',
+        'Pilih tingkat aktivitas yang jujur. Kebanyakan pekerja kantor masuk kategori ringan.',
+      ]),
     ),
     faq: [
       { pertanyaan: 'Berapa IMT yang normal?', jawaban: 'Untuk orang dewasa di Indonesia, IMT normal 18,5 sampai 25,0. WHO memakai 18,5 sampai di bawah 25.' },
@@ -454,6 +641,48 @@ export const TOOLS_AWAL: ToolAwal[] = [
         'Mata kuliah yang hanya dinilai lulus atau tidak lulus, tanpa nilai huruf, tidak dihitung dalam IP dan IPK.',
         'Sebagian kampus memotong IPK ke dua desimal, bukan membulatkan. Kalkulator ini membulatkan.',
       ]),
+      h2('IP yang dibutuhkan untuk target IPK'),
+      p('IP yang dibutuhkan = (target IPK x total SKS setelah semester depan - mutu sekarang) / SKS semester depan.'),
+      daftar(
+        [
+          'IPK 3,34 dari 80 SKS berarti mutu 267,4. Semester depan 20 SKS.',
+          'Target IPK 3,40: (3,40 x 100 - 267,4) / 20 = 3,63. Masih mungkin.',
+          'Target IPK 3,50: (3,50 x 100 - 267,4) / 20 = 4,13. Di atas 4, jadi tidak mungkin dalam satu semester.',
+        ],
+        true,
+      ),
+      h2('Predikat kelulusan'),
+      p(
+        'Permendiktisaintek 39 Tahun 2025 menyerahkan kriteria predikat kelulusan, seperti dengan pujian, kepada masing-masing kampus. Aturan lama, Permendikbud 3 Tahun 2020, memakai IPK di atas 3,50 untuk predikat pujian, dan banyak kampus masih memakai batas itu ditambah syarat lulus tepat waktu.',
+      ),
+      h2('Beban satu SKS'),
+      p(
+        'Satu SKS setara 45 jam belajar per semester, termasuk tatap muka, tugas, dan belajar mandiri. Karena itu mata kuliah ber-SKS besar paling berpengaruh pada IPK, dan sebaiknya mendapat porsi belajar terbesar.',
+      ),
+      h2('Kesalahan yang sering terjadi'),
+      daftar([
+        'Membagi total mutu dengan jumlah mata kuliah, bukan jumlah SKS.',
+        'Memakai konversi nilai antara dari kampus lain.',
+        'Membulatkan IPK lama terlalu jauh sebelum digabung.',
+        'Ikut menghitung mata kuliah yang hanya dinilai lulus atau tidak lulus.',
+      ]),
+      h2('IPS, IPK, dan transkrip'),
+      p(
+        'IP semester tercantum di kartu hasil studi (KHS) setiap akhir semester. IPK adalah angka yang dibawa terus sampai lulus dan tercetak di transkrip. Kalau kamu mengulang mata kuliah, cek di pedoman akademik apakah nilai yang dipakai adalah nilai terbaik atau nilai terakhir, karena SKS mata kuliah itu hanya dihitung sekali.',
+      ),
+      h2('IPK di luar kampus'),
+      p(
+        'Banyak beasiswa dan lowongan kerja memasang syarat IPK minimal. Penerima beasiswa seperti KIP Kuliah juga dievaluasi setiap semester, jadi menjaga IP semester tetap stabil sama pentingnya dengan IPK akhir.',
+      ),
+      h2('Cara memakai kalkulator ini'),
+      daftar(
+        [
+          'Isi SKS dan nilai huruf setiap mata kuliah dari KHS-mu. Tambah baris sesuai jumlah mata kuliah.',
+          'Isi IPK dan total SKS sebelumnya bila ingin melihat IPK gabungan.',
+          'Cocokkan tabel konversi nilai antara dengan pedoman akademik kampusmu.',
+        ],
+        true,
+      ),
     ),
     faq: [
       {

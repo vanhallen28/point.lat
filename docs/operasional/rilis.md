@@ -509,6 +509,39 @@ Pengiriman email belum ada: saat memilih penyedia (Kit, Mailchimp, atau Brevo), 
 
 Tombol bagikan: centang di Pengaturan, Fitur. Kode sematan: Pengaturan, Kode sematan, tambah kode (misalnya Google Analytics, posisi "Di dalam <head>", jenis Butuh persetujuan, cookie `_ga, _ga_*`). Buka situs di jendela privat: banner cookie menyebut layanan itu, dan kodenya baru jalan setelah "Izinkan semua". Setiap kode menambah waktu muat; periksa Lighthouse (I4) setelah memasangnya.
 
+## L. Paket konten awal (v1.3.0)
+
+Setelah zip v1.3.0 di-push dan deploy Vercel berhasil (tanpa migrasi), situs bisa diisi 12 artikel dan penjelasan kalkulator yang lebih lengkap. Semua langkah di admin produksi, dengan akun admin.
+
+### L1. Impor
+
+Buka `https://point.lat/admin`. Di atas kartu angka ada kartu **Paket konten awal**. Klik **Impor paket konten** dan biarkan halaman terbuka sampai pesan "Impor selesai" tampil (biasanya di bawah satu menit).
+
+**Hasil yang diharapkan:** kartu menulis `12/12 masuk` dan `0 terbit`. Buka "Hasil impor terakhir": 12 artikel baru, tujuh subkategori baru (bila belum ada), daftar kalkulator yang diperbarui, dan keadaan blok Pilihan redaksi di beranda. Situs publik belum berubah karena semuanya draf.
+
+Bila ada baris galat "Pilar uang-karier belum ada" atau "Penulis Redaksi point. (slug redaksi) belum ada", data awal C5 belum lengkap. Buat pilar atau penulis itu lewat admin dengan slug yang sama (`uang-karier`, `belajar`, `redaksi`), lalu klik tombolnya lagi. Artikel yang sudah masuk tidak digandakan.
+
+### L2. Review dan terbitkan bertahap
+
+Klik **Buka artikel paket**. Untuk setiap draf:
+
+1. Cocokkan angka dengan sumbernya di bagian Sumber, terutama yang bertahun (jadwal 2027, besaran KIP Kuliah, libur Lebaran 2027).
+2. Tambahkan pengalaman atau sudut pandangmu di satu atau dua tempat. Ini yang membedakan artikel kamu dari halaman lain di Google.
+3. Periksa panel SEO di sidebar (seharusnya hijau semua) dan kartu sampul di Gambar utama.
+4. Centang ketiga butir **Review sebelum terbit**, lalu **Publikasikan perubahan**.
+
+Terbitkan tiga sampai empat artikel per pekan, mulai dari yang musimnya paling dekat: SNBP 2027 dan UTBK-SNBT 2027 (pendaftaran awal tahun), lalu SPT Tahunan (batas 31 Maret 2027) dan THR (Lebaran sekitar 10 Maret 2027). Setiap artikel yang terbit dikabarkan otomatis ke Google dan IndexNow (log di SEO, Log indexing).
+
+### L3. Kalkulator
+
+Buka menu **Tools**. Untuk setiap kalkulator yang masih draf, baca penjelasan barunya, sesuaikan bila perlu, lalu Terbitkan. Kalkulator yang sudah terbit atau sudah kamu ubah sebelum impor tidak diganti; penjelasan barunya bisa disalin manual dari file `src/seed/tools.ts` bila mau.
+
+### L4. Beranda
+
+Bila beranda belum punya blok Pilihan redaksi, impor menambahkannya setelah hero dengan lima artikel paket. Kartunya tampil satu per satu begitu artikelnya terbit. Urutan dan pilihannya bisa diubah di Tampilan, Beranda.
+
+**Hasil yang diharapkan setelah semua terbit:** kartu Paket konten awal hilang dari beranda admin, rubrik Uang & Karier dan Belajar berisi subkategori baru, dan artikel saling menautkan.
+
 ## Verifikasi
 
 - [ ] Deploy Production terakhir **Ready** dan log build memuat `Lingkungan produksi siap: env dan database cocok.`
@@ -571,6 +604,7 @@ Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sud
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
+| 10 November 2026 | Sesi Claude (v1.3.0) | Ditambah bagian L: impor paket konten awal, review dan terbit bertahap, penjelasan kalkulator, dan blok Pilihan redaksi di beranda. |
 | 9 November 2026 | Sesi Claude (v1.2.0) | Ditambah bagian K: beranda admin, Kebijakan Privasi lebih dulu, form kontak, newsletter tersimpan, tombol bagikan, dan Kode sematan. |
 | 9 November 2026 | Sesi Claude (v1.1.0) | Runbook disesuaikan keputusan pemilik: Vercel paket gratis, tanpa Docker dan tanpa `psql` (pemeriksaan di SQL Editor Supabase), proyek pratinjau juga untuk `npm run dev`, Supabase Cron 10 menit opsional (H5). Langkah di layanan luar belum dijalankan ulang. |
 | 7 November 2026 | Probe Rencana 8C (Postgres 16 lokal, PgBouncer mode transaksi dengan TLS dan CA tiruan sebagai pengganti Supabase) | C5 diuji: `npm run migrate` dan `npm run seed` dari shell dengan `DATABASE_URL` dan `DATABASE_CA` ter-export (nilai lewat `read -rs`) mengenai database pooler, bukan database di `.env` lokal; tanpa baris push `dev`; admin hasil seed bisa login dengan `PAYLOAD_SECRET` lain (seperti runtime Vercel), password salah ditolak. D1 diuji tanpa `.env`: dengan `VERCEL_ENV=production` dan tanpa env lain `pnpm periksa:rilis` menolak dengan enam butir yang diawali `DATABASE_URL belum diisi.`; tanpa `VERCEL_ENV` galatnya `missing secret key`. D4 diuji dengan `pnpm build:vercel` ber-`VERCEL_ENV=production` setelah C5: penanda `produksi`, migrasi hanya `Done.`, build berhasil, server menjawab 200 untuk beranda, rubrik, `/tools`, robots, sitemap, dan login admin dengan menu pilar dari seed, header keamanan, dan robots persis seperti I2. Penjaga, header, migrasi, dan backup juga diuji di task kode Rencana 8C. Langkah di layanan luar belum dijalankan. |

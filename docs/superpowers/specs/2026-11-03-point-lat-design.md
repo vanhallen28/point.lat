@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 November 2026 (v1.1.0, v1.2.0, dan v1.2.1): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.3.0): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -15,6 +15,7 @@
 | 2026-11-09 | v1.1.0 | 1. Hosting **Vercel paket gratis (Hobby)**, bukan Pro (§2, §5, §18, §19). 2. **Full Next.js dengan perintah terminal npm** di semua dokumen. 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (§21). 4. **Tanpa Docker: hanya Next.js, Vercel, dan Supabase**; data tersambung ke Supabase lewat kredensial bawaan akun Supabase (§5 Koneksi database). Ditambah: logo resmi dari file pemilik (§3, §4), jadwal 10 menit opsional lewat Supabase Cron (§5), peta skill lengkap (§20), saran trafik (§22) |
 | 2026-11-09 | v1.2.0 | Admin lebih profesional mengikuti gambar referensi pemilik: tema bermerek, beranda admin baru, Dashboard SEO dengan perbandingan periode. Fitur mirip plugin WordPress lewat halaman Fitur dan Kode sematan (plugin unggahan tidak didukung). Form kontak disimpan di admin, pelanggan newsletter disimpan di Supabase dengan unduhan CSV, dan tombol bagikan (§23) |
 | 2026-11-09 | v1.2.1 | Menu admin: grup yang bisa dilipat berupa baris berikon, jadi ikon setiap bagian tetap terlihat saat grup dilipat (§23, permintaan pemilik) |
+| 2026-11-10 | v1.3.0 | Paket konten awal supaya situs tidak sepi: 12 artikel draf Uang & Karier dan Belajar dengan kartu sampul bergaya point., penjelasan enam kalkulator diperluas, dan tombol Impor paket konten di beranda admin (§24) |
 
 ---
 
@@ -659,6 +660,105 @@ Draf halaman Kebijakan Privasi diperbarui dengan:
 - Tanpa dependensi baru: form, CSV, ikon, dan grafik SVG ditulis sendiri. Plugin form-builder Payload tidak dipakai.
 - Migrasi hanya menambah tabel dan kolom.
 - Form kontak dan newsletter berfungsi tanpa JavaScript, dan anggaran JS halaman publik (§12) tetap dijaga `motion.spec.ts`.
+
+## 24. Paket konten awal (v1.3.0)
+
+Keputusan pemilik 10 November 2026 ("agar website terisi penuh tidak sepi seperti sekarang"):
+- Cakupan: penjelasan enam kalkulator diperluas dan 12 artikel baru.
+- Pilar: Uang & Karier dan Belajar, karena keduanya punya kalkulator dan musim pencarian (THR, SPT, SNBP, UTBK).
+- Cara masuk: tombol **Impor paket konten** di beranda admin, bukan perintah terminal.
+- Gambar: kartu sampul bergaya point., bukan foto stok.
+
+Rencana implementasi: `docs/superpowers/plans/2026-11-10-rencana-10-paket-konten.md`.
+
+### Isi paket
+
+| Pilar | Subkategori | Artikel (slug) | Tipe |
+|---|---|---|---|
+| Uang & Karier | Gaji & Pajak | `cara-menghitung-gaji-bersih`, `pph-21-ter`, `ptkp-2026`, `cara-lapor-spt-tahunan-coretax` | panduan, explainer, explainer, panduan |
+| Uang & Karier | BPJS | `potongan-bpjs-di-slip-gaji` | panduan |
+| Uang & Karier | Hak Pekerja | `cara-menghitung-thr`, `cara-menghitung-upah-lembur` | panduan |
+| Uang & Karier | KPR & Kredit | `cara-menghitung-cicilan-kpr` | panduan |
+| Belajar | Kuliah | `cara-menghitung-ipk` | panduan |
+| Belajar | Masuk PTN | `snbp-2027`, `utbk-snbt-2027` | explainer, panduan |
+| Belajar | Beasiswa | `kip-kuliah` | panduan |
+
+Setiap artikel:
+- Judul, deck, tiga sampai lima poin Intinya, isi, FAQ, sumber (situs resmi lebih dulu, tanggal akses), isian SEO, kalkulator terkait, dan artikel terkait.
+- Panjang isi paling sedikit 600 kata untuk panduan dan 550 untuk explainer, dengan contoh hitung, tabel, dan callout.
+- Panel SEO (§7) hijau untuk semua butir:
+  - judul SEO 50 sampai 60 karakter dan meta 150 sampai 160;
+  - keyphrase di judul, slug, dan 100 kata pertama;
+  - tiga sampai lima tautan internal, paling sedikit dua sumber luar;
+  - kalimat rata-rata di bawah 20 kata.
+- Aturan copy: tanpa em dash, en dash, dan tanda seru.
+- Angka aturan sama dengan parameter kalkulator. Fakta yang berubah tiap tahun (jadwal 2027, besaran KIP Kuliah, libur Lebaran 2027) ditulis dengan tahun dan sumbernya.
+- Topik yang angkanya belum terbit saat paket dibuat (UMP 2027) tidak dimasukkan.
+
+Penjelasan keenam kalkulator (`src/seed/tools.ts`) diperluas menjadi sekitar 600 kata: cara memakai, contoh, kesalahan umum, dan sumber.
+
+### Format sumber
+
+- Artikel ditulis sebagai data TypeScript di `src/modules/paket/artikel/`, satu file per artikel. Isinya markdown terbatas yang diubah ke Lexical oleh `markdownKeLexical()` (`src/modules/paket/markdown.ts`, fungsi murni):
+  - `##` dan `###` (H1 dan H4 ke bawah ditolak);
+  - paragraf, daftar `- ` dan `1. `;
+  - tabel pipa dengan baris `Tabel: Judul` opsional (blok Tabel perbandingan);
+  - `> [!info|tips|peringatan] Judul` (blok Callout);
+  - `[[tool:id]]` (blok Sematkan tools);
+  - `[[baca:slug]]` (relasi Baca juga);
+  - `**tebal**`, `*miring*`, dan tautan `[teks](url)`.
+- Tautan `/slug` dan `/tools/id` menjadi tautan internal ke dokumennya. Tujuan yang tidak ada menjadi teks biasa.
+- Tautan di dalam callout atau tabel ditolak, karena blok itu hanya menyimpan teks.
+- Daftar paket dan urutannya di `paket-awal.ts`, beserta lima artikel untuk blok mozaik beranda.
+
+### Kartu sampul
+
+- PNG 1920 x 1080 per artikel di `src/modules/paket/sampul/`, dibuat sekali oleh `scripts/buat-sampul-paket.ts` (Playwright yang sudah ada dan Archivo). Hasilnya di-commit, bukan dibuat saat impor.
+- Desain: latar warna pilar, dua cincin dari tanda logo, label pilar, kata kunci besar yang dipaskan otomatis (paling banyak dua baris), dan logo point.
+- Isi penting ada di tengah, jadi tetap utuh saat Cloudinary memotong otomatis ke 16:9, 4:3, dan 1:1.
+- Diunggah ke koleksi media saat impor dengan teks alt dan kredit "Kartu sampul point.".
+- `outputFileTracingIncludes` di `next.config.ts` membawa file PNG ke fungsi `/api/[...slug]` di Vercel.
+
+### Impor
+
+- **Endpoint.**
+  - `POST /api/artikel/paket-awal` (hanya admin, `tolakSelainAdmin`) menjalankan `imporPaket()` lewat `after()` dan menjawab 202. Selama impor lain berjalan, jawabannya 429.
+  - `GET` yang sama mengembalikan status: jumlah artikel paket yang ada dan terbit, sedang berjalan atau tidak, dan hasil impor terakhir.
+- **Kunci.** Satu impor sekaligus lewat baris `payload_kv` (`paket-awal:berjalan`, klaim atomik, kedaluwarsa 15 menit). Hasil impor terakhir disimpan di `paket-awal:hasil`.
+- **Artikel.**
+  - Dicari lewat slug, termasuk draf. Yang sudah ada tidak disentuh, jadi impor aman diulang dan sampul tidak diunggah dua kali.
+  - Artikel baru dibuat dua tahap. Tahap pertama membuat dokumen dengan semua isian kecuali isi dan artikel terkait. Tahap kedua mengisi keduanya setelah semua id ada, supaya tautan antarartikel menunjuk dokumen.
+  - Semuanya draf dengan `pakaiDrafAi` menyala, jadi checklist Review sebelum terbit (§10) wajib dicentang.
+  - Draf tidak merevalidasi halaman dan tidak dikabarkan ke mesin pencari.
+- **Subkategori.** Dibuat bila slug-nya belum ada. Slug yang sudah dipakai pilar lain dicatat sebagai galat, dan artikelnya masuk tanpa subkategori.
+- **Tools.** Penjelasan diganti dengan versi baru hanya bila semua syarat ini terpenuhi:
+  - tools masih draf dan belum pernah terbit (riwayat versi);
+  - penjelasannya berbeda;
+  - belum disunting, yaitu diubah tidak lebih dari semenit setelah dibuat seed.
+
+  Selain itu dilewati dengan alasan.
+- **Beranda.** Blok mozaik "Pilihan redaksi" ditambahkan tepat setelah hero, hanya bila beranda terbit, tidak punya perubahan belum terbit, dan belum punya blok mozaik. Kartunya tampil setelah artikel pilihannya terbit.
+- **Galat.** Pilar atau penulis `redaksi` yang belum ada dicatat sebagai galat tanpa membuat dokumen setengah jadi.
+
+### Kartu di beranda admin
+
+- Kartu "Paket konten awal" hanya untuk admin, dan hilang setelah semua artikel paket terbit.
+- Isinya:
+  - jumlah artikel masuk dan terbit;
+  - tombol impor ("Impor artikel yang belum masuk" bila sebagian sudah ada);
+  - tautan ke daftar artikel paket;
+  - tiga langkah sebelum terbit;
+  - ringkasan impor terakhir dalam `<details>`.
+- Tombol mengikuti pola aksi admin (§23): `aria-disabled`, `role="status"`, menanyakan status tiap 2 detik, lalu `router.refresh()`.
+
+### Batasan teknis
+
+- Tanpa perubahan skema dan tanpa dependensi baru.
+- Tes:
+  - unit untuk pengubah markdown dan setiap artikel paket (panel SEO, aturan copy, panjang, tujuan tautan internal);
+  - unit untuk aturan tools dan mozaik;
+  - integrasi untuk impor, impor ulang, terbit tanpa review, galat pilar, kunci, dan endpoint;
+  - E2E untuk kartu dan tombol, dengan jawaban server ditiru supaya database E2E tetap.
 
 ## Sumber riset
 

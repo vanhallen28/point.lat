@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   // `next dev` 16.3 menambahkan blok aturan agen berbahasa Inggris ke CLAUDE.md di setiap jalan; CLAUDE.md proyek
   // ditulis sendiri, jadi dimatikan.
   agentRules: false,
+  // Kartu sampul paket konten (`src/modules/paket/sampul`) dibaca dari disk oleh endpoint impor di API Payload.
+  // Path yang dirangkai dari `process.cwd()` tidak dilacak otomatis, jadi folder itu dikemas ke fungsi API.
+  outputFileTracingIncludes: {
+    '/api/[...slug]': ['./src/modules/paket/sampul/*.png'],
+  },
   // Header keamanan di semua jawaban (`src/lib/header-keamanan.ts`). Lewat konfigurasi, bukan dibaca atau
   // ditulis saat render, jadi halaman publik tetap ISR.
   async headers() {

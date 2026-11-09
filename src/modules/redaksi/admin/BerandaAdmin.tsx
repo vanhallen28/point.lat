@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 
 import { PATH_ADMIN, urlAdmin } from '@/lib/admin'
+import { KartuPaket } from '@/modules/paket/admin/KartuPaket'
+import { statusPaket } from '@/modules/paket/status'
 import { teksTanggal } from '@/modules/pantau/format'
 
 import { bacaPeriode, PERIODE_BERANDA, sapaan } from '../aturan'
@@ -43,6 +45,8 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
   const sekarang = new Date()
   const periode = bacaPeriode(searchParams?.periode, PERIODE_BERANDA, 7)
   const data = await ambilRuangRedaksi(req.payload, pengguna, { sekarang, periode })
+  // Paket konten awal (spesifikasi §24): hanya admin, dan hanya sampai semua artikel paketnya terbit.
+  const paket = data.admin ? await statusPaket(req.payload, sekarang) : null
   const namaDepan = data.nama.split(/\s+/)[0]
 
   return (
@@ -87,6 +91,8 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
           </a>
         </div>
       </header>
+
+      {paket && paket.terbit < paket.total && <KartuPaket status={paket} />}
 
       <BarisAngka data={data} />
 

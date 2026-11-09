@@ -8,6 +8,22 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.3.0 (10 November 2026)
+
+Paket konten awal supaya situs tidak sepi: 12 artikel lengkap dan penjelasan yang lebih panjang untuk keenam kalkulator, masuk lewat satu tombol di beranda admin.
+
+- **Tombol Impor paket konten** di beranda admin (hanya admin). Sekali klik, 12 artikel masuk sebagai **draf**, lengkap dengan kartu sampul, Intinya, isi dengan contoh hitung dan tabel, FAQ, sumber resmi, isian SEO yang sudah hijau di panel SEO, kalkulator tersemat, dan tautan antarartikel. Kartu ini menunjukkan berapa artikel sudah masuk dan terbit, lalu hilang sendiri setelah semuanya terbit.
+- **12 artikel paket:**
+  - Uang & Karier: cara menghitung gaji bersih, PPh 21 TER, PTKP 2026, potongan BPJS di slip gaji, THR Lebaran 2027, upah lembur, lapor SPT Tahunan di Coretax, dan cicilan KPR;
+  - Belajar: cara menghitung IPK, SNBP 2027, UTBK-SNBT 2027, dan KIP Kuliah.
+- **Subkategori baru** dibuat bila belum ada: Gaji & Pajak, BPJS, Hak Pekerja, KPR & Kredit, Kuliah, Masuk PTN, dan Beasiswa.
+- **Kartu sampul bergaya point.:** warna pilar, cincin dari logo, label pilar, dan kata kunci besar. Dipotong otomatis dengan rapi untuk 16:9, 4:3, dan kotak.
+- **Penjelasan kalkulator lebih lengkap** (sekitar 600 kata per tools): cara memakai, contoh, kesalahan yang sering terjadi, dan sumber. Hanya kalkulator yang masih draf dan belum kamu sunting yang diperbarui; yang sudah terbit atau sudah kamu ubah tidak disentuh.
+- **Blok Pilihan redaksi di beranda** ditambahkan setelah hero bila beranda belum punya blok itu. Kartunya baru tampil setelah artikel pilihannya terbit.
+- **Tetap wajib review:** setiap artikel paket ditandai draf AI, jadi tiga centang Review sebelum terbit harus diisi dulu. Draf tidak dikabarkan ke Google sampai kamu menerbitkannya.
+- **Aman diklik ulang:** artikel yang sudah ada (draf atau terbit) tidak ditimpa dan sampul tidak diunggah dua kali.
+- Tanpa perubahan database dan tanpa dependensi baru.
+
 ## v1.2.1 (9 November 2026)
 
 Menu kiri admin: ikon setiap bagian tetap terlihat saat grupnya dilipat.

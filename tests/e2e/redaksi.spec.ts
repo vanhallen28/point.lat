@@ -78,6 +78,25 @@ test('menu admin: setiap grup berikon, dan grup Pembaca yang dilipat tetap memba
   await editor.tutup()
 })
 
+test('kartu paket konten awal: tombol impor menanyakan status sampai selesai (jawaban server ditiru)', async ({ browser }) => {
+  const { page, tutup } = await bukaAdmin(browser, ADMIN_E2E)
+  // Jawaban server ditiru supaya database E2E tidak berubah untuk spec lain; impor sungguhan diuji di paket.int.spec.ts.
+  let tanya = 0
+  await page.route('**/api/artikel/paket-awal', async (route) => {
+    if (route.request().method() === 'POST') return route.fulfill({ status: 202, json: { status: 'antre', pesan: 'Impor dimulai.' } })
+    tanya++
+    return route.fulfill({ json: { berjalan: tanya < 2 ? '2026-11-10T00:00:00.000Z' : null, ada: 12, terbit: 0, total: 12 } })
+  })
+  await page.goto('/admin')
+  const kartu = page.getByRole('region', { name: 'Paket konten awal' })
+  await expect(kartu).toContainText('0/12 masuk')
+  await periksaAxe(page, '.paket')
+  await kartu.getByRole('button', { name: 'Impor paket konten' }).click()
+  await expect(kartu.getByRole('status')).toHaveText(/^Impor selesai\. 12 artikel paket/, { timeout: 15_000 })
+  expect(tanya).toBeGreaterThanOrEqual(2)
+  await tutup()
+})
+
 test('beranda admin untuk editor: bagian konten saja, tanpa data Google, kode sematan, dan pelanggan newsletter', async ({ browser, page: p }) => {
   const email = `editor-${Date.now()}@point.lat`
   const password = 'editor-e2e-rahasia-panjang'
@@ -93,6 +112,7 @@ test('beranda admin untuk editor: bagian konten saja, tanpa data Google, kode se
   await expect(page.locator('#nav-global-kode-sematan')).toHaveCount(0)
   await expect(page.locator('#nav-pelanggan-newsletter')).toHaveCount(0)
   await expect(page.locator('#nav-pesan-masuk')).toHaveCount(1)
+  await expect(page.getByRole('region', { name: 'Paket konten awal' })).toHaveCount(0)
   await periksaAxe(page, '.redaksi')
   await tutup()
 })

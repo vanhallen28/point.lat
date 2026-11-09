@@ -15,6 +15,7 @@ import { LABEL_TIPE_ARTIKEL, TIPE_ARTIKEL, type TipeArtikel } from '@/lib/konsta
 import { validasiLebarGambar } from '@/lib/media'
 import type { TargetPath } from '@/lib/paths'
 import { endpointAsisten, endpointStatusAsisten } from '@/modules/ai/endpoint'
+import { endpointImporPaket, endpointStatusPaket } from '@/modules/paket/endpoint'
 import { endpointPanelSeo } from '@/modules/seo/endpoint'
 
 async function validasiGambarUtama(value: unknown, { req }: { req: PayloadRequest }) {
@@ -43,7 +44,7 @@ export const Artikel: CollectionConfig = {
     components: { edit: { PublishButton: '@/modules/ai/admin/TombolTerbit#TombolTerbit' } },
   },
   access: { read: publishedOrLoggedIn, create: isLoggedIn, update: isLoggedIn, delete: isLoggedIn },
-  endpoints: [endpointPanelSeo, endpointAsisten, endpointStatusAsisten],
+  endpoints: [endpointPanelSeo, endpointAsisten, endpointStatusAsisten, endpointImporPaket, endpointStatusPaket],
   versions: {
     drafts: { autosave: { interval: 1500 }, schedulePublish: true },
     maxPerDoc: 50,
