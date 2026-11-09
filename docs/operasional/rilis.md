@@ -1,7 +1,7 @@
 # Runbook: Rilis point.lat dan uji langsung
 
 **Pemilik:** pemilik point.lat | **Frekuensi:** sekali saat rilis (bagian A sampai I); bagian J saat AdSense menyetujui situs; cek di bagian I diulang setelah perubahan besar di layanan luar.
-**Diperbarui:** 7 November 2026 (Rencana 8C) | **Dijalankan terakhir:** belum (lihat Riwayat).
+**Diperbarui:** 9 November 2026 (v1.1.0: Vercel gratis, tanpa Docker, Supabase Cron opsional) | **Dijalankan terakhir:** belum (lihat Riwayat).
 
 ## Tujuan
 
@@ -24,12 +24,12 @@ Membawa point.lat dari repo `vanhallen28/point.lat` sampai live di `https://poin
 
 ## A. Prasyarat
 
-- [ ] Akses Owner di organisasi Supabase berpaket Pro, tim Vercel (Hobby dulu sesuai keputusan pemilik; Pro sebelum iklan dinyalakan), admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
+- [ ] Akses Owner di organisasi Supabase (paket Free cukup untuk mulai; Pro bila butuh backup harian dan proyek yang tidak pernah dijeda), tim Vercel paket gratis (Hobby; Pro baru sebelum iklan dinyalakan), admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
 - [ ] Akun Cloudinary, akun Google (Search Console dan Google Cloud), Claude Console, dan nanti AdSense.
-- [ ] Komputer dengan `git`, Node 26 (26.13.0 atau lebih baru di seri 26; dengan nvm cukup `nvm install` di folder repo karena ada `.nvmrc`; `npm` ikut terpasang bersama Node), `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
+- [ ] Komputer dengan `git`, Node 26 (26.13.0 atau lebih baru di seri 26; dengan nvm cukup `nvm install` di folder repo karena ada `.nvmrc`; `npm` ikut terpasang bersama Node), `openssl`, `curl`, dan `gpg` (bawaan macOS kecuali `gpg`, lihat runbook pemulihan A1), serta salinan repo dari zip pembaruan terakhir (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
 - [ ] Pengelola password untuk menyimpan setiap rahasia yang dibuat di runbook ini.
 
-Mac Intel: Homebrew tidak lagi mendukung Mac Intel. `psql` cukup dijalankan dari image Docker Postgres yang sama dengan `docker-compose.yml` (Docker Desktop harus jalan), misalnya di C4: `docker run --rm -e DATABASE_URL postgres:17 sh -c 'psql "$DATABASE_URL" -c "select version()"'`. Opsi `-e DATABASE_URL` meneruskan nilai dari shell tanpa menampilkannya.
+**Tanpa Docker (keputusan pemilik 2026-11-09):** runbook ini hanya memakai npm, git, dashboard Vercel, dan dashboard Supabase. Semua pemeriksaan SQL dijalankan di Supabase, **SQL Editor**, bukan `psql`. Docker Desktop tidak dibutuhkan lagi; bila masih terpasang dari versi lama, lihat "Membersihkan Docker" di akhir runbook. Hanya pemulihan darurat (runbook pemulihan bagian B dan C) yang butuh klien `psql` dan `pg_restore`: pasang Postgres.app dari postgresapp.com (mendukung Mac Intel) tanpa menjalankan servernya.
 
 ## B. Repo dan CI
 
@@ -62,7 +62,7 @@ Fungsi Vercel berjalan di `sin1` (Singapura, `vercel.json`), dekat database. Apl
 
 ### C1. Proyek produksi
 
-Di organisasi Supabase berpaket Pro: **New project**, nama `point-lat`, region **Southeast Asia (Singapore)** (`ap-southeast-1`). Buat password database dengan tombol generate, simpan di pengelola password sebagai "Supabase produksi, password postgres".
+Di organisasi Supabase (Free atau Pro, lihat A): **New project**, nama `point-lat`, region **Southeast Asia (Singapore)** (`ap-southeast-1`). Buat password database dengan tombol generate, simpan di pengelola password sebagai "Supabase produksi, password postgres".
 
 **Hasil yang diharapkan:** proyek aktif; Settings, Infrastructure menampilkan region Singapura dan versi Postgres. Bila versi utamanya bukan 17, ubah `PG_MAJOR` di `.github/workflows/backup.yml` (runbook pemulihan A5).
 
@@ -82,17 +82,18 @@ Aplikasi tidak memakai Data API Supabase (REST dan GraphQL otomatis). Integratio
 
 ### C4. Connection string transaction pooler
 
-Tombol **Connect** di dashboard proyek, pilih **Transaction pooler**, salin URI (port 6543), ganti `[YOUR-PASSWORD]` dengan password C1, lalu simpan di pengelola password sebagai "DATABASE_URL produksi". Periksa dari komputer:
+Tombol **Connect** di dashboard proyek, pilih **Transaction pooler**, salin URI (port 6543), ganti `[YOUR-PASSWORD]` dengan password C1, lalu simpan di pengelola password sebagai "DATABASE_URL produksi". Masukkan ke shell untuk C5:
 
 ```bash
 read -rs DATABASE_URL && export DATABASE_URL
-psql "$DATABASE_URL" -c "select version()"
 ```
 
-(tempel URI setelah perintah pertama, lalu Enter; tidak ada yang tampil.)
+(tempel URI setelah perintah, lalu Enter; tidak ada yang tampil.) Bila tempel di Terminal bermasalah, pakai kotak isian macOS: `export DATABASE_URL="$(osascript -e 'text returned of (display dialog "DATABASE_URL" default answer "" with hidden answer)')"`.
 
-**Hasil yang diharapkan:** satu baris `PostgreSQL 17...`.
-**Bila gagal:** `password authentication failed` berarti password di URI salah.
+Ini adalah "sinkron lewat kredensial akun Supabase": aplikasi tersambung ke Supabase lewat connection string dari tombol Connect (bersama sertifikat CA dari C2), bukan lewat kunci API Supabase. Kunci API hanya membuka Data API REST, yang dimatikan di C3.
+
+**Hasil yang diharapkan:** tidak ada keluaran. Koneksi, password, dan SSL diuji langsung oleh `npm run migrate` di C5 (tanpa `psql`).
+**Bila gagal di C5:** `password authentication failed` berarti password di URI salah. Password yang memuat `#`, `/`, atau `?` membuat URI tidak sah: reset password database di Supabase ke huruf dan angka saja.
 
 ### C5. Migrasi dan data awal produksi dari komputer pemilik
 
@@ -123,11 +124,27 @@ INFO: Seed selesai. Admin: dibuat. Pilar: 4. Halaman draf: 6. Tools baru: 6. Par
 
 **Bila gagal:** `Seed dihentikan. password: ...` berarti password ditolak aturan password produksi; buat frasa lain dan ulangi dua perintah `read` dan `npm run seed`. Bila `npm run migrate` bertanya soal data loss atau migrasi `dev`, hentikan (Ctrl+C) dan pastikan `DATABASE_URL` menunjuk proyek Supabase yang baru dibuat, bukan database lokal.
 
-### C6. Proyek pratinjau di organisasi Free terpisah
+### C6. Proyek pratinjau (deploy Preview dan `npm run dev` di komputer)
 
-Deploy pratinjau Vercel memakai database sendiri, tidak pernah database produksi. Buat organisasi Supabase baru berpaket **Free** (paket organisasi Pro tidak bisa berisi proyek Free), lalu proyek `point-lat-pratinjau` di region **Southeast Asia (Singapore)**. Ulangi C2 (simpan sertifikat sebagai `~/point-lat-ca-pratinjau.crt`), C3, dan C4 (simpan sebagai "DATABASE_URL pratinjau"), lalu C5 dengan `~/point-lat-ca-pratinjau.crt` dan password admin pratinjau yang berbeda dari produksi.
+Deploy pratinjau Vercel dan pratinjau di komputer pemilik (`npm run dev`) memakai database sendiri, tidak pernah database produksi. Proyek ini menggantikan Postgres lokal lewat Docker. Bila proyek produksi ada di organisasi Pro, buat organisasi Supabase baru berpaket **Free** (paket organisasi Pro tidak bisa berisi proyek Free); bila produksi sudah di organisasi Free, cukup proyek kedua di organisasi itu (Free boleh dua proyek aktif). Nama proyek `point-lat-pratinjau`, region **Southeast Asia (Singapore)**. Ulangi C2 (simpan sertifikat sebagai `~/point-lat-ca-pratinjau.crt`), C3, dan C4 (simpan sebagai "DATABASE_URL pratinjau"), lalu C5 dengan `~/point-lat-ca-pratinjau.crt` dan password admin pratinjau yang berbeda dari produksi.
 
 **Hasil yang diharapkan:** keluaran sama dengan C5 di proyek pratinjau.
+
+Lalu arahkan `.env` di komputer ke proyek pratinjau (sekali saja; zip pembaruan berikutnya menyalin `.env` ini). Buka dengan `open -e .env` dan ubah tiga isian:
+
+```
+DATABASE_URL=<URI transaction pooler proyek pratinjau>
+DATABASE_CA="<seluruh isi ~/point-lat-ca-pratinjau.crt, termasuk baris BEGIN dan END>"
+SEED_ADMIN_PASSWORD=<password admin pratinjau>
+```
+
+Simpan, lalu dari folder repo:
+
+```bash
+npm run dev
+```
+
+**Hasil yang diharapkan:** `http://localhost:3000` menampilkan situs dengan data awal, dan `http://localhost:3000/admin` menerima akun admin pratinjau. Setiap zip pembaruan yang membawa migrasi baru: jalankan `npm run migrate` sekali sebelum `npm run dev`.
 Proyek Free dijeda bila aktivitas database selama 7 hari terlalu sedikit (Supabase mengirim email peringatan sekitar seminggu sebelumnya); build pratinjau gagal sampai proyek dilanjutkan lewat **Resume project** di dashboard (bisa sampai 90 hari setelah dijeda, data dan setelan kembali utuh).
 
 ## D. Proyek Vercel, env, dan deploy produksi pertama
@@ -335,6 +352,43 @@ git push origin --delete uji-pratinjau
 git branch -D uji-pratinjau
 ```
 
+### H5. Jadwal 10 menit lewat Supabase Cron (opsional, gratis)
+
+Vercel Hobby hanya menjalankan cron sekali sehari (D5). Supabase Cron (`pg_cron`) bisa memanggil endpoint yang sama setiap 10 menit lewat `pg_net`, tanpa Vercel Pro. Hasilnya artikel terjadwal terbit paling lambat 10 menit setelah waktunya, kiriman ulang ke Google dan IndexNow tidak menunggu esok hari, dan proyek Supabase Free tidak dijeda karena sepi. Jalankan di proyek Supabase **produksi** setelah D4 (deploy produksi berhasil) dan E1 (domain aktif).
+
+1. Database, Extensions: nyalakan **pg_cron** dan **pg_net**.
+2. Integrations, Vault, **Add new secret**: nama `cron_secret`, nilai sama persis dengan env `CRON_SECRET` Production di Vercel (salin dari pengelola password). Rahasia tidak diketik di SQL Editor, supaya tidak tersimpan di riwayat kueri.
+3. SQL Editor, jalankan:
+
+```sql
+select cron.schedule(
+  'point-jalankan-antrean',
+  '*/10 * * * *',
+  $$
+  select net.http_get(
+    url := 'https://point.lat/api/jobs/run',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
+    ),
+    timeout_milliseconds := 120000
+  );
+  $$
+);
+```
+
+**Hasil yang diharapkan:** satu baris berisi nomor job. Setelah 10 sampai 20 menit:
+
+```sql
+select status, return_message, start_time from cron.job_run_details order by start_time desc limit 3;
+select status_code, timed_out, error_msg, created from net._http_response order by created desc limit 3;
+```
+
+menampilkan `succeeded` dan `status_code` 200. Di Vercel, Logs dengan filter path `/api/jobs/run` menampilkan enam permintaan per jam. Cron harian Vercel tetap ada sebagai cadangan; jalan ganda aman karena antrean diklaim atomik.
+
+**Bila gagal:** `status_code` 401 berarti isi `cron_secret` tidak sama dengan `CRON_SECRET` Production (ubah secret di Vault, tidak perlu menjadwal ulang). `timed_out` true pada jalan yang panjang tidak menghentikan pekerjaan di Vercel, tetapi catat durasinya di I5. Mematikan: `select cron.unschedule('point-jalankan-antrean');`.
+
+**Keamanan:** Supabase mencatat bahwa header permintaan `pg_net` tersimpan sementara di tabel antreannya dan bisa dibaca role database yang boleh login (termasuk `cadangan_baca`). `CRON_SECRET` hanya memberi izin menjalankan antrean, yang aman bila terpanggil berlebih. Bila bocor, buat nilai baru di Vercel dan Vault, lalu Redeploy produksi.
+
 ## I. Rilis dan cek pasca-rilis
 
 ### I1. Terbitkan tulisan pertama
@@ -370,7 +424,7 @@ PageSpeed Insights, mode seluler, untuk beranda, artikel I1, satu rubrik, dan `h
 
 Vercel, Logs, filter path `/api/jobs/run`, satu jam terakhir. Admin, Dashboard SEO.
 
-**Hasil yang diharapkan:** satu permintaan per hari selama di Hobby (enam per jam di Pro, `*/10 * * * *`) berstatus 200, jauh di bawah batas 300 detik fungsi Vercel (Hobby dan Pro). Dalam satu jalan cron, baris "Sinkron Search Console" dan "Pindai tautan" di Dashboard SEO berhasil (data Google untuk domain baru muncul beberapa hari kemudian). Bila durasi mendekati 300 detik, catat untuk Fase 2 (`maxDuration` di `vercel.json`).
+**Hasil yang diharapkan:** satu permintaan per hari dari Vercel Cron selama di Hobby, ditambah enam per jam bila Supabase Cron (H5) dipasang, semuanya berstatus 200, jauh di bawah batas 300 detik fungsi Vercel (Hobby dan Pro). Dalam satu jalan cron, baris "Sinkron Search Console" dan "Pindai tautan" di Dashboard SEO berhasil (data Google untuk domain baru muncul beberapa hari kemudian). Bila durasi mendekati 300 detik, catat untuk Fase 2 (`maxDuration` di `vercel.json`).
 
 ### I6. Log 404
 
@@ -443,7 +497,9 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 | Build: `password authentication failed` | Password di `DATABASE_URL` salah | Salin ulang URI transaction pooler (C4) |
 | Build pratinjau gagal terhubung setelah lama tidak dipakai | Proyek Free dijeda | Dashboard Supabase, organisasi pratinjau, proyek pratinjau, **Resume project** |
 | `npm run seed` mencetak `Seed dihentikan. password: ...` | Password admin ditolak | Pakai frasa lain minimal 15 karakter (C5) |
-| Cron di Logs berstatus 401 | `CRON_SECRET` berubah tanpa deploy ulang | Redeploy produksi |
+| Cron di Logs berstatus 401 | `CRON_SECRET` berubah tanpa deploy ulang, atau secret `cron_secret` di Vault berbeda (H5) | Redeploy produksi; samakan `cron_secret` di Supabase Vault |
+| `npm run dev` gagal terhubung ke database (`ECONNREFUSED 127.0.0.1:5432`) | `.env` masih menunjuk Postgres lokal lewat Docker dari versi lama | Arahkan `.env` ke proyek Supabase pratinjau (C6) |
+| `npm run dev` atau `npm run migrate` gagal setelah proyek pratinjau lama tidak dipakai | Proyek Free dijeda | Dashboard Supabase, proyek pratinjau, **Resume project** |
 | Panggilan ke Google, IndexNow, atau Claude gagal dengan galat koneksi atau protokol (misalnya `ERR_HTTP2`, `GOAWAY`, `stream`) padahal kunci benar | `fetch` Node 26 di Vercel memakai HTTP/2 bila server mendukung | Tambahkan env `VERCEL_FETCH_DISABLE_H2` = `1` di Production (dan Preview bila perlu), Redeploy, lalu ulangi uji langsungnya; catat temuannya untuk diperbaiki di kode |
 | Log indexing: Google 403 | Akun layanan belum Owner | G3 |
 | Log indexing: IndexNow 403 | File kunci tidak cocok | Buka `https://point.lat/<kunci>.txt`, cocokkan dengan Pengaturan SEO (G5) |
@@ -462,13 +518,25 @@ Di Chrome biasa (bukan privat), buka satu artikel, pilih "Izinkan semua", lalu D
 | Situasi | Kontak | Cara |
 |---|---|---|
 | Build, domain, cron, atau Firewall bermasalah di sisi Vercel | Dukungan Vercel (tiket hanya di paket Pro; Hobby lewat komunitas) | Dashboard Vercel, Help |
-| Database, pooler, atau SSL bermasalah di sisi Supabase | Dukungan Supabase (paket Pro) | Dashboard Supabase, Support, tiket baru |
+| Database, pooler, atau SSL bermasalah di sisi Supabase | Dukungan Supabase (tiket prioritas di paket Pro; Free lewat formulir dukungan dan komunitas) | Dashboard Supabase, Support, tiket baru |
 | Search Console atau akun layanan | Bantuan Search Console | support.google.com/webmasters |
 | Cloudinary menolak unggah atau transformasi | Dukungan Cloudinary | Dashboard Cloudinary, Support |
 | Claude API galat terus-menerus | Dukungan Anthropic | Claude Console, Help |
+
+## Membersihkan Docker (sekali, opsional)
+
+Versi sebelum v1.1.0 menyimpan database pengembangan di volume Docker `point-lat_pgdata`. Isinya hanya data uji lokal. Setelah C6 berjalan, Docker bisa dibersihkan dari folder versi lama yang masih punya `docker-compose.yml` (Docker Desktop harus menyala untuk perintah ini):
+
+```bash
+cd "$HOME/Documents/Virgiawan/website done/point-lat-lama"
+docker compose down -v
+```
+
+Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sudah tidak terpasang, lewati bagian ini.
 
 ## Riwayat
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
-| 7 November 2026 | Probe Rencana 8C (Postgres 16 lokal, PgBouncer mode transaksi dengan TLS dan CA tiruan sebagai pengganti Supabase) | C5 diuji: `pnpm migrate` dan `pnpm seed` dari shell dengan `DATABASE_URL` dan `DATABASE_CA` ter-export (nilai lewat `read -rs`) mengenai database pooler, bukan database di `.env` lokal; tanpa baris push `dev`; admin hasil seed bisa login dengan `PAYLOAD_SECRET` lain (seperti runtime Vercel), password salah ditolak. D1 diuji tanpa `.env`: dengan `VERCEL_ENV=production` dan tanpa env lain `pnpm periksa:rilis` menolak dengan enam butir yang diawali `DATABASE_URL belum diisi.`; tanpa `VERCEL_ENV` galatnya `missing secret key`. D4 diuji dengan `pnpm build:vercel` ber-`VERCEL_ENV=production` setelah C5: penanda `produksi`, migrasi hanya `Done.`, build berhasil, server menjawab 200 untuk beranda, rubrik, `/tools`, robots, sitemap, dan login admin dengan menu pilar dari seed, header keamanan, dan robots persis seperti I2. Penjaga, header, migrasi, dan backup juga diuji di task kode Rencana 8C. Langkah di layanan luar belum dijalankan. |
+| 9 November 2026 | Sesi Claude (v1.1.0) | Runbook disesuaikan keputusan pemilik: Vercel paket gratis, tanpa Docker dan tanpa `psql` (pemeriksaan di SQL Editor Supabase), proyek pratinjau juga untuk `npm run dev`, Supabase Cron 10 menit opsional (H5). Langkah di layanan luar belum dijalankan ulang. |
+| 7 November 2026 | Probe Rencana 8C (Postgres 16 lokal, PgBouncer mode transaksi dengan TLS dan CA tiruan sebagai pengganti Supabase) | C5 diuji: `npm run migrate` dan `npm run seed` dari shell dengan `DATABASE_URL` dan `DATABASE_CA` ter-export (nilai lewat `read -rs`) mengenai database pooler, bukan database di `.env` lokal; tanpa baris push `dev`; admin hasil seed bisa login dengan `PAYLOAD_SECRET` lain (seperti runtime Vercel), password salah ditolak. D1 diuji tanpa `.env`: dengan `VERCEL_ENV=production` dan tanpa env lain `pnpm periksa:rilis` menolak dengan enam butir yang diawali `DATABASE_URL belum diisi.`; tanpa `VERCEL_ENV` galatnya `missing secret key`. D4 diuji dengan `pnpm build:vercel` ber-`VERCEL_ENV=production` setelah C5: penanda `produksi`, migrasi hanya `Done.`, build berhasil, server menjawab 200 untuk beranda, rubrik, `/tools`, robots, sitemap, dan login admin dengan menu pilar dari seed, header keamanan, dan robots persis seperti I2. Penjaga, header, migrasi, dan backup juga diuji di task kode Rencana 8C. Langkah di layanan luar belum dijalankan. |

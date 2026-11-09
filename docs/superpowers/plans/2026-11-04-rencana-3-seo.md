@@ -1,12 +1,18 @@
 # Rencana 3: Modul SEO inti point.lat
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Membangun modul `src/modules/seo/` (`metadata`, `jsonLd`, `analisis`), rute teknis `/sitemap.xml`, `/sitemap/{jenis}.xml`, `/news-sitemap.xml`, `/robots.txt`, `/feed.xml` dengan cache bertag dan revalidasi otomatis, serta panel SEO di editor artikel (checklist, kanibalisasi, saran link internal, pratinjau Google dan kartu sosial), semuanya teruji tanpa jaringan.
 
 **Architecture:** Semua aturan SEO adalah fungsi murni di `src/modules/seo/` yang menerima dokumen Payload ter-populate (tipe longgar `MasukanSeo`) dan pengaturan situs (`Situs`), lalu mengembalikan `Metadata` Next.js, graf JSON-LD, daftar cek, atau teks XML. Rute teknis di `src/app/(frontend)/` hanya mengambil data lewat `data.ts` yang dibungkus `unstable_cache` bertag; hook `revalidasiPublik` di tujuh koleksi publik dan global `pengaturan-seo` memanggil `revalidateTag` untuk tag yang terdampak. Panel SEO adalah field `ui` di tab SEO artikel: komponen klien membaca isian form, memanggil endpoint `POST /api/artikel/panel-seo` untuk data server (artikel lain, media, pengaturan), lalu merender hasil fungsi murni yang sama.
 
-**Tech Stack:** Next.js 16.3.3 (App Router, route handler, `next/cache`), Payload 3.92.1 (`@payloadcms/ui`, `payload/shared`), modul media Rencana 2 (`bangunUrl`, `urlOg`, `klienMedia`), Vitest 4, PostgreSQL 16/17, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, route handler, `next/cache`), Payload 3.92.1 (`@payloadcms/ui`, `payload/shared`), modul media Rencana 2 (`bangunUrl`, `urlOg`, `klienMedia`), Vitest 4, PostgreSQL 16/17, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§5 modul `seo` dan "Rendering", §7 rute teknis, §8 "Panel SEO per artikel" dan "Tingkat situs", §12, §16 tes `seo`).
 
@@ -14,13 +20,13 @@
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`.
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`.
 - **Tidak ada dependensi baru.** Semua yang dipakai sudah terpasang: `next/cache` (`unstable_cache`, `revalidateTag`), `@payloadcms/ui` (hook form admin), `payload/shared` (`reduceFieldsToValues`, `formatAdminURL`), `sass` bawaan admin untuk `PanelSeo.scss`. JSON Lexical dibaca tanpa paket `lexical`.
 - Nama domain berbahasa Indonesia seperti Rencana 1 dan 2 (`metadata`, `jsonLd`, `analisis` dari spesifikasi §5; `remahRoti`, `kanibalisasi`, `sarankanLink`, `ambilSitus`). Nama teknis framework tetap bahasa Inggris (hook, endpoint, route handler).
 - Copy UI dan pesan: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru. Pesan checklist dikunci tes.
 - Path publik selalu lewat `pathFor()` (`src/lib/paths.ts`); URL media selalu lewat `src/modules/media` (`bangunUrl`, `urlOg`). URL absolut dibangun dari `urlSitus` global `pengaturan-seo`.
-- **Perubahan skema harus aditif.** Rencana ini tidak menambah kolom: hanya hook, endpoint, dan field `ui` (tidak disimpan). Setiap task yang menyentuh koleksi memeriksa `pnpm generate:types && git diff --stat src/payload-types.ts` tetap tanpa perubahan. Bila Payload macet di "Pulling schema from database...", reset database yang bersangkutan seperti di Rencana 2.
-- Setiap kali menambah komponen admin: `pnpm generate:importmap`. Setiap kali koleksi berubah: `pnpm generate:types` lalu `pnpm typecheck`.
+- **Perubahan skema harus aditif.** Rencana ini tidak menambah kolom: hanya hook, endpoint, dan field `ui` (tidak disimpan). Setiap task yang menyentuh koleksi memeriksa `npm run generate:types && git diff --stat src/payload-types.ts` tetap tanpa perubahan. Bila Payload macet di "Pulling schema from database...", reset database yang bersangkutan seperti di Rencana 2.
+- Setiap kali menambah komponen admin: `npm run generate:importmap`. Setiap kali koleksi berubah: `npm run generate:types` lalu `npm run typecheck`.
 - Tes tidak memanggil jaringan dan memakai `.env.test` (database `pointlat_test`). Tes integrasi butuh Postgres jalan.
 - Halaman publik tidak dibangun di sini (Rencana 4). Rencana ini menyediakan fungsi untuk `generateMetadata`, JSON-LD, breadcrumb, dan tag cache yang akan dipakai halaman.
 - `next dev` di Next 16.3 menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md` bila mendeteksi agen AI. Kembalikan dengan `git checkout CLAUDE.md` sebelum commit (kecuali Task 9 yang memang mengubah `CLAUDE.md`; buang blok itu saja).
@@ -283,7 +289,7 @@ Analisis SEO (Task 4) dan panel admin (Task 8) membaca isi artikel dari JSON Lex
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-teks.test.ts` dengan `Cannot find package '@/modules/seo/lexical'`.
@@ -517,9 +523,9 @@ Analisis SEO (Task 4) dan panel admin (Task 8) membaca isi artikel dari JSON Lex
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 18 passed (18)`, `Tests 114 passed (114)`; type check dan lint tanpa error.
@@ -785,7 +791,7 @@ Tipe masukan sengaja lebih longgar dari `payload-types.ts`: relasi boleh ID atau
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-metadata.test.ts` dengan `Cannot find package '@/modules/seo/metadata'`.
@@ -1152,9 +1158,9 @@ Tipe masukan sengaja lebih longgar dari `payload-types.ts`: relasi boleh ID atau
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 19 passed (19)`, `Tests 131 passed (131)`; type check dan lint tanpa error.
@@ -1419,7 +1425,7 @@ FAQ tetap ditulis sebagai isi, tetapi `FAQPage` dan `HowTo` tidak dibuat (spesif
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-jsonld.test.ts` dengan `Cannot find package '@/modules/seo/jsonld'`.
@@ -1730,9 +1736,9 @@ FAQ tetap ditulis sebagai isi, tetapi `FAQPage` dan `HowTo` tidak dibuat (spesif
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 20 passed (20)`, `Tests 143 passed (143)`; type check dan lint tanpa error.
@@ -1962,7 +1968,7 @@ Urutan dan isi cek mengikuti spesifikasi §8 butir 2. Semua cek hanya hijau atau
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-analisis.test.ts` dengan `Cannot find package '@/modules/seo/analisis'`.
@@ -2196,9 +2202,9 @@ Urutan dan isi cek mengikuti spesifikasi §8 butir 2. Semua cek hanya hijau atau
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 21 passed (21)`, `Tests 158 passed (158)`; type check dan lint tanpa error.
@@ -2434,7 +2440,7 @@ Keputusan yang dikunci tes:
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-xml.test.ts` dengan `Cannot find package '@/modules/seo/sitemap'`.
@@ -2695,9 +2701,9 @@ Keputusan yang dikunci tes:
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 22 passed (22)`, `Tests 173 passed (173)`; type check dan lint tanpa error.
@@ -2736,7 +2742,7 @@ Nama tag mengikuti spesifikasi §5 "Rendering" dengan nama koleksi berbahasa Ind
 
 Koleksi dengan draf (artikel, tools, video, halaman) tidak merevalidasi saat menyimpan draf atau autosave, karena halaman publik tidak berubah. Batal terbit harus tetap merevalidasi, tetapi di `afterChange` dokumen utama sudah tertimpa dan `previousDoc` berisi versi terakhir (bisa draf). Karena itu `beforeChange` mencatat apakah dokumen utama tadinya terbit di `req.context` (pola yang sama dengan `redirectSaatPathBerubah` dari Rencana 1); bila versi terakhir sudah terbit, query dilewati. `afterChange` lalu membaca status dokumen utama sekali lagi hanya bila dokumen tadinya terbit dan yang disimpan bukan terbit.
 
-`revalidateTag(tag, { expire: 0 })`: data langsung kedaluwarsa sehingga permintaan berikutnya, termasuk crawler yang dikabari Mesin Indexing tepat setelah terbit, mendapat data baru. Bentuk dua argumen ini dianjurkan dokumentasi Next 16 untuk revalidasi dari route handler (bentuk satu argumen sudah usang). Di luar server Next (`pnpm seed`, tes, `payload run`) `revalidateTag` melempar "static generation store missing"; galat itu diabaikan karena tidak ada cache yang perlu dibuang. Tes memasang pemicu palsu lewat `pakaiPemicuRevalidasi`.
+`revalidateTag(tag, { expire: 0 })`: data langsung kedaluwarsa sehingga permintaan berikutnya, termasuk crawler yang dikabari Mesin Indexing tepat setelah terbit, mendapat data baru. Bentuk dua argumen ini dianjurkan dokumentasi Next 16 untuk revalidasi dari route handler (bentuk satu argumen sudah usang). Di luar server Next (`npm run seed`, tes, `payload run`) `revalidateTag` melempar "static generation store missing"; galat itu diabaikan karena tidak ada cache yang perlu dibuang. Tes memasang pemicu palsu lewat `pakaiPemicuRevalidasi`.
 
 - [ ] **Langkah 1: Tulis tes yang gagal**
 
@@ -2882,7 +2888,7 @@ Koleksi dengan draf (artikel, tools, video, halaman) tidak merevalidasi saat men
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/tag.test.ts` dengan `Cannot find package '@/hooks/revalidasiPublik'`.
@@ -2952,7 +2958,7 @@ Koleksi dengan draf (artikel, tools, video, halaman) tidak merevalidasi saat men
    * Mesin Indexing tepat setelah terbit) menunggu data baru, bukan menerima versi lama. Dokumentasi
    * Next 16 menyarankan bentuk ini untuk revalidasi dari luar Server Action (route handler Payload).
    *
-   * Di luar server Next (`pnpm seed`, tes, skrip `payload run`) tidak ada cache yang perlu dibuang dan
+   * Di luar server Next (`npm run seed`, tes, skrip `payload run`) tidak ada cache yang perlu dibuang dan
    * `revalidateTag` melempar "static generation store missing"; galat itu sengaja diabaikan.
    */
   const pemicuNext: PemicuRevalidasi = (tag) => {
@@ -3316,11 +3322,11 @@ Koleksi dengan draf (artikel, tools, video, halaman) tidak merevalidasi saat men
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: `payload-types.ts` tidak berubah (hanya hook yang ditambah); type check dan lint bersih; unit `Test Files 23 passed (23)`, `Tests 178 passed (178)`; integrasi `Test Files 11 passed (11)`, `Tests 37 passed (37)`.
@@ -3497,7 +3503,7 @@ Keputusan:
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-data.test.ts` dengan `Cannot find package '@/modules/seo/data'`.
@@ -3831,10 +3837,10 @@ Keputusan:
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check dan lint bersih; unit `Test Files 24 passed (24)`, `Tests 181 passed (181)`; integrasi `Test Files 12 passed (12)`, `Tests 44 passed (44)`.
@@ -3844,8 +3850,8 @@ Keputusan:
   Jalankan (database dev `pointlat`; seed membuat pilar, penulis redaksi, dan halaman draf):
 
   ```bash
-  pnpm build
-  pnpm seed
+  npm run build
+  npm run seed
   cat > src/contoh-terbit.ts <<'TS'
   import config from '@payload-config'
   import { getPayload } from 'payload'
@@ -3879,8 +3885,8 @@ Keputusan:
   payload.logger.info(`Artikel contoh: /${artikel.slug} terbit ${artikel.terbitPada}`)
   process.exit(0)
   TS
-  pnpm payload run src/contoh-terbit.ts && rm src/contoh-terbit.ts
-  (PORT=3113 pnpm start > /tmp/point-lat-start.log 2>&1 &) && sleep 20   # sama dengan uji asap Rencana 2
+  npm run payload -- run src/contoh-terbit.ts && rm src/contoh-terbit.ts
+  (PORT=3113 npm run start > /tmp/point-lat-start.log 2>&1 &) && sleep 20   # sama dengan uji asap Rencana 2
   for p in /sitemap.xml /sitemap/artikel.xml /sitemap/pilar.xml /sitemap/halaman.xml /sitemap/lain.xml /news-sitemap.xml /robots.txt /feed.xml; do
     echo "== $p"; curl -s -D - "http://localhost:3113$p" | grep -iE '^HTTP|^content-type|<loc>|<news:title>|^Sitemap:|<item>' | head -12
   done
@@ -3899,7 +3905,7 @@ Keputusan:
 
 - [ ] **Langkah 8: Uji revalidasi di server yang berjalan**
 
-  Jalankan `PORT=3114 pnpm dev` di terminal lain, tunggu sampai `http://localhost:3114/robots.txt` menjawab, lalu:
+  Jalankan `PORT=3114 npm run dev` di terminal lain, tunggu sampai `http://localhost:3114/robots.txt` menjawab, lalu:
 
   ```bash
   set -a && . ./.env && set +a
@@ -4302,7 +4308,7 @@ Gaya panel memakai variabel tema admin Payload (`--theme-elevation-*`, `--base`)
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/seo-kemiripan.test.ts`, `tests/unit/seo-pratinjau.test.ts`, dan `tests/unit/seo-panel.test.ts` dengan `Cannot find package '@/modules/seo/...'`.
@@ -5144,21 +5150,21 @@ Gaya panel memakai variabel tema admin Payload (`--theme-elevation-*`, `--base`)
   Jalankan:
 
   ```bash
-  pnpm generate:importmap
+  npm run generate:importmap
   grep -n "PanelSeo" "src/app/(payload)/admin/importMap.js"
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run build
   ```
 
   Hasil yang diharapkan: import map berisi dua baris `PanelSeo` (import dan entri `"@/modules/seo/PanelSeo#PanelSeo"`); `payload-types.ts` tidak berubah (field `ui` tidak disimpan); type check dan lint bersih; unit `Test Files 27 passed (27)`, `Tests 203 passed (203)`; integrasi `Test Files 13 passed (13)`, `Tests 48 passed (48)`; build selesai. Log tes integrasi berisi satu `APIError: Masuk dulu untuk memakai panel SEO.` yang memang diharapkan.
 
 - [ ] **Langkah 8: Periksa panel di browser**
 
-  Jalankan `pnpm dev`, masuk ke `http://localhost:3000/admin`, buka artikel contoh dari Task 7, klik tab **SEO**.
+  Jalankan `npm run dev`, masuk ke `http://localhost:3000/admin`, buka artikel contoh dari Task 7, klik tab **SEO**.
 
   Hasil yang diharapkan: di atas field SEO tampil lima kotak: "Checklist SEO" (12 cek dengan titik hijau/kuning, teks "Sesuai"/"Perlu dilihat", dan ringkasan "N dari 12 sudah sesuai"), "Kanibalisasi keyphrase", "Saran link internal" (artikel lain sepilar dengan alasan), "Pratinjau hasil Google" (Desktop dan HP, judul `... · point.`, URL `point.lat › slug`, canonical), dan "Kartu sosial (WhatsApp, Facebook, X)". Mengetik keyphrase yang sama dengan artikel lain memunculkan label "Sama" dengan tautan ke artikel itu dalam sekitar satu detik. Di tab Network, setiap perubahan memanggil `POST /api/artikel/panel-seo` (200). Gambar kartu sosial kosong tanpa kredensial Cloudinary (URL `res.cloudinary.com/palsu/...`), itu wajar. Kembalikan `CLAUDE.md` dengan `git checkout CLAUDE.md` bila `next dev` menambahkan blok agent-rules.
 
@@ -5227,7 +5233,7 @@ Gaya panel memakai variabel tema admin Payload (`--theme-elevation-*`, `--base`)
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/sitemap.int.spec.ts` dengan `Cannot find module '@/modules/seo/situs'` (atau `Failed to load url`).
@@ -5305,13 +5311,13 @@ Gaya panel memakai variabel tema admin Payload (`--theme-elevation-*`, `--base`)
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run build
   ```
 
   Hasil yang diharapkan: `payload-types.ts` dan import map tidak berubah; type check dan lint bersih; unit `Test Files 27 passed (27)`, `Tests 203 passed (203)`; integrasi `Test Files 13 passed (13)`, `Tests 49 passed (49)`; build mencantumkan `ƒ /feed.xml`, `ƒ /news-sitemap.xml`, `ƒ /robots.txt`, `ƒ /sitemap.xml`, `ƒ /sitemap/[jenis]`.
@@ -5328,7 +5334,7 @@ Gaya panel memakai variabel tema admin Payload (`--theme-elevation-*`, `--base`)
 
 ## Selesai bila
 
-- `pnpm test` lulus (203 unit, 49 integrasi), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil dan mencantumkan lima rute teknis, semuanya tanpa kredensial Cloudinary dan tanpa jaringan.
+- `npm test` lulus (203 unit, 49 integrasi), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil dan mencantumkan lima rute teknis, semuanya tanpa kredensial Cloudinary dan tanpa jaringan.
 - Uji asap Task 7: `/sitemap.xml` (enam jenis), `/sitemap/artikel.xml`, `/news-sitemap.xml`, `/robots.txt`, `/feed.xml` menjawab 200 dengan tipe konten yang benar; jenis sitemap lain 404; terbit, simpan draf, dan batal terbit tercermin sesuai aturan di server yang berjalan.
 - Panel SEO tampil di tab SEO artikel dengan 12 cek, kanibalisasi, saran link, pratinjau Google desktop/HP, dan kartu sosial; endpoint menolak pengguna yang belum masuk.
 - `payload-types.ts` tidak berubah (tidak ada perubahan skema).

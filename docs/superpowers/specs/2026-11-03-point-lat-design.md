@@ -1,16 +1,24 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** desain disetujui per bagian dalam sesi brainstorming, menunggu review spesifikasi tertulis.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 November 2026 (v1.1.0): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
+
+### Riwayat revisi
+
+| Tanggal | Versi | Perubahan (keputusan pemilik) |
+|---|---|---|
+| 2026-11-03 | - | Spesifikasi awal: Vercel Pro, pnpm, Postgres lokal lewat Docker |
+| 2026-11-07 | v1.0.0 | Vercel Hobby dulu (cron sekali sehari), npm menggantikan pnpm, pembaruan dikirim sebagai zip bernomor versi |
+| 2026-11-09 | v1.1.0 | 1. Hosting **Vercel paket gratis (Hobby)**, bukan Pro (§2, §5, §18, §19). 2. **Full Next.js dengan perintah terminal npm** di semua dokumen. 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (§21). 4. **Tanpa Docker: hanya Next.js, Vercel, dan Supabase**; data tersambung ke Supabase lewat kredensial bawaan akun Supabase (§5 Koneksi database). Ditambah: logo resmi dari file pemilik (§3, §4), jadwal 10 menit opsional lewat Supabase Cron (§5), peta skill lengkap (§20), saran trafik (§22) |
 
 ---
 
 ## 1. Ringkasan
 
-point.lat adalah media edukasi praktis berbahasa Indonesia untuk pembaca usia 18-35. Isinya menjelaskan uang, karier, teknologi, pendidikan, dan kesehatan mulai dari intinya, lalu memberi alat (kalkulator) untuk langsung menghitung. Situs dibangun dengan Next.js + Payload CMS 3 di Vercel, database Supabase Postgres, dan media lewat Cloudinary. Semua konten dan elemen tampilan bisa diedit dari CMS. Setiap kali konten terbit atau berubah besar, Mesin Indexing memberi tahu mesin pencari secara otomatis dan memantau status indeksnya.
+point.lat adalah media edukasi praktis berbahasa Indonesia untuk pembaca usia 18-35. Isinya menjelaskan uang, karier, teknologi, pendidikan, dan kesehatan mulai dari intinya, lalu memberi alat (kalkulator) untuk langsung menghitung. Situs dibangun dengan Next.js + Payload CMS 3 di Vercel paket gratis (Hobby), database Supabase Postgres, dan media lewat Cloudinary. Infrastruktur hanya Next.js, Vercel, dan Supabase: tanpa Docker, semua perintah terminal memakai npm. Semua konten dan elemen tampilan bisa diedit dari CMS. Setiap kali konten terbit atau berubah besar, Mesin Indexing memberi tahu mesin pencari secara otomatis dan memantau status indeksnya.
 
 ### Kriteria sukses (operasional, bukan target trafik)
 
@@ -28,11 +36,13 @@ point.lat adalah media edukasi praktis berbahasa Indonesia untuk pembaca usia 18
 | Pilar | Uang & Karier, Tekno, Belajar, Sehat. 60-90 hari pertama fokus artikel di Uang & Karier dan Belajar |
 | Pengelola | Pemilik sendiri + asisten AI (AI tidak bisa menerbitkan) |
 | Bahasa & pasar | Bahasa Indonesia (`id-ID`), pembaca Indonesia, sapaan "kamu" |
-| Stack | Next.js (App Router) + Payload CMS 3, satu aplikasi |
-| Hosting | Vercel (paket Pro, lihat §19), database Supabase Postgres lewat pooler |
+| Stack | Full Next.js (App Router) + Payload CMS 3 dalam satu aplikasi Next.js. Perintah terminal hanya npm (`npm ci`, `npm run dev`, `npm run migrate`), Node 26 |
+| Hosting | Vercel **paket gratis (Hobby)**, fungsi di region `sin1` (Singapura). Pindah ke Pro hanya saat iklan dinyalakan, karena Hobby khusus penggunaan non-komersial (§19) |
+| Database | Supabase Postgres (Singapura) lewat pooler, kredensial dari akun Supabase pemilik (§5). Tanpa Docker: pratinjau di komputer memakai proyek Supabase kedua |
+| Pembaruan | Zip bernomor versi + perintah terminal npm untuk setiap pembaruan (§21) |
 | Media | Cloudinary untuk semua gambar dan video, upload langsung dari browser |
 | Monetisasi | Iklan (AdSense dsb.), slot dikelola CMS |
-| Visual | Arah 3 · Kartu Intinya |
+| Visual | Arah 3 · Kartu Intinya, dengan logo resmi POINT. dari file pemilik (§3) |
 | URL artikel | `point.lat/{slug}` (datar), rubrik di `/{pilar}` |
 | Indexing | Sitemap + Search Console API + IndexNow + URL Inspection. Google Indexing API opsional, mati secara default |
 | Mode gelap | Di luar MVP. Token warna disiapkan supaya bisa ditambah |
@@ -41,7 +51,25 @@ point.lat adalah media edukasi praktis berbahasa Indonesia untuk pembaca usia 18
 
 **Positioning:** media edukasi praktis untuk pembaca Indonesia 18-35 yang ingin cepat paham urusan uang, karier, teknologi, pendidikan, dan kesehatan. Setiap halaman dimulai dari intinya, lalu bisa langsung dihitung atau dipraktikkan.
 
-**Nama & tanda:** ditulis `point.` Titik adalah logo dan punya dua makna: "intinya" dan titik koordinat (.lat = latitude).
+**Nama:** di teks ditulis `point.` (judul tab, nama situs di schema, byline "Redaksi point."). Titik punya dua makna: "intinya" dan titik koordinat (.lat = latitude).
+
+**Logo (dari file pemilik, sejak v1.1.0):** logotype **POINT.** dengan huruf kapital geometris bergaris tipis. Huruf O adalah tanda: cincin tebal, cincin tipis dengan satu titik biru di orbitnya, dan panah biru bergelombang yang naik dari sebuah titik ink (dari titik awal menuju inti). Logotype ditutup titik biru besar.
+
+| File | Pakai untuk |
+|---|---|
+| `logo-dark.png` | logotype di latar terang |
+| `point-logotype-reversed-2000.png` | logotype di latar gelap (strip video, OG gelap) |
+| `point-mark-ink.png` | tanda saja di latar terang (avatar, watermark) |
+| `point-mark-putih.png` | tanda saja di latar gelap; dasar favicon |
+
+Di situs, logo digambar ulang sebagai SVG inline (`src/components/dasar/Logo.tsx`) supaya tajam tanpa unduhan tambahan: bagian ink mengikuti warna teks, bagian biru memakai `merek-biru`. Favicon: tanda putih dan biru di kotak ink sudut membulat (`src/app/(frontend)/icon.svg`). File asli disimpan pemilik; ekspor turunan (PNG kecil, SVG) dibuat dari file itu, tidak digambar ulang dengan tangan.
+
+Aturan pemakaian:
+- Tinggi logotype minimal 24 px di layar (header 32 px, footer 26 px); di bawahnya cincin tipis hilang, jadi pakai tanda saja (minimal 16 px).
+- Ruang kosong di setiap sisi minimal setinggi titik biru besar.
+- Warna hanya ink atau putih, ditambah `merek-biru`. Tanpa gradien, bayangan, outline, atau warna pilar.
+- Jangan mengganti huruf logo dengan Archivo, merenggangkan, memiringkan, atau memisahkan tanda dari huruf di logotype.
+- Nama yang dibacakan pembaca layar tetap "point.".
 
 **Tagline:** "Intinya dulu."
 
@@ -88,8 +116,9 @@ Panjang adalah acuan, bukan kuota. Brief menyesuaikan dengan hasil teratas di Go
 | `pilar-tekno` | `#C2410C` | Tekno (teks putih) |
 | `pilar-belajar` | `#F2C230` | Belajar (teks ink) |
 | `pilar-sehat` | `#FF8A80` | Sehat (teks ink) |
+| `merek-biru` | `#2F6BFF` | titik dan panah logo, grafik merek. Bukan warna teks dan bukan warna pilar |
 
-**Kontras terukur:** ink/paper 18,88:1 · ink/sand 16,76:1 · muted/paper 7,06:1 · muted/sand 6,27:1 · putih/uang 5,32:1 · putih/tekno 5,18:1 · ink/belajar 11,27:1 · ink/sehat 8,27:1 · uang sebagai teks di sand 4,72:1. Warna pilar kuning dan koral tidak dipakai sebagai warna teks di latar terang. Warna pilar selalu didampingi label teks, tidak pernah jadi satu-satunya penanda. Dilarang: gradien biru-ungu, teks gradien, efek kaca, glow.
+**Kontras terukur:** ink/paper 18,88:1 · ink/sand 16,76:1 · muted/paper 7,06:1 · muted/sand 6,27:1 · putih/uang 5,32:1 · putih/tekno 5,18:1 · ink/belajar 11,27:1 · ink/sehat 8,27:1 · uang sebagai teks di sand 4,72:1 · merek-biru/paper 4,50:1 · merek-biru/sand 3,99:1 · merek-biru/ink 4,20:1 (cukup untuk grafik, minimal 3:1). Warna pilar kuning dan koral tidak dipakai sebagai warna teks di latar terang. Warna pilar selalu didampingi label teks, tidak pernah jadi satu-satunya penanda. Dilarang: gradien biru-ungu, teks gradien, efek kaca, glow.
 
 ### Tipografi
 
@@ -105,7 +134,7 @@ Archivo (variable, sumbu `wdth` 62-125 dan `wght` 400-900), di-host sendiri dan 
 
 ### Pola tata letak
 
-- Header: logo `point.` + pill rubrik dengan titik warna pilar + tombol Tools hitam.
+- Header: logo POINT. (SVG, tinggi 32 px) + pill rubrik dengan titik warna pilar + tombol Tools hitam.
 - Homepage: judul raksasa "INTINYA DULU.", kalimat pembuka, pencarian besar; mozaik kartu ukuran beragam (bukan grid kartu seragam); strip video 9:16 gelap; "Paling dicari pekan ini" (judul diubah pemilik 2026-11-05 dari "Paling dibaca pekan ini" karena datanya klik dari pencarian Google, bukan semua pembaca; artikel dengan klik Google terbanyak 7 hari terakhir dari sinkron Search Analytics harian; selama datanya belum cukup untuk semua tempat, blok ini menampilkan tulisan terbaru dengan judul "Tulisan terbaru", keputusan pemilik 2026-11-05); slot iklan; newsletter; footer.
 - Halaman artikel: kicker pilar, H1, deck, byline + diperbarui + waktu baca, kotak Intinya (latar warna pilar versi lembut atau sand, label "Intinya"), daftar isi, isi, blok sumber, FAQ, artikel terkait, profil penulis.
 - Halaman tools: kalkulator di atas lipatan, hasil besar, lalu artikel penjelasan rumus.
@@ -127,14 +156,28 @@ Browser ──► Vercel (Next.js App Router)
             ├──► Google Search Console API / URL Inspection API
             ├──► IndexNow (api.indexnow.org)
             └──► Claude API (asisten AI, hanya dari server)
-Vercel Cron ──► /api/jobs/run sesuai jadwal vercel.json (header rahasia)
+Vercel Cron ──► /api/jobs/run sekali sehari (vercel.json, batas paket Hobby)
+Supabase Cron (opsional) ──► /api/jobs/run setiap 10 menit (pg_cron + pg_net, rahasia dari Vault)
 ```
 
 **Rendering:** halaman publik dirender statis dan di-cache dengan tag (`article:{id}`, `pilar:{slug}`, `home`, `sitemap`). Hook Payload `afterChange`/`afterDelete` memanggil `revalidateTag` untuk tag yang terdampak. Komponen server sebanyak mungkin, JavaScript klien hanya untuk kalkulator, pencarian, iklan, dan banner persetujuan.
 
-**Penjadwal:** Vercel Cron (jadwal di `vercel.json`: setiap 10 menit di paket Pro; sekali sehari selama di Hobby, keputusan pemilik 2026-11-07) memanggil endpoint job runner Payload untuk pekerjaan berulang: retry indexing, cek status, sinkron Search Analytics harian, cek link rusak mingguan. Saat publikasi, job pertama langsung dijalankan lewat `after()` Next.js supaya tidak menunggu jadwal. Paket Hobby tidak dipakai karena cron-nya hanya sekali sehari dan paket itu untuk penggunaan non-komersial.
+**Penjadwal:** endpoint job runner `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) menjalankan pekerjaan berulang: jadwal terbit artikel, retry indexing, cek status, sinkron Search Analytics harian, dan cek link rusak. Saat konten disimpan atau terbit, antrean langsung dijalankan lewat `after()` Next.js, jadi kabar ke Google dan IndexNow tidak menunggu jadwal.
 
-**Koneksi database:** Supabase pooler Supavisor mode transaksi (port 6543, IPv4) untuk fungsi Vercel di `sin1` (dekat Supabase Singapura), pool 5 koneksi per instance, koneksi menganggur ditutup 5 detik, TLS terverifikasi dengan sertifikat CA Supabase (`DATABASE_CA`). Skema produksi dan pratinjau hanya lewat migrasi Payload (`src/migrations`) yang dijalankan build Vercel sebelum `next build`; push skema hanya ke database lokal. Data API Supabase dimatikan dan hak `anon` dan `authenticated` atas skema `public` dicabut migrasi. Deploy produksi dan pratinjau menandai databasenya dan menolak database milik lingkungan lain; pratinjau memakai proyek Supabase sendiri. (Rencana 8C)
+- **Vercel Cron (wajib, paket gratis):** di Hobby cron hanya boleh sekali sehari, jadi `vercel.json` memakai `0 23 * * *` (sekitar 06.00 WIB, bisa meleset sampai 59 menit). Tanpa jadwal lain, artikel terjadwal terbit paling lambat sehari setelah waktunya, kiriman yang gagal diulang saat cron atau simpan berikutnya, dan cek status indeks serta sinkron Search Console berjalan sekali sehari.
+- **Supabase Cron (opsional, gratis):** `pg_cron` + `pg_net` di proyek Supabase produksi memanggil endpoint yang sama setiap 10 menit, dengan `CRON_SECRET` disimpan di Supabase Vault. Ini mengembalikan jadwal 10 menit tanpa Vercel Pro, dan sekaligus menjaga proyek Supabase Free tetap aktif. Pemasangan dan cara mematikannya ada di runbook rilis H5. Catatan keamanan Supabase: header permintaan `pg_net` sempat tersimpan di tabel antreannya dan bisa dibaca role database yang boleh login, jadi `CRON_SECRET` hanya memberi izin menjalankan antrean (aman bila terpanggil dua kali) dan diganti bila bocor.
+
+**Koneksi database:** Supabase pooler Supavisor mode transaksi (port 6543, IPv4) untuk fungsi Vercel di `sin1` (dekat Supabase Singapura), pool 5 koneksi per instance, koneksi menganggur ditutup 5 detik, TLS terverifikasi dengan sertifikat CA Supabase (`DATABASE_CA`). Skema produksi dan pratinjau hanya lewat migrasi Payload (`src/migrations`) yang dijalankan build Vercel sebelum `next build` (dan `npm run migrate` dari komputer untuk proyek pratinjau); push skema hanya ke Postgres tes di mesin CI dan sesi pengembangan Claude. Data API Supabase dimatikan dan hak `anon` dan `authenticated` atas skema `public` dicabut migrasi. Deploy produksi dan pratinjau menandai databasenya dan menolak database milik lingkungan lain; pratinjau memakai proyek Supabase sendiri. (Rencana 8C)
+
+**Tanpa Docker (keputusan pemilik 2026-11-09):** proyek hanya memakai Next.js, Vercel, dan Supabase. `docker-compose.yml`, `Dockerfile`, dan folder `docker/` dihapus di v1.1.0.
+
+| Tempat | Database |
+|---|---|
+| Produksi (`point.lat`) | proyek Supabase produksi, env Vercel Production |
+| Pratinjau di komputer pemilik (`npm run dev`) dan deploy Preview Vercel | proyek Supabase kedua `point-lat-pratinjau` (paket Free, Singapura), di `.env` lokal dan env Vercel Preview |
+| Tes otomatis | Postgres bawaan runner GitHub Actions (CI) atau Postgres sistem di sesi pengembangan, database sekali pakai; tidak pernah Supabase |
+
+**Sinkron data lewat kredensial akun Supabase:** semua data (konten, pengaturan, log, antrean) tersimpan di Supabase, jadi apa pun yang diubah di CMS langsung ada di Supabase. Aplikasi tersambung dengan nilai yang diambil dari akun Supabase pemilik: `DATABASE_URL` (tombol Connect, Transaction pooler, port 6543) dan `DATABASE_CA` (Database Settings, SSL Configuration). Keduanya disimpan di env Vercel dan di `.env` lokal, tidak pernah di repo. Kunci API Supabase (publishable dan secret) tidak dipakai, karena Payload berbicara langsung dengan Postgres lewat SQL, sedangkan kunci API hanya membuka Data API REST Supabase. Data API itu sengaja dimatikan dan hak `anon` serta `authenticated` dicabut, supaya kunci yang bocor tidak bisa membaca atau mengubah data.
 
 ### Modul (antarmuka kecil, implementasi dalam)
 
@@ -265,7 +308,7 @@ Pemicu: `terbit`, `ubah-besar`, `hapus` (artikel, tools, video, halaman, pilar),
 
 Kegagalan: retry 3 kali dengan jeda 1, 5, 30 menit; setelah itu status Gagal di log (cek status: status indeks Error) dan peringatan di dashboard. Kuota Google habis (429): ditunda ke awal hari kuota berikutnya (tengah malam waktu Pasifik). Penghapusan dan batal terbit: URL keluar dari sitemap, halaman menjawab 404, atau 308 ke tujuan bila ada redirect (keputusan pemilik di Rencana 4A: redirect lewat `permanentRedirect()`, kode 410 di CMS menjawab 404), IndexNow tetap dikabari, dan `URL_DELETED` bila Indexing API aktif.
 
-Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) sesuai jadwal di `vercel.json`; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `pnpm indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
+Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) sesuai jadwal di `vercel.json`; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `npm run indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
 
 Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cloud dengan Search Console API aktif (Indexing API hanya bila saklarnya kelak dipakai), ditambahkan sebagai **Owner** properti. Kredensial disimpan di env Vercel (`GOOGLE_SERVICE_ACCOUNT_JSON`), tanpa pustaka Google: token akses dari JWT RS256 akun layanan.
 
@@ -283,6 +326,7 @@ View admin `/admin/seo` dengan tautan di atas menu, hanya untuk admin: klik, imp
 - Gambar OG otomatis: transformasi teks Cloudinary (latar warna pilar, judul Archivo, logo), dipakai bila editor tidak mengunggah gambar OG.
 - Adapter: modul `media` sendiri di atas `@payloadcms/plugin-cloud-storage` (antarmuka `GeneratedAdapter`). Plugin Cloudinary komunitas dinilai saat build; dipakai hanya jika aktif dirawat dan mendukung signed client upload.
 - Kredensial (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`) hanya di env server.
+- Cloudinary tetap dipakai walau infrastruktur hanya Next.js, Vercel, dan Supabase (revisi 2026-11-09): Cloudinary adalah layanan fitur (seperti Google, Claude, dan AdSense), bukan server yang dijalankan pemilik, dan paket gratisnya mengubah ukuran, format, dan video. Supabase Storage paket Free hanya 1 GB tanpa transformasi gambar, jadi pindah ke sana butuh rencana tersendiri bila kelak diinginkan.
 
 ## 10. Asisten AI
 
@@ -358,7 +402,7 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 | AI gagal / anggaran habis | pesan jelas di sidebar, editor tetap bisa menulis |
 | 404 | halaman 404 dengan pencarian dan artikel populer, dicatat di `log404` |
 | 500 | halaman error statis; error dikirim ke log Vercel |
-| Database | backup harian Supabase Pro (7 hari) + GitHub Actions mingguan: `pg_dump` skema `public` lewat session pooler dengan role baca saja, dienkripsi ke kunci publik GPG pemilik, disimpan sebagai artifact privat repo 90 hari; runbook pemulihan `docs/operasional/pemulihan-database.md`. Diubah Rencana 8C dari bucket Supabase Storage: backup di proyek yang sama ikut hilang bila proyek dihapus, dan unggah ke Storage butuh kunci service role |
+| Database | backup harian Supabase (hanya paket Pro, 7 hari; paket Free tanpa backup otomatis, jadi cadangan mingguan menjadi satu-satunya cadangan) + GitHub Actions mingguan: `pg_dump` skema `public` lewat session pooler dengan role baca saja, dienkripsi ke kunci publik GPG pemilik, disimpan sebagai artifact repo 90 hari (terenkripsi, jadi tetap aman bila repo publik); runbook pemulihan `docs/operasional/pemulihan-database.md`. Diubah Rencana 8C dari bucket Supabase Storage: backup di proyek yang sama ikut hilang bila proyek dihapus, dan unggah ke Storage butuh kunci service role |
 
 ## 16. Testing & verifikasi
 
@@ -366,7 +410,7 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 - **Integrasi:** hook Payload memicu revalidasi dan job; validasi koleksi.
 - **E2E (Playwright):** buat artikel → terbitkan → URL ada di sitemap dan news sitemap → log indexing tercatat; ganti slug → redirect 301 bekerja; kalkulator gaji menghasilkan angka contoh resmi; banner persetujuan menahan iklan.
 - **Kualitas:** Lighthouse CI (§12), axe untuk aksesibilitas, skrip design-audit (tanpa temuan Critical), uji layar 375 / 768 / 1440 dan reduced motion.
-- **CI:** GitHub Actions setiap push ke `master` dan pull request: type check, lint, unit, migrasi sesuai skema, integrasi (Postgres 16), migrasi di database kosong lalu build, E2E, dan Lighthouse, tanpa rahasia produksi (Rencana 8C).
+- **CI:** GitHub Actions setiap push ke `master` dan pull request: type check, lint, unit, migrasi sesuai skema, integrasi, migrasi di database kosong lalu build, E2E, dan Lighthouse, tanpa rahasia produksi (Rencana 8C). Database tes dari PostgreSQL bawaan runner ubuntu-24.04 (`scripts/ci-postgres.sh`), tanpa container Docker (v1.1.0). Pemilik tidak perlu menjalankan tes di komputernya: centang hijau di GitHub adalah buktinya.
 
 ## 17. Cakupan
 
@@ -378,22 +422,28 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 
 ## 18. Setup dari pemilik
 
-1. Akun Vercel (paket Pro) dan hubungkan domain `point.lat` (DNS).
-2. Proyek Supabase (region Singapura untuk latensi Indonesia) dan repo GitHub untuk kode + backup mingguan.
+1. Akun Vercel **paket gratis (Hobby)** dan hubungkan domain `point.lat` (DNS). Pro baru saat iklan dinyalakan.
+2. Proyek Supabase produksi (region Singapura untuk latensi Indonesia; Free cukup untuk mulai, Pro disarankan saat trafik besar karena backup harian dan tanpa jeda proyek) dan repo GitHub untuk kode, CI, dan backup mingguan.
 3. Akun Cloudinary: cloud name, API key, API secret.
 4. Google Search Console: properti domain `point.lat` (verifikasi DNS).
 5. Google Cloud: proyek, aktifkan Search Console API (dan Indexing API bila nanti dipakai), akun layanan dengan kunci JSON, tambahkan email akun layanan (`client_email`) sebagai Owner di Search Console.
 6. Env Vercel untuk Mesin Indexing: `INDEXER_ADAPTER=asli` (Production) dan `palsu` (Preview), `GOOGLE_SERVICE_ACCOUNT_JSON` berisi seluruh file kunci JSON (Production saja), `CRON_SECRET` acak minimal 16 karakter. Kunci IndexNow diisi di Pengaturan SEO; status pemasangan tampil di halaman yang sama.
 7. Kunci Claude API: env Vercel `AI_ADAPTER=asli` dan `ANTHROPIC_API_KEY` (Production), `AI_ADAPTER=palsu` (Preview). Anggaran bulanan, harga per model, dan sumber resmi per pilar di Pengaturan, Asisten AI.
 8. Akun AdSense (setelah konten cukup): ID penerbit dan unit iklan display berukuran tetap di global Iklan, pesan European regulations di Privacy & messaging, Kebijakan Privasi terbit sebelum iklan dinyalakan. Penyedia newsletter.
-9. Database pratinjau: proyek Supabase kedua di organisasi Free terpisah (Singapura), env Preview Vercel menunjuk ke sana. Data API Supabase dimatikan di kedua proyek.
+9. Database pratinjau: proyek Supabase kedua `point-lat-pratinjau` (Free, Singapura; bila produksi di organisasi Pro, buat di organisasi Free terpisah). Dipakai `.env` lokal untuk `npm run dev` dan env Preview Vercel. Data API Supabase dimatikan di kedua proyek.
 10. Backup mingguan: kunci GPG khusus cadangan (kunci rahasia di pengelola password), role baca saja `cadangan_baca`, dan secret GitHub Actions `BACKUP_DATABASE_URL` dan `BACKUP_KUNCI_PUBLIK` (runbook pemulihan).
+11. Opsional: Supabase Cron setiap 10 menit (ekstensi `pg_cron` dan `pg_net`, secret `cron_secret` di Vault; runbook rilis H5).
+12. Komputer: Node 26 lewat nvm (npm ikut terpasang), git, dan unzip. Tidak perlu Docker. Untuk pemulihan darurat saja: klien `psql` dan `pg_restore` (Postgres.app di Mac, tanpa menjalankan servernya).
 
 ## 19. Risiko & mitigasi
 
 | Risiko | Mitigasi |
 |---|---|
-| Biaya Vercel Pro wajib sejak live (Hobby non-komersial, cron harian) | Pro dipakai sejak domain live; pengembangan awal boleh di Hobby tanpa iklan dan tanpa cron |
+| Vercel Hobby hanya untuk penggunaan non-komersial (iklan dan AdSense termasuk komersial), dan fitur yang melewati kuota gratisnya bisa diblokir sampai 30 hari | situs live di Hobby tanpa iklan; global Iklan tetap mati sampai pindah ke Pro; pantau Usage di dashboard Vercel |
+| Cron Hobby hanya sekali sehari | `after()` saat simpan; Supabase Cron 10 menit opsional (§5) |
+| Supabase Free: proyek dijeda setelah 7 hari sepi, tanpa backup otomatis, database 500 MB | cron harian (dan Supabase Cron) menjaga aktivitas; cadangan mingguan terenkripsi; pantau ukuran database; Pro saat mendekati batas atau saat iklan menyala |
+| Tanpa Docker, tes tidak dijalankan di komputer pemilik | CI GitHub menjalankan semua tes di setiap push; pratinjau lokal memakai proyek Supabase pratinjau |
+| Layanan di luar Next.js, Vercel, Supabase (Cloudinary, Google, Claude, AdSense) | semuanya API fitur dengan kredensial di env Vercel dan adapter palsu untuk tes; Cloudinary bisa diganti lewat rencana terpisah (§9) |
 | Payload diakuisisi Figma (Juni 2025), arah jangka panjang belum pasti | lisensi MIT, data di Postgres sendiri, logika bisnis di modul terpisah dari Payload |
 | Konten AI dianggap spam oleh Google | AI hanya membantu, checklist review manusia wajib, pengalaman/sumber nyata |
 | Aturan pajak/BPJS berubah | parameter bertanggal di CMS, sumber dicatat, tes dengan contoh resmi |
@@ -406,16 +456,71 @@ WCAG 2.2 AA: kontras sesuai §4, fokus terlihat (`:focus-visible`, ring 2px ink 
 
 ## 20. Skill per tahap
 
-| Tahap | Skill |
-|---|---|
-| Spesifikasi & rencana | writing-plans, codebase-design, context-engineering |
-| Design system & UI | design:design-system, ui-ux-pro-max, ui-styling, theme-factory, design-an-interface, landing-page-design, magic-ui, css-native, frontend-design |
-| Build | executing-plans, ponytail, gsap, gsap-core, gsap-performance, motion-design, data:build-dashboard |
-| Konten | seo-content-brief, technical-blog-writing, humanizer, design:ux-copy, copywriting, writing-skills, skill-creator (skill penulisan khas point) |
-| Review | design-audit, design:design-critique, code-review |
-| Video (Fase 2) | huashu-art-motion, remotion-render |
+Semua skill yang ditautkan pemilik aktif sesuai tahapnya. Di awal setiap tahap Claude memanggil skill itu lewat alat Skill (aturan using-superpowers: periksa skill yang relevan sebelum bertindak) dan mengikuti isinya; skill yang tidak relevan untuk tahap itu tidak dipanggil. Pemilik juga bisa memanggil skill mana pun langsung dengan `/nama-skill`.
 
-Catatan: skill `/design` hanya bisa dijalankan langsung oleh pemilik.
+| Tahap | Skill | Aktif saat | Hasil |
+|---|---|---|---|
+| Setiap sesi | using-superpowers | awal setiap permintaan | daftar skill yang dipakai untuk permintaan itu |
+| Setiap sesi | context-engineering | awal sesi, ganti tugas, atau kualitas jawaban turun | `CLAUDE.md` dan log keputusan tetap ringkas dan benar |
+| Ide & keputusan | brainstorming | fitur atau perubahan baru sebelum ada kode | pertanyaan satu per satu, 2-3 pendekatan, desain disetujui, spesifikasi diperbarui |
+| Ide & keputusan | brand | logo, suara, warna merek, materi berlogo | aturan logo (§3), token merek (§4), cek konsistensi |
+| Rencana | writing-plans | setelah desain disetujui | rencana per task dengan kode, tes, dan perintah npm |
+| Rencana | codebase-design, design-an-interface | modul baru atau antarmuka modul berubah | modul dalam dengan antarmuka kecil; beberapa bentuk antarmuka dibandingkan sebelum dipilih |
+| Build | executing-plans | menjalankan rencana | task per task dengan review |
+| Build | ponytail | setiap tugas kode | perubahan terkecil yang menyelesaikan tugas, jawaban singkat |
+| Desain & UI | design:design-system, ui-ux-pro-max, ui-styling | komponen, token, atau layar baru | komponen sesuai token Kartu Intinya, aturan UX dan aksesibilitas |
+| Desain & UI | landing-page-design | beranda, halaman tools sebagai landing, Pasang Iklan | struktur halaman yang mengarah ke satu tindakan |
+| Desain & UI | css-native | animasi dan efek | CSS modern (View Transitions, `@starting-style`, scroll-driven) tanpa JavaScript |
+| Desain & UI | magic-ui | komponen efek React yang diminta | dipakai hanya bila lolos anggaran JS (§12) dan aturan motion (§13) |
+| Desain & UI | theme-factory | dokumen, laporan, atau materi presentasi bertema (media kit iklan, laporan bulanan) | materi luar situs yang serasi dengan merek |
+| Desain & UI | design | identitas merek lanjutan, banner sosial, aset kampanye | aset merek (pemilik juga bisa menjalankannya langsung) |
+| Motion | motion-design | animasi baru | kurva dan durasi sesuai §13 |
+| Motion | gsap, gsap-core, gsap-performance | animasi yang tidak bisa dengan CSS | GSAP hanya bila muat di anggaran JS 25 KB milik point.; gsap-performance mengukur dampaknya. Sekarang semua animasi situs CSS |
+| Data | data:build-dashboard | dashboard SEO admin, laporan trafik | dashboard dari data Search Console |
+| Konten | seo-content-brief | setiap artikel baru (juga tombol Brief di Asisten AI) | brief: intent, outline, pertanyaan, sumber wajib |
+| Konten | technical-blog-writing | panduan dan explainer Tekno | artikel teknis yang akurat dan runtut |
+| Konten | copywriting | judul, CTA, halaman Pasang Iklan, newsletter | copy yang menyebut hasil, sapaan "kamu" |
+| Konten | design:ux-copy | label, pesan error, teks kosong di situs dan CMS | microcopy lugas tanpa tanda seru |
+| Konten | humanizer | sebelum terbit (juga Cek pola di CMS) | pola tulisan AI ditandai dan diperbaiki |
+| Konten | writing-skills, skill-creator | membuat atau memperbarui skill khas point. (gaya tulisan, checklist review) | skill baru yang bisa dipanggil `/nama` |
+| Review | code-review | setiap task dan sebelum zip dikirim | temuan diperbaiki sebelum rilis |
+| Review | design:design-critique | layar baru atau perubahan visual (mis. logo baru) | kritik hierarki, kontras, konsistensi |
+| Review | design-audit | sebelum rilis | tanpa temuan Critical (§1 kriteria 5) |
+| Video (Fase 2) | huashu-art-motion, remotion-render | pipeline video explainer | video 9:16 dari naskah, diunggah ke Cloudinary |
+
+Dimuat di revisi v1.1.0: using-superpowers, brainstorming, dan brand (aturan logo). Hasil logo diperiksa lewat tangkapan layar 375 px dan 1440 px serta seluruh tes (unit 550, integrasi 164, E2E 153 dengan axe).
+
+## 21. Alur pembaruan (zip + perintah terminal)
+
+Setiap pembaruan dikirim ke pemilik sebagai `point-lat-vX.Y.Z.zip` (Z perbaikan, Y fitur, X perubahan besar) bersama blok perintah terminal npm yang siap ditempel. Zip berisi clone bersih `master` dengan riwayat git, tag versi, dan `origin` GitHub, tanpa `.env` dan tanpa `node_modules`. Riwayat untuk pemilik ada di `CHANGELOG.md`.
+
+Perintah standar di Mac pemilik (folder dan nama zip disesuaikan dengan versi):
+
+```bash
+cd "$HOME/Documents/Virgiawan/website done"
+rm -rf point-lat-lama
+mv point-lat point-lat-lama
+unzip -q "$(ls -t ~/Downloads/point-lat*.zip | head -1)"
+cp point-lat-lama/.env point-lat/.env
+cd point-lat
+npm ci
+git describe --tags          # harus menampilkan versi zip, misalnya v1.1.0
+git push origin master       # Vercel membangun dan merilis otomatis (migrasi produksi ikut di build)
+```
+
+Setelah CI di GitHub hijau: `git push origin vX.Y.Z` untuk mengirim tag. Bila pembaruan membawa migrasi dan pemilik memakai pratinjau lokal: `npm run migrate` (ke proyek Supabase pratinjau di `.env`). Langkah sekali jalan (misalnya isi baru di `.env` atau langkah di dashboard) ditulis di kiriman yang membutuhkannya.
+
+## 22. Saran trafik
+
+Arah yang paling cepat menghasilkan trafik untuk media baru berbahasa Indonesia, berurutan dari dampak terbesar:
+
+1. **Tools dulu, artikel di sekitarnya.** Kalkulator (gaji bersih, THR, KPR, dana darurat) dicari setiap bulan dan jarang dikerjakan media lain dengan baik. Setiap tools didampingi 3-5 artikel yang menautkannya (cara hitung, contoh kasus, perubahan aturan).
+2. **Kalender musiman.** Terbitkan 3-4 minggu sebelum puncak pencarian: THR (sebelum Lebaran), SPT Tahunan (Januari sampai Maret), kenaikan UMP (November sampai Desember), PPDB dan SNBP/SNBT (awal tahun), kenaikan batas upah JP (Maret).
+3. **Klaster per pilar.** Satu panduan induk per topik besar, artikel turunan yang menautkannya, dan glosarium untuk istilah. Fokus 60-90 hari pertama di Uang & Karier dan Belajar (§2).
+4. **Explainer topik hangat dalam 24 jam.** Aturan pajak atau BPJS baru, perubahan kurikulum: kotak Intinya menjawab di kalimat pertama, lalu tautan ke tools terkait. Mesin Indexing mengabari Google dan IndexNow saat terbit.
+5. **Perbarui, jangan hanya menambah.** Setiap bulan buka Dashboard SEO: halaman dengan impresi tinggi dan CTR rendah diperbaiki judul dan metanya; artikel yang angkanya berubah diperbarui dengan saklar "perubahan besar".
+6. **Distribusi di luar Google.** Saluran WhatsApp (sudah ada di footer), newsletter, dan potongan video 9:16 di Instagram, TikTok, dan YouTube Shorts yang menautkan ke artikel induk.
+7. **Kredibilitas YMYL.** Profil penulis lengkap, sumber resmi di setiap artikel uang dan kesehatan, tanggal diperbarui, dan disclaimer, karena Google menilai topik ini lebih ketat.
 
 ## Sumber riset
 
@@ -427,3 +532,7 @@ Catatan: skill `/design` hanya bisa dijalankan langsung oleh pemilik.
 - Payload 2026: https://techsy.io/fi/blog/payload-cms-2026-why-figma-bought-it-and-should-you-adopt-it
 - Payload storage adapters: https://payloadcms.com/docs/v3/upload/storage-adapters
 - Vercel cron limits: https://vercel.com/docs/cron-jobs/usage-and-pricing
+- Vercel Hobby (non-komersial, batas pemakaian): https://vercel.com/docs/plans/hobby
+- Supabase pg_net: https://supabase.com/docs/guides/database/extensions/pg_net
+- Supabase menjadwalkan panggilan HTTP dengan pg_cron dan Vault: https://supabase.com/docs/guides/functions/schedule-functions
+- Header pg_net bisa dibaca role database: https://supabase.com/docs/guides/troubleshooting/database-roles-can-read-request-headers-queued-by-pg_net-ad6357

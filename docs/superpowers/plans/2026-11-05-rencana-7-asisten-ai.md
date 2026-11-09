@@ -1,12 +1,18 @@
 # Rencana 7: Asisten AI point.lat (brief dari keyword, draf per bagian, generator meta, cek pola tulisan AI, cek klaim, anggaran, log, dan checklist review)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Melengkapi spesifikasi §10: sidebar "Asisten AI" di editor artikel dengan lima tugas (brief dari keyword, draf per bagian, generator meta, cek pola tulisan AI, cek klaim), anggaran bulanan yang tidak bisa terlewati, log setiap panggilan, dan checklist review manusia yang wajib sebelum artikel ber-draf AI terbit; tanpa jaringan di tes, tanpa dependensi baru, dan tanpa menambah JavaScript halaman publik.
 
 **Architecture:** Modul baru `src/modules/ai` dengan antarmuka kecil: `jalankan(payload, tugas, masukan, opsi)` satu-satunya pintu ke Claude untuk tugas `brief`, `draf`, dan `meta` (dipanggil endpoint `POST /api/artikel/asisten`; status di `GET /api/artikel/asisten`), serta `periksaPola(blok)` dan `periksaKlaim(blok, sumber)` yang murni dan berjalan di browser. Di balik `jalankan`: saklar global `asisten-ai`, batas per menit per pengguna, harga model, cadangan anggaran atomik (`anggaran.ts`, koleksi tersembunyi `pemakaian-ai`), log (`log-ai`), lalu prompt, skema JSON, dan pemeriksa per tugas di `prompt/{brief,draf,meta}.ts` (fungsi murni). Seam adapter (`adapter.ts`) punya dua adapter: `asli.ts` (`fetch` ke Messages API) dan `palsu.ts` (dalam memori), dipilih env `AI_ADAPTER`. Sidebar (`admin/AsistenAi.tsx`, komponen klien) hanya memberi saran: isian artikel berubah hanya lewat tombol, dan artikel yang memakai draf AI ditandai `pakaiDrafAi` sehingga checklist `reviewAi` wajib sebelum terbit.
 
-**Tech Stack:** Next.js 16.3.3 (App Router), Payload 3.92.1 (custom endpoint koleksi, field `ui`, `json`, `group` dengan `admin.condition`, `admin.components.edit.PublishButton`, `useForm`/`useFormFields`, `addFieldRow`/`removeFieldRow`, `payload.db.drizzle`), PostgreSQL 16 (`INSERT ... ON CONFLICT DO NOTHING` dan `UPDATE ... RETURNING` lewat `sql` dari `@payloadcms/db-postgres`), Claude Messages API (`anthropic-version: 2026-10-21`, structured outputs `output_config.format`), `fetch` dan `AbortSignal.timeout`, Clipboard API (`ClipboardItem` HTML dan teks), `Intl` id-ID dan `Asia/Jakarta`, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router), Payload 3.92.1 (custom endpoint koleksi, field `ui`, `json`, `group` dengan `admin.condition`, `admin.components.edit.PublishButton`, `useForm`/`useFormFields`, `addFieldRow`/`removeFieldRow`, `payload.db.drizzle`), PostgreSQL 16 (`INSERT ... ON CONFLICT DO NOTHING` dan `UPDATE ... RETURNING` lewat `sql` dari `@payloadcms/db-postgres`), Claude Messages API (`anthropic-version: 2026-10-21`, structured outputs `output_config.format`), `fetch` dan `AbortSignal.timeout`, Clipboard API (`ClipboardItem` HTML dan teks), `Intl` id-ID dan `Asia/Jakarta`, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§3 aturan copy dan rambu kredibilitas YMYL; §5 modul `ai` dan "Claude API hanya dari server"; §6 koleksi `logAI` dan global `asistenAI`; §8 panel SEO per artikel; §10 Asisten AI; §14 aksesibilitas; §15 "AI gagal / anggaran habis"; §16 testing; §17 cakupan (tugas 1 sampai 5 di MVP, naskah video Fase 2); §18 setup kunci Claude API; §19 risiko konten AI dan biaya Claude).
 
@@ -24,24 +30,24 @@
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
 - Nama domain berbahasa Indonesia (`jalankan`, `periksaPola`, `periksaKlaim`, `log-ai`, `pemakaian-ai`, `asisten-ai`, `pakaiDrafAi`, `reviewAi`, `briefAi`). Nama field API luar tetap seperti aslinya (`max_tokens`, `output_config`, `stop_reason`, `input_tokens`, `output_tokens`).
 - Copy admin, prompt sistem, dan keluaran yang ditampilkan: bahasa Indonesia, sapaan "kamu" bila menyapa, tanpa em dash dan en dash (juga di komentar dan prompt), tanpa tanda seru. Keluaran model dibersihkan dari em dash dan en dash sebelum ditampilkan dan editor diberi tahu jumlahnya. Pesan galat dan keadaan nonaktif menyebut penyebab dan langkah berikutnya.
 - Kode dan tes yang memang butuh em dash atau en dash (pembersih, cek pola, contoh adapter palsu, dan tesnya) menulisnya sebagai escape `\u2014` dan `\u2013` di string dan regex, sama dengan aturan `\u00a0` di `CLAUDE.md`. Salin blok kode rencana ini apa adanya: escape itu bagian dari kode, jangan diganti karakter aslinya.
 - **Tes tidak pernah memanggil jaringan.** Unit memakai `fetch` tiruan; integrasi memakai adapter palsu (`adapterPalsu()` + `pakaiAdapterAi()` atau opsi `adapter`); E2E memakai `AI_ADAPTER=palsu` di server E2E. Waktu di tes integrasi lewat opsi `sekarang` dengan bulan lampau (1990 sampai 2000), supaya baris anggaran bulan itu milik tes itu sendiri.
 - **Kunci API dan nama model hanya di env server** (`ANTHROPIC_API_KEY`, `AI_ADAPTER`, `AI_MODEL`, `AI_MODEL_BRIEF`, `AI_MODEL_DRAF`, `AI_MODEL_META`), tidak pernah di CMS, log, tes, atau rencana ini. Global Asisten AI hanya menyebut kunci terpasang atau belum. Tes memakai teks `kunci-uji-bukan-kunci-asli`.
 - Path admin lewat `urlAdmin` (`src/lib/admin.ts`). Jangan merangkai URL admin manual.
-- **Perubahan skema harus aditif.** Rencana ini menambah koleksi `log-ai` dan `pemakaian-ai`, global `asisten-ai`, dan field artikel `pakaiDrafAi`, `reviewAi` (grup), dan `briefAi` (json), tanpa mengubah kolom lama; field `ui` tidak mengubah tabel. Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
+- **Perubahan skema harus aditif.** Rencana ini menambah koleksi `log-ai` dan `pemakaian-ai`, global `asisten-ai`, dan field artikel `pakaiDrafAi`, `reviewAi` (grup), dan `briefAi` (json), tanpa mengubah kolom lama; field `ui` tidak mengubah tabel. Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
 - **Operasi massal.** Hapus dan update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu transaksi. Koleksi baru dengan kunci unik (`pemakaian-ai`, kunci `bulan`) dan artikel yang memakai checklist baru diuji dengan update massal dan hapus massal dua dokumen atau lebih dalam satu operasi. Rencana ini tidak menambah hook yang menulis tabel berkunci unik; SQL anggaran berjalan di endpoint lewat koneksi pool, di luar transaksi `req`.
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
-- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, `INDEXER_ADAPTER=palsu`, dan `AI_ADAPTER=palsu` (Task 8). E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
+- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, `INDEXER_ADAPTER=palsu`, dan `AI_ADAPTER=palsu` (Task 8). E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang setelah task selesai.
 - `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 11 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja).
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
 - **Tulis `req.context` setelah `await`** (Rencana 6A): simpan hasil operasi Payload ke variabel dulu, lalu tulis ke `req.context`.
 - Tes integrasi berbagi database dan berjalan berurutan dengan urutan file yang tidak pasti. Pengguna pertama di database selalu admin (`tetapkanPeranAwal`), jadi tes yang butuh editor sungguhan membuat admin dulu. Tes mencari dokumennya sendiri lewat ID, `unik()`, atau bulan anggaran miliknya; jangan membaca daftar dengan batas tetap. ID hanya unik di dalam satu koleksi, jadi kueri yang menyimpan ID lintas koleksi (misalnya `sumberId` temuan tautan) disertai nama koleksinya.
 - E2E berjalan berurutan di satu database dan spec lain membaca daftar artikel admin halaman pertama (10 baris, misalnya kolom status indeks di `indexing.spec.ts`). Tes asisten menghapus draf buatannya setelah setiap tes (`test.afterEach`), jadi jumlah artikel contoh tidak berubah untuk spec sesudahnya.
-- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` atau atribut `lang` kosong karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` atau atribut `lang` kosong karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 - Next 16.3.3 kadang mengirim header `Location` dua kali pada redirect pertama sebuah path ISR (`/a, /a`); tes redirect memakai `toContain`, bukan `toBe`.
 - **Admin Payload 3.92.** CSS admin menghapus outline, jadi cincin fokus (`:focus-visible`) ditulis sendiri di komponen buatan rencana ini. Deskripsi field bawaan (`admin.description`) memakai `--theme-elevation-400` yang gagal kontras axe, jadi penjelasan di grup checklist dirender komponen sendiri dan deskripsi checkbox `pakaiDrafAi` diberi warna sendiri (`.field-description-pakaiDrafAi`). Isi grup di sidebar baru dirender saat terlihat (`RenderIfInViewport`), jadi tes E2E menggulirnya dulu. State form menyimpan field array tanpa baris sebagai angka 0, bukan array kosong. Tab form adalah tombol `.tabs-field__tab-button`, bukan peran `tab`.
 
@@ -243,7 +249,7 @@ Semua aturan asisten yang bisa diuji tanpa database dan tanpa jaringan ada di si
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-aturan.test.ts` dengan `Error: Cannot find package '@/modules/ai/aturan'`.
@@ -460,11 +466,11 @@ Semua aturan asisten yang bisa diuji tanpa database dan tanpa jaringan ada di si
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 62 passed (62)`, `Tests 427 passed (427)`; integrasi `Test Files 36 passed (36)`, `Tests 117 passed (117)`; E2E `101 passed`.
@@ -648,7 +654,7 @@ Spesifikasi §10 butir 4, berdasarkan skill humanizer dan disesuaikan bahasa Ind
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-pola.test.ts` dengan `Error: Cannot find package '@/modules/ai/pola'`.
@@ -950,11 +956,11 @@ Spesifikasi §10 butir 4, berdasarkan skill humanizer dan disesuaikan bahasa Ind
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 63 passed (63)`, `Tests 439 passed (439)`; integrasi `Test Files 36 passed (36)`, `Tests 117 passed (117)`; E2E `101 passed`.
@@ -1058,7 +1064,7 @@ Spesifikasi §10 butir 5: "menandai angka dan klaim tanpa sumber di blok sumber"
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-klaim.test.ts` dengan `Error: Cannot find package '@/modules/ai/klaim'`.
@@ -1181,11 +1187,11 @@ Spesifikasi §10 butir 5: "menandai angka dan klaim tanpa sumber di blok sumber"
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 64 passed (64)`, `Tests 443 passed (443)`; integrasi `Test Files 36 passed (36)`, `Tests 117 passed (117)`; E2E `101 passed`.
@@ -1443,7 +1449,7 @@ Saklar `AI_ADAPTER` terpisah dari `INDEXER_ADAPTER` (Keputusan teknis "Adapter d
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-adapter.test.ts` dengan `Error: Cannot find package '@/modules/ai/adapter'`.
@@ -1792,11 +1798,11 @@ Saklar `AI_ADAPTER` terpisah dari `INDEXER_ADAPTER` (Keputusan teknis "Adapter d
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 65 passed (65)`, `Tests 453 passed (453)`; integrasi `Test Files 36 passed (36)`, `Tests 117 passed (117)`; E2E `101 passed`.
@@ -1989,7 +1995,7 @@ Koleksi `log-ai` tidak menyimpan teks masukan dan keluaran (Keputusan teknis "Lo
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/ai-anggaran.int.spec.ts` dengan `Error: Cannot find package '@/modules/ai/anggaran'`.
@@ -2461,8 +2467,8 @@ Koleksi `log-ai` tidak menyimpan teks masukan dan keluaran (Keputusan teknis "Lo
   Buat ulang tipe dan import map:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
+  npm run generate:types
+  npm run generate:importmap
   ```
 
   Hasil yang diharapkan: `src/payload-types.ts` bertambah tipe `LogAi`, `PemakaianAi`, dan `AsistenAi`; import map bertambah `StatusAsisten`.
@@ -2472,12 +2478,12 @@ Koleksi `log-ai` tidak menyimpan teks masukan dan keluaran (Keputusan teknis "Lo
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm seed
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run seed
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; tanpa pertanyaan DATA LOSS (tabel baru saja); unit `Test Files 65 passed (65)`, `Tests 453 passed (453)`; integrasi `Test Files 37 passed (37)`, `Tests 124 passed (124)`; E2E `101 passed`.
@@ -2864,8 +2870,8 @@ Generator meta (spesifikasi §10 butir 3) memakai Haiku dengan `effort: low`. Pr
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-meta.test.ts` dengan `Error: Cannot find package '@/modules/ai/prompt/meta'`, dan FAIL di `tests/int/ai-jalankan.int.spec.ts` dengan `Error: Cannot find package '@/modules/ai'`.
@@ -3305,11 +3311,11 @@ Generator meta (spesifikasi §10 butir 3) memakai Haiku dengan `effort: low`. Pr
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 66 passed (66)`, `Tests 459 passed (459)`; integrasi `Test Files 38 passed (38)`, `Tests 130 passed (130)`; E2E `101 passed`. `payload-types.ts` tidak berubah (endpoint tidak menambah field).
@@ -3519,8 +3525,8 @@ Petunjuk dan arti setiap butir dirender `PetunjukReview` (field `ui` di dalam gr
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-review.test.ts` dengan `Error: Cannot find package '@/fields/reviewAi'`; di `tests/int/ai-review.int.spec.ts` ketiga tes gagal dengan `AssertionError` (dokumen tanpa `pakaiDrafAi` dan `reviewAi`, terbit massal draf AI malah berhasil: `expected [ { …(23) }, { …(23) } ] to deeply equal []`).
@@ -3740,8 +3746,8 @@ Petunjuk dan arti setiap butir dirender `PetunjukReview` (field `ui` di dalam gr
   Buat ulang tipe dan import map:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
+  npm run generate:types
+  npm run generate:importmap
   ```
 
   Hasil yang diharapkan: `Artikel` di `payload-types.ts` bertambah `pakaiDrafAi` dan `reviewAi`; import map bertambah `TombolTerbit` dan `PetunjukReview`.
@@ -3751,12 +3757,12 @@ Petunjuk dan arti setiap butir dirender `PetunjukReview` (field `ui` di dalam gr
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm seed
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run seed
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; tanpa pertanyaan DATA LOSS (kolom baru saja); unit `Test Files 67 passed (67)`, `Tests 463 passed (463)`; integrasi `Test Files 39 passed (39)`, `Tests 133 passed (133)`; E2E `103 passed` (termasuk axe pada `#field-reviewAi` dan tanpa geser horizontal di 1440 px).
@@ -3966,7 +3972,7 @@ E2E memakai pengguna editor baru untuk tes yang memanggil AI: batas 6 permintaan
   Jalankan:
 
   ```bash
-  pnpm test:e2e tests/e2e/asisten.spec.ts
+  npm run test:e2e -- tests/e2e/asisten.spec.ts
   ```
 
   Hasil yang diharapkan: dua tes checklist dari Task 7 lulus; tujuh tes baru gagal, misalnya "saran meta dari adapter palsu ..." dengan `Error: locator.scrollIntoViewIfNeeded: Test timeout of 30000ms exceeded.` saat menunggu `getByRole('region', { name: 'Asisten AI' })`.
@@ -4771,7 +4777,7 @@ E2E memakai pengguna editor baru untuk tes yang memanggil AI: batas 6 permintaan
   Buat ulang import map:
 
   ```bash
-  pnpm generate:importmap
+  npm run generate:importmap
   ```
 
   Hasil yang diharapkan: import map bertambah `AsistenAi`; `payload-types.ts` tidak berubah (field `ui`).
@@ -4781,11 +4787,11 @@ E2E memakai pengguna editor baru untuk tes yang memanggil AI: batas 6 permintaan
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 67 passed (67)`, `Tests 463 passed (463)`; integrasi `Test Files 39 passed (39)`, `Tests 133 passed (133)`; E2E `110 passed` (termasuk axe pada `.asisten` dan tanpa geser horizontal di 375, 768, dan 1440 px).
@@ -5153,8 +5159,8 @@ Tautan di daftar brief berdempetan per baris, jadi dibuat setinggi 44 px (probe:
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-brief.test.ts` dengan `Error: Cannot find package '@/modules/ai/prompt/brief'`, dan FAIL di `tests/int/ai-brief.int.spec.ts` dengan `Error: Cannot find package '@/seed/sumber-resmi'`.
@@ -5925,8 +5931,8 @@ Tautan di daftar brief berdempetan per baris, jadi dibuat setinggi 44 px (probe:
   Buat ulang tipe dan import map:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
+  npm run generate:types
+  npm run generate:importmap
   ```
 
   Hasil yang diharapkan: `Artikel` bertambah `briefAi`, `AsistenAi` bertambah `sumberResmi`; import map tidak berubah.
@@ -5936,12 +5942,12 @@ Tautan di daftar brief berdempetan per baris, jadi dibuat setinggi 44 px (probe:
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm seed
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run seed
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; tanpa pertanyaan DATA LOSS; unit `Test Files 68 passed (68)`, `Tests 469 passed (469)`; integrasi `Test Files 40 passed (40)`, `Tests 136 passed (136)`; E2E `111 passed`.
@@ -6174,8 +6180,8 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/ai-draf.test.ts` dengan `Error: Cannot find package '@/modules/ai/prompt/draf'`, dan di `tests/int/ai-draf.int.spec.ts` dengan `AssertionError: expected 400 to be 200` (tugas draf masih "belum tersedia").
@@ -6586,11 +6592,11 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 69 passed (69)`, `Tests 475 passed (475)`; integrasi `Test Files 41 passed (41)`, `Tests 137 passed (137)`; E2E `112 passed`. `payload-types.ts` dan import map tidak berubah.
@@ -6642,8 +6648,8 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
   -- Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, atau `INDEXER_ADAPTER=asli`. Kredensial Google hanya di env server Vercel, tidak pernah di CMS, log, atau tes.
   +- Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, `INDEXER_ADAPTER=asli`, `ANTHROPIC_API_KEY`, atau `AI_ADAPTER=asli`. Kredensial Google dan kunci API Claude hanya di env server Vercel, tidak pernah di CMS, log, atau tes.
    - Tanya dulu sebelum menambah dependensi baru di luar rencana.
-   - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-   - Jalankan `pnpm test` sebelum commit, dan `pnpm test:e2e` bila halaman publik berubah.
+   - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+   - Jalankan `npm test` sebelum commit, dan `npm run test:e2e` bila halaman publik berubah.
   ```
 
   ```diff
@@ -6761,17 +6767,17 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:int
-  pnpm test:e2e
-  pnpm test:e2e
-  pnpm seed
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:int
+  npm run test:e2e
+  npm run test:e2e
+  npm run seed
+  npm run build
   git status --short
   ```
 
@@ -6783,12 +6789,12 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`), buat draf artikel di pilar Uang & Karier, lalu periksa sidebar Asisten AI di 375, 768, dan 1440 px (DevTools), tema terang dan gelap (menu akun, Theme): keadaan awal (anggaran dan "Mode palsu"), memuat (label tombol berganti, `aria-busy`), brief (perkiraan Claude dan data point. terpisah, sumber resmi tertaut), draf per bagian dan "Salin draf" (artikel ditandai memakai draf AI, checklist muncul, tombol terbit nonaktif), saran meta (tombol berganti "Batalkan" dan fokus tetap), cek pola dengan banyak tanda (isi berisi "Di era digital ini", em dash, "Kesimpulan"), cek klaim, galat API (isi berisi `[uji galat]`), anggaran habis (anggaran bulanan 0 di Pengaturan, Asisten AI; kembalikan ke 10 setelahnya), dan global Asisten AI (status pemasangan). Pastikan tidak ada geser horizontal, teks tidak tumpang tindih, tombol dan tautan berdempetan setinggi 44 px, dan cincin fokus terlihat saat menekan Tab. Hentikan server dengan `fuser -k 3200/tcp`, lalu `pnpm build` lagi dengan env biasa.
+  Masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`), buat draf artikel di pilar Uang & Karier, lalu periksa sidebar Asisten AI di 375, 768, dan 1440 px (DevTools), tema terang dan gelap (menu akun, Theme): keadaan awal (anggaran dan "Mode palsu"), memuat (label tombol berganti, `aria-busy`), brief (perkiraan Claude dan data point. terpisah, sumber resmi tertaut), draf per bagian dan "Salin draf" (artikel ditandai memakai draf AI, checklist muncul, tombol terbit nonaktif), saran meta (tombol berganti "Batalkan" dan fokus tetap), cek pola dengan banyak tanda (isi berisi "Di era digital ini", em dash, "Kesimpulan"), cek klaim, galat API (isi berisi `[uji galat]`), anggaran habis (anggaran bulanan 0 di Pengaturan, Asisten AI; kembalikan ke 10 setelahnya), dan global Asisten AI (status pemasangan). Pastikan tidak ada geser horizontal, teks tidak tumpang tindih, tombol dan tautan berdempetan setinggi 44 px, dan cincin fokus terlihat saat menekan Tab. Hentikan server dengan `fuser -k 3200/tcp`, lalu `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -6803,7 +6809,7 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
 
 ## Selesai bila
 
-- `pnpm test` lulus (475 tes unit di 69 file dan 137 tes integrasi di 41 file, juga di database tes yang sudah berisi data putaran sebelumnya), `pnpm test:e2e` lulus (112 tes E2E) dua kali berturut-turut tanpa membuang database E2E, `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa jaringan dan tanpa kunci API.
+- `npm test` lulus (475 tes unit di 69 file dan 137 tes integrasi di 41 file, juga di database tes yang sudah berisi data putaran sebelumnya), `npm run test:e2e` lulus (112 tes E2E) dua kali berturut-turut tanpa membuang database E2E, `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa jaringan dan tanpa kunci API.
 - Sidebar Asisten AI di editor artikel: brief dari keyword (perkiraan Claude terpisah dari data point., sumber resmi dari global), draf per bagian yang disalin, saran meta yang diterapkan per isian dengan Batalkan, cek pola tulisan AI dan cek klaim di browser; keadaan memuat, galat, nonaktif (dimatikan, belum dipasang, anggaran habis) dengan alasannya; lolos axe dan tanpa geser horizontal di 375, 768, dan 1440 px, tema terang dan gelap.
 - Setiap panggilan Claude lewat `jalankan`: batas 6 per menit per pengguna, harga model dari global, cadangan anggaran atomik (anggaran bulanan tidak terlewati walau permintaan bersamaan), log `log-ai` tanpa teks masukan dan keluaran, keluaran tanpa em dash dan en dash.
 - Artikel yang memakai draf AI (salin draf, terapkan Intinya atau FAQ) tidak bisa terbit sebelum checklist review lengkap, termasuk lewat REST, terbit massal, dan terbit terjadwal; tombol terbit nonaktif sampai lengkap.
@@ -6863,7 +6869,7 @@ Hasil tidak disisipkan ke editor isi: "Salin draf" menulis HTML (`htmlDraf`, kar
 | Uji visual akhir dengan data E2E (tema terang dan gelap, 375, 768, 1440 px): awal, memuat, brief, draf, meta, pola dan klaim, checklist dan tombol terbit nonaktif, galat API, anggaran habis, global Asisten AI. | axe tanpa pelanggaran pada `.asisten`, `#field-reviewAi`, `.field-description-pakaiDrafAi`, dan `.asisten-status` di 54 pemeriksaan (9 keadaan, 2 tema, 3 lebar), tombol terbit nonaktif di keenam kombinasi tema dan lebar, dan tanpa geser horizontal setelah perbaikan tooltip. |
 | Verifikasi penuh per commit di salinan terpisah (database tes dibuat ulang per commit): type check, lint, unit, integrasi, dan E2E; Task 11 menjalankan E2E dua kali berturut-turut tanpa membuang database E2E. | Semua hijau setelah perbaikan di atas (verifikasi diulang untuk kesebelas commit); jumlah tes per task di tabel "Jumlah tes yang diharapkan". |
 | Putaran tambahan di database tes yang sudah berisi data (tanpa dibuat ulang) di commit terakhir: unit, integrasi, dan E2E. | Semua hijau dengan jumlah yang sama (tes mencari dokumennya sendiri lewat ID, `unik()`, atau bulan anggaran). |
-| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`c627a5f`), task demi task. | 11 dari 11 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe, termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `pnpm generate:types` dan `pnpm generate:importmap`. |
+| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`c627a5f`), task demi task. | 11 dari 11 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe, termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `npm run generate:types` dan `npm run generate:importmap`. |
 | Review pengawas (6 November 2026), dibaca ulang dari dokumentasi Claude: halaman migrasi 2026-10-21 (header `anthropic-version: 2026-10-21`, `temperature`/`top_p`/`top_k` dijawab 400 walau bernilai bawaan, `x-api-key` tetap diterima), Structured outputs (`output_config.format` dengan `type: 'json_schema'`, `additionalProperties: false` wajib, tanpa `minLength`/`maxLength`/batas angka, `minItems` hanya 0 atau 1, 24 properti opsional), Effort (`output_config.effort`; Sonnet 5.5 dan Haiku 5.5 menerima kelima level), dan Pricing (Sonnet 5.5 US$2 dan US$10; Haiku 5.5 US$0,10 dan US$0,50 sampai 100.000 token prompt). | Cocok dengan Task 4, Task 5 (`HARGA_BAWAAN`), dan Task 6. Tidak ada perubahan. |
 | Review pengawas: `pakaiDrafAi` hanya-baca di form admin (`admin.readOnly`), tetapi REST API dan update massal tetap bisa mengubahnya menjadi `false`, sehingga checklist review terlewati tanpa jejak. | Commit lanjutan `69c7cdf` setelah Task 11: hook field `beforeValidate` `tetapPakaiDrafAi` menjaga `pakaiDrafAi` tetap `true` setelah tersimpan `true` (dokumen baru dan hasil duplikat tetap mengikuti nilainya). `beforeValidate` dipilih supaya validasi checklist di dokumen yang sama sudah melihat tanda yang menyala. Diuji unit dan integrasi (simpan draf dan terbit massal dua artikel dengan `pakaiDrafAi: false`; tes integrasi gagal tanpa hook). |
 | Review pengawas: pemindaian rencana dan diff probe (`c627a5f..57e60b1`): tanpa em dash, en dash, dan spasi tak putus asli; tanpa kunci API, rahasia, atau kredensial seed; `package.json` dan lockfile tidak berubah; `.env.test` tanpa variabel AI; `.env.example` hanya berisi nama variabel kosong. Foto akhir (54 keadaan, terang dan gelap) diperiksa: tombol terbit nonaktif saat checklist belum lengkap, galat dan anggaran habis menyebut langkah berikutnya. | Tidak ada perubahan. |

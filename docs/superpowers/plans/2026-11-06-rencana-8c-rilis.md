@@ -1,16 +1,22 @@
 # Rencana 8C: Persiapan rilis produksi point.lat (Next 16.3.8, migrasi Payload, penjaga lingkungan, header keamanan, CI, Lighthouse CI, backup mingguan, dan runbook rilis)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Menyiapkan point.lat untuk produksi di Vercel Pro dan Supabase Pro (Singapura): Next naik ke 16.3.8; skema Supabase hanya lewat migrasi Payload yang dijalankan build Vercel, dengan koneksi pooler mode transaksi yang terverifikasi TLS; deploy produksi dan pratinjau menolak env yang salah dan database milik lingkungan lain; password admin di lingkungan terbuka tidak bisa lemah atau contoh; header keamanan di semua jawaban tanpa mematikan ISR; CI GitHub Actions dengan E2E dan Lighthouse; backup mingguan terenkripsi yang pemulihannya sudah diuji; dan runbook pemilik dari nol sampai live beserta uji langsung layanan luar. Tes tetap tanpa jaringan.
+**Goal:** Menyiapkan point.lat untuk produksi di Vercel (paket gratis Hobby sejak keputusan pemilik 7 dan 9 November 2026; rencana awal Pro) dan Supabase (Singapura): Next naik ke 16.3.8; skema Supabase hanya lewat migrasi Payload yang dijalankan build Vercel, dengan koneksi pooler mode transaksi yang terverifikasi TLS; deploy produksi dan pratinjau menolak env yang salah dan database milik lingkungan lain; password admin di lingkungan terbuka tidak bisa lemah atau contoh; header keamanan di semua jawaban tanpa mematikan ISR; CI GitHub Actions dengan E2E dan Lighthouse; backup mingguan terenkripsi yang pemulihannya sudah diuji; dan runbook pemilik dari nol sampai live beserta uji langsung layanan luar. Tes tetap tanpa jaringan.
 
-**Architecture:** `src/lib/database.ts` memutuskan dua hal dari `DATABASE_URL`: push skema Payload hanya untuk database lokal (`databaseLokal`), dan opsi pool `pg` (lokal memakai bawaan driver; database bersama memakai pool 5, idle 5 detik, batas sambung 10 detik, TLS dengan `DATABASE_CA`). Migrasi Payload di `src/migrations` (awal dari skema sekarang, lalu `kunci_data_api`) dijalankan `pnpm build:vercel` (`periksa:rilis`, `migrate`, `periksa:rilis`, `build`) sebelum `next build`. Modul `src/modules/lingkungan` membaca `VERCEL_ENV`: aturan env murni (`masalahLingkungan`) diperiksa saat config Payload dimuat (`tolakEnvSalah`), penanda database di `payload_kv` (`lingkungan-database`) ditulis lingkungan pertama yang memakainya dan diperiksa di `onInit` (`jagaDatabase`, yang menghentikan proses bila database milik lingkungan lain), dan aturan password (`periksaPassword`) dipasang di hook `beforeValidate` koleksi `pengguna`. Header keamanan satu konstanta (`HEADER_KEAMANAN`) dipasang `headers()` di `next.config.ts`. Operasional di luar aplikasi: `.github/workflows/ci.yml`, `lighthouserc.json`, `.github/workflows/backup.yml` dengan `scripts/cadangkan-database.sh` dan `scripts/pulihkan-database.sh`, serta runbook `docs/operasional/pemulihan-database.md` dan `docs/operasional/rilis.md`.
+**Architecture:** `src/lib/database.ts` memutuskan dua hal dari `DATABASE_URL`: push skema Payload hanya untuk database lokal (`databaseLokal`), dan opsi pool `pg` (lokal memakai bawaan driver; database bersama memakai pool 5, idle 5 detik, batas sambung 10 detik, TLS dengan `DATABASE_CA`). Migrasi Payload di `src/migrations` (awal dari skema sekarang, lalu `kunci_data_api`) dijalankan `npm run build:vercel` (`periksa:rilis`, `migrate`, `periksa:rilis`, `build`) sebelum `next build`. Modul `src/modules/lingkungan` membaca `VERCEL_ENV`: aturan env murni (`masalahLingkungan`) diperiksa saat config Payload dimuat (`tolakEnvSalah`), penanda database di `payload_kv` (`lingkungan-database`) ditulis lingkungan pertama yang memakainya dan diperiksa di `onInit` (`jagaDatabase`, yang menghentikan proses bila database milik lingkungan lain), dan aturan password (`periksaPassword`) dipasang di hook `beforeValidate` koleksi `pengguna`. Header keamanan satu konstanta (`HEADER_KEAMANAN`) dipasang `headers()` di `next.config.ts`. Operasional di luar aplikasi: `.github/workflows/ci.yml`, `lighthouserc.json`, `.github/workflows/backup.yml` dengan `scripts/cadangkan-database.sh` dan `scripts/pulihkan-database.sh`, serta runbook `docs/operasional/pemulihan-database.md` dan `docs/operasional/rilis.md`.
 
-**Tech Stack:** Next.js 16.3.8 (App Router, ISR, `headers()` di `next.config.ts`), Payload 3.92.1 (`@payloadcms/db-postgres` dengan `push`, `pool`, `onInit`, `payload migrate`, `migrate:create`, `payload_kv`, `ValidationError`), PostgreSQL 16 (lokal dan CI) dan 17 (Supabase), node-postgres lewat Supavisor mode transaksi, Vercel Pro (`vercel.json` `buildCommand`, `regions`, `crons`; fluid compute), GitHub Actions (service container `postgres:16`, `schedule`, artifact), `@lhci/cli` 0.15.1 (Lighthouse 12.6.1), GnuPG 2.4, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.8 (App Router, ISR, `headers()` di `next.config.ts`), Payload 3.92.1 (`@payloadcms/db-postgres` dengan `push`, `pool`, `onInit`, `payload migrate`, `migrate:create`, `payload_kv`, `ValidationError`), PostgreSQL 16 (lokal dan CI) dan 17 (Supabase), node-postgres lewat Supavisor mode transaksi, Vercel Pro (`vercel.json` `buildCommand`, `regions`, `crons`; fluid compute), GitHub Actions (service container `postgres:16`, `schedule`, artifact), `@lhci/cli` 0.15.1 (Lighthouse 12.6.1), GnuPG 2.4, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§5 arsitektur, penjadwal, dan koneksi database; §12 performa dan Lighthouse CI; §15 penanganan galat dan backup database; §16 testing; §18 setup pemilik; §19 risiko).
 
-**Rencana sebelumnya:** `docs/superpowers/plans/2026-11-04-rencana-1-fondasi.md` sampai `docs/superpowers/plans/2026-11-06-rencana-8b-paginasi-pemeliharaan.md` (master `f96a983`). Rencana ini memakai config Payload dan `postgresAdapter` (Rencana 1), adapter Cloudinary dan `pnpm media:siapkan` (Rencana 2), rute SEO dan `robots.txt` (Rencana 3), ISR bertag dan halaman 404 (Rencana 4A dan 4B), adapter `INDEXER_ADAPTER` dan cron `GET /api/jobs/run` di `vercel.json` (Rencana 6A), adapter `AI_ADAPTER` (Rencana 7), banner persetujuan dan iklan (Rencana 8A), dan `tests/e2e/siapkan.ts` beserta aturan E2E Rencana 8B. Baseline di `f96a983`: 523 tes unit (76 file), 158 tes integrasi (47 file), 150 tes E2E.
+**Rencana sebelumnya:** `docs/superpowers/plans/2026-11-04-rencana-1-fondasi.md` sampai `docs/superpowers/plans/2026-11-06-rencana-8b-paginasi-pemeliharaan.md` (master `f96a983`). Rencana ini memakai config Payload dan `postgresAdapter` (Rencana 1), adapter Cloudinary dan `npm run media:siapkan` (Rencana 2), rute SEO dan `robots.txt` (Rencana 3), ISR bertag dan halaman 404 (Rencana 4A dan 4B), adapter `INDEXER_ADAPTER` dan cron `GET /api/jobs/run` di `vercel.json` (Rencana 6A), adapter `AI_ADAPTER` (Rencana 7), banner persetujuan dan iklan (Rencana 8A), dan `tests/e2e/siapkan.ts` beserta aturan E2E Rencana 8B. Baseline di `f96a983`: 523 tes unit (76 file), 158 tes integrasi (47 file), 150 tes E2E.
 
 **Pembagian Rencana 8 (keputusan pengawas):** 8A (selesai): iklan, persetujuan cookie, admin berbahasa Indonesia. 8B (selesai): paginasi, Cek sekarang dan Pindai ulang sekarang, penjaga beacon 404. 8C (rencana ini): rilis. Semua cakupan 8C muat dalam 12 task (patokan 8 sampai 12), jadi tidak ada Rencana 8D; runbook rilis dan uji langsung adalah Task 12, dan langkah layanan luarnya dijalankan pemilik (Setup dari pemilik).
 
@@ -18,28 +24,28 @@
 
 | Paket | Keputusan rencana ini |
 |---|---|
-| `next` 16.3.8 dan `eslint-config-next` 16.3.8 (sekarang 16.3.3) | **Disetujui pemilik (6 November 2026).** Task 1: `package.json` 2 baris, `pnpm-lock.yaml` 64 baris tambah dan 64 baris hapus (66 dan 66 bersama `package.json`; koreksi saat eksekusi). Alasan: perbaikan keamanan 16.3.4 sampai 16.3.8 (Keputusan teknis). Tidak terbukti memperbaiki isi 404 yang kadang kosong (aturan "ulangi sekali" tetap). |
-| `@lhci/cli` 0.15.1 (devDependency, versi persis) | **Disetujui pemilik (7 November 2026).** Rilis 25 Juni 2025, membawa Lighthouse 12.6.1. Di proyek ini menambah 239 paket di lockfile (`pnpm-lock.yaml` +2.025 baris, sekitar 150 MB di `node_modules`; npm mencatat 165 MB dan 295 paket bila dipasang sendiri). Hanya dipakai `pnpm lighthouse` dan job E2E CI; tidak masuk bundle situs. Alternatif yang dinilai: `lighthouse` 13.5.0 langsung dengan Chromium Playwright (170 MB, 115 paket, Node 22.19+) tanpa runner, median, dan assertion, jadi butuh sekitar 100 baris skrip sendiri; `@lhci/cli` 0.16.0 (Lighthouse 13.6.0, 217 MB) dirilis 2 November 2026, terlalu baru untuk dikunci; PageSpeed Insights API butuh jaringan dan URL publik, jadi tidak bisa menjaga pull request; tanpa Lighthouse, anggaran JS tetap dijaga `motion.spec.ts`. **Bila ditolak:** lepas Task 10 (catatan pelepasan ada di awal Task 10). |
-| GitHub Actions pihak ketiga: `actions/checkout` v7.0.1, `pnpm/action-setup` v6.1.0, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2 | Bukan dependensi aplikasi; kode yang berjalan di runner CI dan backup. Dikunci ke SHA commit rilisnya (diperiksa lewat `git ls-remote` ke tag rilis), dengan komentar versi. |
+| `next` 16.3.8 dan `eslint-config-next` 16.3.8 (sekarang 16.3.3) | **Disetujui pemilik (6 November 2026).** Task 1: `package.json` 2 baris, `package-lock.json` 64 baris tambah dan 64 baris hapus (66 dan 66 bersama `package.json`; koreksi saat eksekusi). Alasan: perbaikan keamanan 16.3.4 sampai 16.3.8 (Keputusan teknis). Tidak terbukti memperbaiki isi 404 yang kadang kosong (aturan "ulangi sekali" tetap). |
+| `@lhci/cli` 0.15.1 (devDependency, versi persis) | **Disetujui pemilik (7 November 2026).** Rilis 25 Juni 2025, membawa Lighthouse 12.6.1. Di proyek ini menambah 239 paket di lockfile (`package-lock.json` +2.025 baris, sekitar 150 MB di `node_modules`; npm mencatat 165 MB dan 295 paket bila dipasang sendiri). Hanya dipakai `npm run lighthouse` dan job E2E CI; tidak masuk bundle situs. Alternatif yang dinilai: `lighthouse` 13.5.0 langsung dengan Chromium Playwright (170 MB, 115 paket, Node 22.19+) tanpa runner, median, dan assertion, jadi butuh sekitar 100 baris skrip sendiri; `@lhci/cli` 0.16.0 (Lighthouse 13.6.0, 217 MB) dirilis 2 November 2026, terlalu baru untuk dikunci; PageSpeed Insights API butuh jaringan dan URL publik, jadi tidak bisa menjaga pull request; tanpa Lighthouse, anggaran JS tetap dijaga `motion.spec.ts`. **Bila ditolak:** lepas Task 10 (catatan pelepasan ada di awal Task 10). |
+| GitHub Actions pihak ketiga: `actions/checkout` v7.0.1, `npm/action-setup` v6.1.0, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2 | Bukan dependensi aplikasi; kode yang berjalan di runner CI dan backup. Dikunci ke SHA commit rilisnya (diperiksa lewat `git ls-remote` ke tag rilis), dengan komentar versi. |
 | Klien PostgreSQL 17 dari repositori resmi PostgreSQL (`apt.postgresql.org`) | Dipasang di runner oleh workflow backup (`postgresql-client-17`), karena `pg_dump` harus sama atau lebih baru dari server Supabase dan runner Ubuntu 24.04 membawa Postgres 16. Bukan dependensi repo. |
 | Alat probe, tidak masuk repo | PgBouncer 1.22.0 (apt) sebagai pengganti Supavisor mode transaksi dengan TLS dan CA tiruan; `check-jsonschema` 0.39.0 dan `shellcheck` 0.11.0 di virtualenv scratchpad untuk memvalidasi workflow dan skrip. Executor rencana ini tidak memasangnya. |
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.8` (setelah Task 1), Payload `3.92.1`, `@playwright/test` `1.63.0`, `@lhci/cli` `0.15.1` (Task 10). Tanpa dependensi lain.
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.8` (setelah Task 1), Payload `3.92.1`, `@playwright/test` `1.63.0`, `@lhci/cli` `0.15.1` (Task 10). Tanpa dependensi lain.
 - Nama domain berbahasa Indonesia (`databaseLokal`, `pushSkema`, `opsiPool`, `masalahLingkungan`, `tolakEnvSalah`, `jagaDatabase`, `periksaPassword`, `tolakPasswordLemah`, `HEADER_KEAMANAN`). Nama dari pihak luar tetap seperti aslinya (`VERCEL_ENV`, `DATABASE_CA`, `payload_kv`, `frame-ancestors`).
 - Pesan, komentar, dan dokumen buatan rencana ini: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru.
 - **Tes dan probe tidak pernah memanggil Vercel, Supabase, GitHub, Google, IndexNow, Cloudinary, atau Anthropic.** Database "Supabase" di tes adalah Postgres lokal; adapter tetap palsu; header diuji terhadap server lokal.
-- **Database proyek.** Tes unit dan integrasi memakai `.env.test` (`pointlat_test`), E2E memakai `pointlat_test_e2e`, dan `pnpm build` memakai `.env` (`pointlat`). Database Supabase tidak pernah dihubungi dari workspace ini; langkah yang menyentuhnya ada di runbook pemilik.
-- **Push skema hanya ke database lokal** (setelah Task 2): `pushSkema()` bernilai `true` untuk `localhost`, `127.0.0.1`, `::1`, dan soket Unix. Dev, tes, dan E2E tetap memakai push seperti rencana sebelumnya. Jangan menjalankan `pnpm migrate` di database dev yang dibuat push (Payload bertanya soal data loss karena ada baris migrasi `dev`); uji migrasi di database terpisah yang dibuat baru, misalnya `pointlat_migrasi`.
+- **Database proyek.** Tes unit dan integrasi memakai `.env.test` (`pointlat_test`), E2E memakai `pointlat_test_e2e`, dan `npm run build` memakai `.env` (`pointlat`). Database Supabase tidak pernah dihubungi dari workspace ini; langkah yang menyentuhnya ada di runbook pemilik.
+- **Push skema hanya ke database lokal** (setelah Task 2): `pushSkema()` bernilai `true` untuk `localhost`, `127.0.0.1`, `::1`, dan soket Unix. Dev, tes, dan E2E tetap memakai push seperti rencana sebelumnya. Jangan menjalankan `npm run migrate` di database dev yang dibuat push (Payload bertanya soal data loss karena ada baris migrasi `dev`); uji migrasi di database terpisah yang dibuat baru, misalnya `pointlat_migrasi`.
 - **Perubahan skema harus aditif.** Rencana ini tidak mengubah field. Task 3 menulis migrasi awal dari skema sekarang; CI (Task 7) gagal bila skema berubah tanpa migrasi.
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati). Halaman yang sudah ada di `.next/cache/fetch-cache` tidak membaca database lagi saat build ulang, jadi uji build terhadap database lain selalu diawali `rm -rf .next`.
-- E2E menjalankan `next build` sendiri di port 3100 (database `pointlat_test_e2e`, dibuat dan diisi ulang `tests/e2e/siapkan.ts`), jadi isi `.next/` diganti; jalankan `pnpm build` lagi sebelum `pnpm start` biasa. Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang.
-- `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 11 dan 12 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja). Build yang tertinggal dari commit lain bisa meninggalkan `.next/types` yang menunjuk rute yang tidak ada (`TS2307`); hapus `.next` lalu ulangi `pnpm typecheck`.
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati). Halaman yang sudah ada di `.next/cache/fetch-cache` tidak membaca database lagi saat build ulang, jadi uji build terhadap database lain selalu diawali `rm -rf .next`.
+- E2E menjalankan `next build` sendiri di port 3100 (database `pointlat_test_e2e`, dibuat dan diisi ulang `tests/e2e/siapkan.ts`), jadi isi `.next/` diganti; jalankan `npm run build` lagi sebelum `npm run start` biasa. Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang.
+- `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 11 dan 12 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja). Build yang tertinggal dari commit lain bisa meninggalkan `.next/types` yang menunjuk rute yang tidak ada (`TS2307`); hapus `.next` lalu ulangi `npm run typecheck`.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
 - Tes integrasi berbagi database dan berjalan berurutan dengan urutan file yang tidak pasti. Tes rencana ini mencari datanya sendiri (`unik()`), mengosongkan penanda `lingkungan-database` sebelum setiap tes penanda (lingkungan diberikan sebagai argumen, bukan lewat `process.env`; di luar Vercel penanda yang tersisa diabaikan), dan tes password mengembalikan env lewat `vi.unstubAllEnvs()`.
 - E2E berjalan berurutan di satu database. `header.spec.ts` (Task 6) tidak menerbitkan, membatalkan terbit, atau menghapus dokumen, jadi urutannya bebas; spec yang melakukannya tetap berjalan setelah `indexing.spec.ts`.
-- **Isi 404 Next 16.3 yang kadang tidak dirender (warisan Rencana 4A dan 8B, masih terjadi di 16.3.8).** Tes yang membuka path 404 (`galat.spec.ts`, `motion.spec.ts` "kartu ke artikel memakai View Transitions", `cari.spec.ts` "cari dari halaman 404", dan `paginasi.spec.ts` untuk nomor di luar jangkauan; `header.spec.ts` memeriksa path 404 lewat `request`, bukan browser) sesekali gagal dengan `locator resolved to <html id="__next_error__">`, atribut `lang` kosong, atau beacon `/api/log-404/catat` yang tidak terkirim. Bila salah satu tes itu gagal dengan gejala tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- **Isi 404 Next 16.3 yang kadang tidak dirender (warisan Rencana 4A dan 8B, masih terjadi di 16.3.8).** Tes yang membuka path 404 (`galat.spec.ts`, `motion.spec.ts` "kartu ke artikel memakai View Transitions", `cari.spec.ts` "cari dari halaman 404", dan `paginasi.spec.ts` untuk nomor di luar jangkauan; `header.spec.ts` memeriksa path 404 lewat `request`, bukan browser) sesekali gagal dengan `locator resolved to <html id="__next_error__">`, atribut `lang` kosong, atau beacon `/api/log-404/catat` yang tidak terkirim. Bila salah satu tes itu gagal dengan gejala tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 - Next 16.3 kadang mengirim header `Location` dua kali pada redirect pertama sebuah path ISR; tes redirect memakai `toContain`, bukan `toBe`.
 - **Rahasia.** Rencana, workflow, runbook, log, dan commit tidak pernah memuat kunci API, password database, token, ID penerbit, atau kredensial asli; contoh memakai nilai yang jelas palsu (`ci-hanya-untuk-build-0123456789abcdef`, `cadangan@contoh.test`). Jangan menampilkan nilai `SEED_ADMIN_*` atau `PAYLOAD_SECRET` dari `.env`.
 - Karakter yang dibutuhkan kode (spasi tak putus, em dash, en dash, elipsis) ditulis sebagai escape `\u00a0`, `\u2014`, `\u2013`, `\u2026`; rencana ini tanpa karakter asli em dash, en dash, dan spasi tak putus. Salin blok kode rencana ini apa adanya.
@@ -50,8 +56,8 @@
 |---|---|---|
 | Batas rencana | 12 task: Next 16.3.8 (1), koneksi dan push (2), migrasi awal (3), penjaga lingkungan (4), password admin (5), header keamanan (6), CI (7), backup dan runbook pemulihan (8), migrasi `kunci_data_api` (9), Lighthouse CI (10, bisa dilepas), dokumentasi (11), runbook rilis dan uji langsung (12). | Patokan 8 sampai 12 task per file. Semua task diverifikasi di probe per commit. |
 | Next 16.3.8 | Naik di task pertama yang berdiri sendiri, tanpa perubahan kode. | Rilis v16.3.4 sampai v16.3.8 (GitHub, `git log v16.3.3..v16.3.8`; 16.3.8 terbit 30 September 2026): perbaikan keamanan dan ketahanan, antara lain pin DNS optimasi `next/image`, perlindungan DNS rebinding server MCP dev, path data peka huruf besar, kunci cache respons per rute, CSP nonce di `loading` dan `template`, dan SVG `next/og`. Proyek ini tidak memakai optimasi gambar Next (loader Cloudinary) dan tidak memakai `use cache`; probe: semua tes lulus (unit 523, integrasi 158, E2E 150) dan anggaran JS `motion.spec.ts` tetap. |
-| Push atau migrasi | Push skema Payload hanya ke database lokal (`pushSkema()` dari host `DATABASE_URL`), bukan dari `NODE_ENV`. Dev, tes, E2E, dan service Postgres CI tetap push. Supabase hanya lewat migrasi. | Kode `@payloadcms/db-postgres` 3.92.1: push berjalan bila `NODE_ENV` bukan `production`, `PAYLOAD_MIGRATING` bukan `true`, dan `push` tidak `false`. `pnpm seed` atau `payload run` dari komputer pemilik ke Supabase berjalan dengan `NODE_ENV` development, jadi tanpa opsi ini Payload mendorong skema ke produksi. Dokumentasi migrasi Payload: jangan mencampur push dan migrasi di database yang sama; push menulis baris migrasi `dev` (batch -1) yang membuat `payload migrate` bertanya soal data loss. Push di dev dan tes mempertahankan semua rencana sebelumnya; CI menjaga agar migrasi ikut setiap perubahan skema. |
-| Kapan migrasi berjalan | `vercel.json` `buildCommand` = `pnpm build:vercel`: `periksa:rilis` (env dan penanda), `migrate`, `periksa:rilis` lagi (menandai database yang baru dimigrasi), lalu `pnpm build`. Bukan `prodMigrations`. | Dokumentasi migrasi Payload: produksi wajib migrasi; contoh perintah build `payload migrate && pnpm build` membuat deploy gagal bila migrasi gagal (deploy lama tetap melayani); `prodMigrations` menjalankan migrasi saat init dan memperlambat cold start serverless. `vercel.json` `buildCommand` menimpa setelan dashboard. `pnpm build` membaca database (halaman statis), jadi skema harus sudah ada sebelum build. Probe: build bisa mengambil data dari `.next/cache/fetch-cache` tanpa menyentuh database, jadi penanda tidak bisa mengandalkan `next build`; `periksa:rilis` kedua menandai database yang baru dibuat migrasi. |
+| Push atau migrasi | Push skema Payload hanya ke database lokal (`pushSkema()` dari host `DATABASE_URL`), bukan dari `NODE_ENV`. Dev, tes, E2E, dan service Postgres CI tetap push. Supabase hanya lewat migrasi. | Kode `@payloadcms/db-postgres` 3.92.1: push berjalan bila `NODE_ENV` bukan `production`, `PAYLOAD_MIGRATING` bukan `true`, dan `push` tidak `false`. `npm run seed` atau `payload run` dari komputer pemilik ke Supabase berjalan dengan `NODE_ENV` development, jadi tanpa opsi ini Payload mendorong skema ke produksi. Dokumentasi migrasi Payload: jangan mencampur push dan migrasi di database yang sama; push menulis baris migrasi `dev` (batch -1) yang membuat `payload migrate` bertanya soal data loss. Push di dev dan tes mempertahankan semua rencana sebelumnya; CI menjaga agar migrasi ikut setiap perubahan skema. |
+| Kapan migrasi berjalan | `vercel.json` `buildCommand` = `npm run build:vercel`: `periksa:rilis` (env dan penanda), `migrate`, `periksa:rilis` lagi (menandai database yang baru dimigrasi), lalu `npm run build`. Bukan `prodMigrations`. | Dokumentasi migrasi Payload: produksi wajib migrasi; contoh perintah build `payload migrate && npm run build` membuat deploy gagal bila migrasi gagal (deploy lama tetap melayani); `prodMigrations` menjalankan migrasi saat init dan memperlambat cold start serverless. `vercel.json` `buildCommand` menimpa setelan dashboard. `npm run build` membaca database (halaman statis), jadi skema harus sudah ada sebelum build. Probe: build bisa mengambil data dari `.next/cache/fetch-cache` tanpa menyentuh database, jadi penanda tidak bisa mengandalkan `next build`; `periksa:rilis` kedua menandai database yang baru dibuat migrasi. |
 | Koneksi | Runtime dan migrasi lewat **Transaction pooler** Supavisor (port 6543, IPv4). Pool `pg` 5 koneksi per instance, koneksi menganggur ditutup 5 detik, batas sambung 10 detik. Backup lewat **Session pooler** (port 5432). | Dokumentasi Supabase: koneksi langsung hanya IPv6 (IPv4 add-on berbayar), Vercel dan GitHub Actions hanya IPv4; mode transaksi untuk fungsi serverless dan tidak mendukung prepared statement bernama. `pg` (dipakai Drizzle) mengirim statement tanpa nama. Compute Micro (bawaan Pro): 60 koneksi langsung, 200 klien pooler. Panduan pooling Vercel: satu pool global per instance fluid compute dengan idle pendek, bukan `max: 1`. Probe: 158 tes integrasi dan `payload migrate` lulus lewat PgBouncer mode transaksi dengan TLS terverifikasi (pool 5, tanpa push). `pg_dump` butuh sesi utuh, jadi backup memakai session pooler. |
 | TLS database | `DATABASE_CA` (PEM sertifikat CA Supabase, `\n` tertulis juga diterima) menyalakan `ssl: { ca, rejectUnauthorized: true }` (verifikasi sertifikat dan nama host). Penjaga produksi dan pratinjau menolak koneksi tanpa `DATABASE_CA` dan tanpa `sslmode` di URL. | Dokumentasi Supabase SSL enforcement: `verify-full` butuh sertifikat CA yang diunduh dari dashboard (`prod-ca-2021.crt`). `pg-connection-string` 2.14.1: `sslmode=require` berarti `verify-full` dengan CA sistem kecuali `uselibpqcompat`, sehingga sertifikat Supabase ditolak tanpa CA. Probe: CA benar tersambung, CA lain `unable to verify the first certificate`, tanpa CA `SSL required`. |
 | Sinyal lingkungan | `VERCEL_ENV` (`production`, `preview`); `development` dan di luar Vercel tanpa aturan tambahan. | Dokumentasi Vercel System Environment Variables: `VERCEL_ENV` tersedia saat build dan runtime bila System Environment Variables diekspos (setelan proyek). Runbook memeriksanya dari log build (`Lingkungan produksi siap`). |
@@ -70,8 +76,8 @@
 ## Struktur file setelah rencana ini
 
 ```
-package.json, pnpm-lock.yaml       next dan eslint-config-next 16.3.8; skrip migrate, periksa:rilis, build:vercel, lighthouse; @lhci/cli 0.15.1
-vercel.json                        + buildCommand pnpm build:vercel, regions sin1
+package.json, package-lock.json       next dan eslint-config-next 16.3.8; skrip migrate, periksa:rilis, build:vercel, lighthouse; @lhci/cli 0.15.1
+vercel.json                        + buildCommand npm run build:vercel, regions sin1
 next.config.ts                     headers() dengan HEADER_KEAMANAN, poweredByHeader false
 eslint.config.mjs                  src/migrations/ tidak di-lint (hasil generator)
 lighthouserc.json                  Lighthouse CI: 4 halaman, median 3, anggaran
@@ -91,7 +97,7 @@ src/modules/lingkungan/
 src/hooks/tolakPasswordLemah.ts    hook beforeValidate koleksi pengguna
 src/collections/Pengguna.ts        + beforeValidate tolakPasswordLemah
 src/seed/run.ts                    pesan per isian saat ValidationError
-src/scripts/periksa-rilis.ts       pnpm periksa:rilis
+src/scripts/periksa-rilis.ts       npm run periksa:rilis
 src/payload.config.ts              opsiPool, pushSkema, tolakEnvSalah, onInit jagaDatabase
 scripts/cadangkan-database.sh, scripts/pulihkan-database.sh
 .github/workflows/ci.yml, .github/workflows/backup.yml
@@ -126,7 +132,7 @@ Diubah juga: `CLAUDE.md` dan spesifikasi (§5, §12, §15, §16, §18, §19). `s
 ### Task 1: Naik ke Next 16.3.8 dan eslint-config-next 16.3.8
 
 **Files:**
-- Modify: `package.json`, `pnpm-lock.yaml`
+- Modify: `package.json`, `package-lock.json`
 
 **Interfaces:**
 - Consumes: semua kode yang sudah ada (tanpa perubahan kode).
@@ -137,7 +143,7 @@ Task ini berdiri sendiri supaya kegagalan karena versi Next terlihat terpisah da
 - [ ] **Langkah 1: Catat versi sekarang**
 
   ```bash
-  pnpm ls next eslint-config-next --depth 0
+  npm ls next eslint-config-next --depth 0
   ```
 
   Hasil yang diharapkan: `next 16.3.3` di dependencies dan `eslint-config-next 16.3.3` di devDependencies.
@@ -145,22 +151,22 @@ Task ini berdiri sendiri supaya kegagalan karena versi Next terlihat terpisah da
 - [ ] **Langkah 2: Naikkan versi**
 
   ```bash
-  pnpm add -E next@16.3.8
-  pnpm add -D -E eslint-config-next@16.3.8
+  npm install -E next@16.3.8
+  npm install -D -E eslint-config-next@16.3.8
   ```
 
-  Hasil yang diharapkan: `package.json` berisi `"next": "16.3.8"` dan `"eslint-config-next": "16.3.8"`; `git diff --stat` menampilkan `package.json` (2 baris tambah, 2 hapus) dan `pnpm-lock.yaml` (64 baris tambah, 64 hapus; total 66 dan 66). pnpm boleh menyebut versi yang lebih baru tersedia; jangan dipakai.
+  Hasil yang diharapkan: `package.json` berisi `"next": "16.3.8"` dan `"eslint-config-next": "16.3.8"`; `git diff --stat` menampilkan `package.json` (2 baris tambah, 2 hapus) dan `package-lock.json` (64 baris tambah, 64 hapus; total 66 dan 66). npm boleh menyebut versi yang lebih baru tersedia; jangan dipakai.
 
 - [ ] **Langkah 3: Jalankan semua tes**
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task1.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task1.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task1.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task1.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: type check dan lint bersih; unit 523 tes (76 file); integrasi 158 tes (47 file; baca log utuh, tanpa pertanyaan DATA LOSS); E2E 150 tes, termasuk anggaran JS di `motion.spec.ts`; build berhasil dengan `next-build (v16.3.8)`. Di probe, satu putaran E2E gagal sekali di `galat.spec.ts` dengan beacon 404 yang tidak terkirim (gejala isi 404 Next yang dikenal, Global Constraints) dan lulus 150 tes saat diulang.
@@ -168,7 +174,7 @@ Task ini berdiri sendiri supaya kegagalan karena versi Next terlihat terpisah da
 - [ ] **Langkah 4: Commit**
 
   ```bash
-  git add package.json pnpm-lock.yaml
+  git add package.json package-lock.json
   git commit -m "build: naik ke Next 16.3.8 dan eslint-config-next 16.3.8 (perbaikan keamanan 16.3.4 sampai 16.3.8)"
   ```
 
@@ -189,7 +195,7 @@ Task ini berdiri sendiri supaya kegagalan karena versi Next terlihat terpisah da
   - `pushSkema(env = process.env): boolean` = `databaseLokal(env.DATABASE_URL)`.
   - `type OpsiPool` dan `opsiPool(env = process.env): OpsiPool`: lokal `{ connectionString }`; bukan lokal ditambah `max`, `idleTimeoutMillis`, `connectionTimeoutMillis`, dan bila `DATABASE_CA` diisi `ssl: { ca, rejectUnauthorized: true }` (`\n` tertulis dipulihkan menjadi baris baru).
 
-Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV` bukan `production`, termasuk saat pemilik menjalankan `pnpm seed` dari komputernya ke Supabase. Dengan `pushSkema()`, dev, tes, E2E, dan CI tetap memakai push seperti sebelumnya, sedangkan database bersama hanya berubah lewat migrasi (Task 3).
+Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV` bukan `production`, termasuk saat pemilik menjalankan `npm run seed` dari komputernya ke Supabase. Dengan `pushSkema()`, dev, tes, E2E, dan CI tetap memakai push seperti sebelumnya, sedangkan database bersama hanya berubah lewat migrasi (Task 3).
 
 - [ ] **Langkah 1: Tulis tes yang gagal**
 
@@ -270,7 +276,7 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 - [ ] **Langkah 2: Pastikan tes gagal**
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/database.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/database.test.ts
   ```
 
   Hasil yang diharapkan: FAIL `tests/unit/database.test.ts` dengan `Error: Cannot find package '@/lib/database'` (diimpor dari `tests/unit/database.test.ts`), `Tests  no tests`.
@@ -283,7 +289,7 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
   /**
    * Koneksi Postgres untuk adapter Payload (`postgresAdapter` di `payload.config.ts`). Lokal, tes, E2E, dan CI
    * memakai Postgres di mesin sendiri dengan push skema Payload; database bersama (Supabase produksi dan
-   * pratinjau) hanya diubah lewat migrasi (`pnpm migrate`) dan dihubungi lewat pooler Supavisor mode transaksi.
+   * pratinjau) hanya diubah lewat migrasi (`npm run migrate`) dan dihubungi lewat pooler Supavisor mode transaksi.
    */
 
   type Env = Record<string, string | undefined>
@@ -318,7 +324,7 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 
   /**
    * Push skema Payload (Drizzle) hanya ke database lokal. Database bersama tidak pernah didorong, juga saat
-   * `pnpm seed` atau skrip `payload run` dijalankan dari komputer dengan `DATABASE_URL` Supabase (tanpa
+   * `npm run seed` atau skrip `payload run` dijalankan dari komputer dengan `DATABASE_URL` Supabase (tanpa
    * `NODE_ENV=production`, Payload mendorong skema bila opsi ini tidak dimatikan).
    */
   export function pushSkema(env: Env = process.env): boolean {
@@ -371,7 +377,7 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
      secret: process.env.PAYLOAD_SECRET || '',
      typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
   +  // Lokal dan tes: push skema ke Postgres sendiri. Supabase (produksi, pratinjau): hanya migrasi
-  +  // (`src/migrations`, `pnpm migrate`), lewat pooler mode transaksi dengan pool kecil (`src/lib/database.ts`).
+  +  // (`src/migrations`, `npm run migrate`), lewat pooler mode transaksi dengan pool kecil (`src/lib/database.ts`).
      db: postgresAdapter({
   -    pool: { connectionString: process.env.DATABASE_URL || '' },
   +    pool: opsiPool(),
@@ -385,12 +391,12 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task2.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task2.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task2.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task2.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: bersih; unit 529 tes (77 file); integrasi 158 tes (47 file; database tes lokal tetap memakai push); E2E 150 tes; build berhasil. Di probe, 158 tes integrasi juga lulus lewat PgBouncer mode transaksi dengan TLS terverifikasi (`DATABASE_URL` ke host non-lokal dan `DATABASE_CA` tiruan, pool 5, tanpa push): bukti bahwa Payload berjalan di mode transaksi tanpa prepared statement bernama.
@@ -412,14 +418,14 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 
 **Interfaces:**
 - Consumes: skema Payload Rencana 8B (semua koleksi dan global, termasuk `pilar.disclaimer`, `tampilkan_tools`, `takarir`, dan `status_indeks.diminta_pada` yang ditunda ke rencana ini), `pushSkema` (Task 2).
-- Produces: migrasi `20261106_152942_awal` (membuat 108 tabel), skrip `pnpm migrate`. Database kosong yang dimigrasi punya skema yang sama dengan database hasil push.
+- Produces: migrasi `20261106_152942_awal` (membuat 108 tabel), skrip `npm run migrate`. Database kosong yang dimigrasi punya skema yang sama dengan database hasil push.
 
 `payload migrate:create` membandingkan skema config dengan snapshot JSON migrasi terakhir (tanpa koneksi database) dan menulis SQL Drizzle. Hasilnya deterministik kecuali nama file (waktu pembuatan) dan `"id"` acak di akhir snapshot JSON, jadi langkah 1 menetapkan keduanya supaya hasil sama persis dengan commit probe. File migrasi hasil generator tidak diubah tangan dan tidak di-lint.
 
 - [ ] **Langkah 1: Buat migrasi dan tetapkan nama serta id snapshot**
 
   ```bash
-  pnpm payload migrate:create awal
+  npm run payload -- migrate:create awal
   mv src/migrations/*_awal.ts src/migrations/20261106_152942_awal.ts
   mv src/migrations/*_awal.json src/migrations/20261106_152942_awal.json
   sed -i -E 's/^  "id": "[0-9a-f-]{36}",$/  "id": "2c404645-c208-41c7-bb9b-8f80aadf469a",/' src/migrations/20261106_152942_awal.json
@@ -498,8 +504,8 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
   ```bash
   P=postgres://postgres:postgres@127.0.0.1:5432
   psql -q $P/postgres -c "DROP DATABASE IF EXISTS pointlat_migrasi WITH (FORCE)" -c "CREATE DATABASE pointlat_migrasi" -c "DROP DATABASE IF EXISTS pointlat_push WITH (FORCE)" -c "CREATE DATABASE pointlat_push"
-  DATABASE_URL=$P/pointlat_migrasi pnpm migrate
-  DATABASE_URL=$P/pointlat_push pnpm seed
+  DATABASE_URL=$P/pointlat_migrasi npm run migrate
+  DATABASE_URL=$P/pointlat_push npm run seed
   D=$(mktemp -d)
   for db in pointlat_migrasi pointlat_push; do
     pg_dump --schema-only --no-owner --no-privileges $P/$db | grep -vE '^\\(restrict|unrestrict) |^--' > $D/$db.sql
@@ -507,20 +513,20 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
   grep -c '^CREATE TABLE' $D/pointlat_migrasi.sql
   diff $D/pointlat_migrasi.sql $D/pointlat_push.sql && echo "skema sama"
   rm -rf .next
-  DATABASE_URL=$P/pointlat_migrasi pnpm build > $D/build.log 2>&1 && echo "build berhasil"
+  DATABASE_URL=$P/pointlat_migrasi npm run build > $D/build.log 2>&1 && echo "build berhasil"
   psql -tA $P/pointlat_migrasi -c "select name, batch from payload_migrations"
   psql -q $P/postgres -c "DROP DATABASE pointlat_migrasi WITH (FORCE)" -c "DROP DATABASE pointlat_push WITH (FORCE)"
   rm -rf .next $D
   ```
 
-  `pg_dump` 16.15 menulis baris `\restrict` dan `\unrestrict` berkunci acak; baris itu dan komentar dibuang sebelum dibandingkan. `pnpm seed` ke database lokal membuat skema lewat push.
+  `pg_dump` 16.15 menulis baris `\restrict` dan `\unrestrict` berkunci acak; baris itu dan komentar dibuang sebelum dibandingkan. `npm run seed` ke database lokal membuat skema lewat push.
 
-  Hasil yang diharapkan: `pnpm migrate` mencetak `Migrating: 20261106_152942_awal`, `Migrated:  20261106_152942_awal (...ms)`, dan `Done.`; `108` tabel; `skema sama`; `build berhasil`; satu baris `20261106_152942_awal|1` (tanpa baris `dev`, jadi build tidak mendorong skema).
+  Hasil yang diharapkan: `npm run migrate` mencetak `Migrating: 20261106_152942_awal`, `Migrated:  20261106_152942_awal (...ms)`, dan `Done.`; `108` tabel; `skema sama`; `build berhasil`; satu baris `20261106_152942_awal|1` (tanpa baris `dev`, jadi build tidak mendorong skema).
 
 - [ ] **Langkah 6: Skema dan migrasi selaras**
 
   ```bash
-  pnpm payload migrate:create periksa --skip-empty
+  npm run payload -- migrate:create periksa --skip-empty
   git status --porcelain src/migrations
   ```
 
@@ -529,12 +535,12 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 - [ ] **Langkah 7: Jalankan semua tes**
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task3.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task3.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task3.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task3.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: bersih (lint tidak membaca `src/migrations/`); unit 529 tes (77 file); integrasi 158 tes (47 file); E2E 150 tes; build berhasil.
@@ -543,7 +549,7 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 
   ```bash
   git add eslint.config.mjs package.json src/migrations
-  git commit -m "feat(database): migrasi awal Payload dari skema sekarang (produksi hanya lewat migrasi), skrip pnpm migrate, dan migrasi hasil generator tidak diperiksa lint"
+  git commit -m "feat(database): migrasi awal Payload dari skema sekarang (produksi hanya lewat migrasi), skrip npm run migrate, dan migrasi hasil generator tidak diperiksa lint"
   ```
 
 ---
@@ -556,12 +562,12 @@ Tanpa opsi `push`, Payload mendorong skema ke database apa pun selama `NODE_ENV`
 - Test: `tests/unit/lingkungan.test.ts`, `tests/int/lingkungan.int.spec.ts`
 
 **Interfaces:**
-- Consumes: `databaseLokal` (Task 2), tabel `payload_kv` bawaan Payload (kunci unik), `sql` dari `@payloadcms/db-postgres`, skrip `pnpm migrate` (Task 3).
+- Consumes: `databaseLokal` (Task 2), tabel `payload_kv` bawaan Payload (kunci unik), `sql` dari `@payloadcms/db-postgres`, skrip `npm run migrate` (Task 3).
 - Produces:
   - `aturan.ts` (fungsi murni): `type JenisLingkungan = 'produksi' | 'pratinjau'`, `CONTOH_ENV` (nilai contoh `.env.example` untuk `PAYLOAD_SECRET` dan `SEED_ADMIN_PASSWORD`), `MIN_PAYLOAD_SECRET = 32`, `MIN_CRON_SECRET = 16`, `jenisLingkungan(env)`, `lingkunganTerbuka(env)` (deploy Vercel atau database bukan lokal), `masalahLingkungan(env): string[]`, `type Penanda`, `type KeputusanPenanda = { tulis; tolak }`, `keputusanPenanda(jenis, penanda)`.
   - `penanda.ts`: `KUNCI_PENANDA = 'lingkungan-database'`, `bacaPenanda(payload)` (`undefined` bila `payload_kv` belum ada), `tulisPenanda(payload, lingkungan, sekarang)` (`ON CONFLICT (key) DO NOTHING`).
   - `index.ts`: ekspor ulang, `tolakEnvSalah(env)` (melempar `Env deploy belum benar:` dengan semua masalah), `class DatabaseLingkunganLain`, `periksaDatabase(payload, env)`, `jagaDatabase(payload, env)` (`logger.fatal` lalu `process.exit(1)` untuk database milik lingkungan lain).
-  - `pnpm periksa:rilis` mencetak `Lingkungan {produksi|pratinjau|lokal} siap: env dan database cocok.`; `pnpm build:vercel` = `periksa:rilis`, `migrate`, `periksa:rilis`, `build`.
+  - `npm run periksa:rilis` mencetak `Lingkungan {produksi|pratinjau|lokal} siap: env dan database cocok.`; `npm run build:vercel` = `periksa:rilis`, `migrate`, `periksa:rilis`, `build`.
 
 Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan menyebut env yang salah dan cara memperbaikinya. Pratinjau yang memakai database produksi ditolak sebelum migrasi, jadi database produksi tidak pernah diubah oleh deploy pratinjau. `jagaDatabase` menghentikan proses karena `getPayload` 3.92.1 membuat ulang Payload tanpa `onInit` setelah init gagal (probe: tanpa `process.exit`, permintaan kedua ke server pratinjau dengan database produksi berhasil).
 
@@ -808,8 +814,8 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
 - [ ] **Langkah 2: Pastikan tes gagal**
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/lingkungan.test.ts
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/lingkungan.int.spec.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/lingkungan.test.ts
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/lingkungan.int.spec.ts
   ```
 
   Hasil yang diharapkan: keduanya FAIL dengan `Error: Cannot find package '@/modules/lingkungan'` (diimpor dari file tes masing-masing), `Tests  no tests`.
@@ -852,7 +858,7 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
 
   /**
    * Lingkungan yang datanya nyata atau alamatnya terbuka: deploy produksi dan pratinjau, atau database bukan
-   * lokal (juga `pnpm seed` dari komputer pemilik ke Supabase). Aturan password admin berlaku di sini.
+   * lokal (juga `npm run seed` dari komputer pemilik ke Supabase). Aturan password admin berlaku di sini.
    */
   export function lingkunganTerbuka(env: Env = process.env): boolean {
     return jenisLingkungan(env) !== null || !databaseLokal(env.DATABASE_URL)
@@ -1079,7 +1085,7 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
   import { jenisLingkungan } from '@/modules/lingkungan'
 
   /**
-   * `pnpm periksa:rilis`, langkah pertama build Vercel (`pnpm build:vercel`), sebelum migrasi. Memuat config
+   * `npm run periksa:rilis`, langkah pertama build Vercel (`npm run build:vercel`), sebelum migrasi. Memuat config
    * (`tolakEnvSalah`: env deploy yang salah ditolak) dan menjalankan `onInit` (`periksaDatabase`: database milik
    * lingkungan lain ditolak, database baru ditandai), jadi migrasi tidak pernah menyentuh database yang salah.
    */
@@ -1100,7 +1106,7 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
   -    "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate"
   +    "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
   +    "periksa:rilis": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/periksa-rilis.ts",
-  +    "build:vercel": "pnpm periksa:rilis && pnpm migrate && pnpm periksa:rilis && pnpm build"
+  +    "build:vercel": "npm run periksa:rilis && npm run migrate && npm run periksa:rilis && npm run build"
      },
      "dependencies": {
        "@payloadcms/db-postgres": "3.92.1",
@@ -1114,7 +1120,7 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
   @@ -1,4 +1,6 @@
    {
      "$schema": "https://openapi.vercel.sh/vercel.json",
-  +  "buildCommand": "pnpm build:vercel",
+  +  "buildCommand": "npm run build:vercel",
   +  "regions": ["sin1"],
      "crons": [{ "path": "/api/jobs/run", "schedule": "*/10 * * * *" }]
    }
@@ -1123,8 +1129,8 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
 - [ ] **Langkah 5: Periksa penjaga dari terminal**
 
   ```bash
-  pnpm periksa:rilis
-  VERCEL_ENV=production pnpm periksa:rilis
+  npm run periksa:rilis
+  VERCEL_ENV=production npm run periksa:rilis
   ```
 
   Hasil yang diharapkan: perintah pertama mencetak `Lingkungan lokal siap: env dan database cocok.` (di luar Vercel tanpa aturan tambahan); perintah kedua gagal (exit 1) dengan `Env deploy belum benar:` yang memuat `- DATABASE_URL menunjuk database lokal. Isi connection string pooler Supabase mode transaksi (port 6543).`, `- INDEXER_ADAPTER wajib diisi di Production: asli atau palsu.`, `- AI_ADAPTER wajib diisi di Production: asli atau palsu.`, dan `- CRON_SECRET wajib string acak minimal 16 karakter (Vercel Cron mengirimnya sebagai Bearer).` (butir lain tergantung isi `.env` lokal). Database dev tidak berubah.
@@ -1133,12 +1139,12 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task4.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task4.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task4.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task4.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: bersih; unit 541 tes (78 file); integrasi 162 tes (48 file); E2E 150 tes (di luar Vercel penjaga tidak menambah query); build berhasil. Bukti probe di luar tes otomatis (Postgres lokal lewat PgBouncer mode transaksi dengan TLS sebagai pengganti Supabase): Production tanpa env wajib ditolak di `periksa:rilis`, `migrate`, dan `next build` dengan enam pesan tanpa satu tabel pun dibuat; Preview dengan adapter asli dan kunci Claude ditolak; `build:vercel` Production di database kosong menjalankan periksa, migrasi, periksa lagi (menandai `produksi`), lalu build; `build:vercel` dan `next build` Preview ke database itu berhenti dengan `FATAL: Database ini milik Production, tetapi deploy ini Preview. Ganti DATABASE_URL di Preview (Vercel, Settings, Environment Variables).` sebelum migrasi; server Preview berhenti pada permintaan Payload pertama; penanda tetap `produksi`.
@@ -1165,9 +1171,9 @@ Pesan penjaga ditulis untuk pemilik yang membaca log build Vercel: setiap pesan 
   - `MIN_PASSWORD = 15`, `KATA_DITOLAK = ['point', 'password', 'admin', 'qwerty', '123456']`.
   - `periksaPassword(password, { email }): true | string`, dengan pesan: `Password ini contoh dari .env.example. Buat password baru.`; `Password minimal 15 karakter. Pakai frasa panjang yang mudah kamu ingat, misalnya empat kata acak.`; `Password tidak boleh memuat "{kata}". Pakai kata yang tidak berhubungan dengan situs atau akunmu.` (juga bagian depan email bila 4 karakter ke atas); `Password terlalu mudah ditebak. Pakai frasa dengan kata yang berbeda-beda.` (kurang dari 4 karakter berbeda).
   - Hook `tolakPasswordLemah` (`beforeValidate` koleksi `pengguna`): bila `data.password` ada dan `lingkunganTerbuka()`, password yang ditolak menjadi `ValidationError` di field `password`.
-  - `pnpm seed` yang ditolak mencetak `Seed dihentikan. password: {pesan}` lalu keluar dengan kode 1.
+  - `npm run seed` yang ditolak mencetak `Seed dihentikan. password: {pesan}` lalu keluar dengan kode 1.
 
-Aturan ini berlaku di deploy Vercel (halaman buat admin pertama, buat pengguna, ganti password) dan saat `pnpm seed` atau skrip lain dijalankan dari komputer pemilik ke database Supabase (database bukan lokal). Lokal, tes, dan E2E tidak diperiksa. Payload tanpa adapter email tidak mengirim tautan lupa password, jadi password diganti lewat halaman akun (diperiksa hook ini).
+Aturan ini berlaku di deploy Vercel (halaman buat admin pertama, buat pengguna, ganti password) dan saat `npm run seed` atau skrip lain dijalankan dari komputer pemilik ke database Supabase (database bukan lokal). Lokal, tes, dan E2E tidak diperiksa. Payload tanpa adapter email tidak mengirim tautan lupa password, jadi password diganti lewat halaman akun (diperiksa hook ini).
 
 - [ ] **Langkah 1: Tulis tes yang gagal**
 
@@ -1296,8 +1302,8 @@ Aturan ini berlaku di deploy Vercel (halaman buat admin pertama, buat pengguna, 
 - [ ] **Langkah 2: Pastikan tes gagal**
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/password.test.ts
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/password.int.spec.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/password.test.ts
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/password.int.spec.ts
   ```
 
   Hasil yang diharapkan: unit FAIL dengan `Error: Cannot find package '@/hooks/tolakPasswordLemah'` (diimpor dari `tests/unit/password.test.ts`), `Tests  no tests`; integrasi `1 failed | 1 passed (2)`: "lokal dan tes tetap menerima password pendek" lulus, "deploy Vercel: buat pengguna dan ganti password menolak password contoh dan password lemah" gagal dengan `Error: Operasi diharapkan gagal, tetapi berhasil.`
@@ -1345,7 +1351,7 @@ Aturan ini berlaku di deploy Vercel (halaman buat admin pertama, buat pengguna, 
   import { periksaPassword } from '@/modules/lingkungan/password'
 
   /**
-   * Password baru atau yang diganti di lingkungan terbuka (deploy Vercel, atau `pnpm seed` dan skrip ke database
+   * Password baru atau yang diganti di lingkungan terbuka (deploy Vercel, atau `npm run seed` dan skrip ke database
    * Supabase) wajib lolos `periksaPassword`; berlaku juga untuk halaman buat admin pertama dan ganti password di
    * akun. Lokal, tes, dan E2E (database lokal di luar Vercel) tidak diperiksa.
    */
@@ -1428,15 +1434,15 @@ Aturan ini berlaku di deploy Vercel (halaman buat admin pertama, buat pengguna, 
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task5.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task5.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task5.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task5.log
+  npm run test:e2e
+  npm run build
   ```
 
-  Hasil yang diharapkan: bersih; unit 546 tes (79 file); integrasi 164 tes (49 file); E2E 150 tes (password E2E dan seed lokal tidak diperiksa); build berhasil. Bukti probe di luar tes otomatis (server Production tiruan lewat PgBouncer TLS): `pnpm seed` ke database non-lokal dengan password contoh mencetak `Seed dihentikan. password: Password ini contoh dari .env.example. Buat password baru.` tanpa membuat data; halaman `/admin/create-first-user` menolak password contoh (tetap di halaman itu; pesan aturan tampil di bawah isian di satu dari dua putaran probe, ringkasan `Isian berikut tidak valid: password` di putaran lain) lalu menerima frasa empat kata (`POST /api/pengguna/first-register` 200, admin dibuat); seed dengan frasa kuat mencetak `Seed selesai. Admin: dibuat. Pilar: 4. Halaman draf: 6. Tools baru: 6. Parameter baru: 22.` tanpa baris push `dev`.
+  Hasil yang diharapkan: bersih; unit 546 tes (79 file); integrasi 164 tes (49 file); E2E 150 tes (password E2E dan seed lokal tidak diperiksa); build berhasil. Bukti probe di luar tes otomatis (server Production tiruan lewat PgBouncer TLS): `npm run seed` ke database non-lokal dengan password contoh mencetak `Seed dihentikan. password: Password ini contoh dari .env.example. Buat password baru.` tanpa membuat data; halaman `/admin/create-first-user` menolak password contoh (tetap di halaman itu; pesan aturan tampil di bawah isian di satu dari dua putaran probe, ringkasan `Isian berikut tidak valid: password` di putaran lain) lalu menerima frasa empat kata (`POST /api/pengguna/first-register` 200, admin dibuat); seed dengan frasa kuat mencetak `Seed selesai. Admin: dibuat. Pilar: 4. Halaman draf: 6. Tools baru: 6. Parameter baru: 22.` tanpa baris push `dev`.
 
 - [ ] **Langkah 6: Commit**
 
@@ -1594,7 +1600,7 @@ Header dipasang lewat config, bukan dengan membaca permintaan di halaman, jadi h
 - [ ] **Langkah 2: Pastikan tes gagal**
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/header-keamanan.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/header-keamanan.test.ts
   ```
 
   Hasil yang diharapkan: FAIL dengan `Error: Cannot find package '@/lib/header-keamanan'` (diimpor dari `tests/unit/header-keamanan.test.ts`), `Tests  no tests`.
@@ -1663,12 +1669,12 @@ Header dipasang lewat config, bukan dengan membaca permintaan di halaman, jadi h
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task6.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task6.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task6.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task6.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: bersih; unit 550 tes (80 file); integrasi 164 tes (49 file); E2E 153 tes (3 tes `header.spec.ts` baru; tes banner, iklan, dan admin yang lama tetap lulus); build berhasil.
@@ -1676,7 +1682,7 @@ Header dipasang lewat config, bukan dengan membaca permintaan di halaman, jadi h
 - [ ] **Langkah 5: Periksa header dan cache di server produksi lokal**
 
   ```bash
-  PORT=3200 pnpm start > /tmp/server-task6.log 2>&1 &
+  PORT=3200 npm run start > /tmp/server-task6.log 2>&1 &
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   curl -s -o /dev/null http://localhost:3200/
   curl -sI http://localhost:3200/ | grep -iE '^(x-content-type-options|referrer-policy|x-frame-options|permissions-policy|content-security-policy|cache-control|x-nextjs-cache|x-powered-by):'
@@ -1755,37 +1761,37 @@ Workflow tanpa secret: `PAYLOAD_SECRET` di workflow hanya untuk build CI dan sen
         - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           with:
             persist-credentials: false
-        - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        - uses: npm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
           with:
             version: 10.28.0
         - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
           with:
             node-version: 22.23.4
-            cache: pnpm
+            cache: npm
         - name: Pasang dependensi
-          run: pnpm install --frozen-lockfile
+          run: npm ci
         - name: Type check
-          run: pnpm typecheck
+          run: npm run typecheck
         - name: Lint
-          run: pnpm lint
+          run: npm run lint
         - name: Tes unit
-          run: pnpm test:unit
+          run: npm run test:unit
         - name: Migrasi sesuai skema
           run: |
-            pnpm payload migrate:create periksa --skip-empty
+            npm run payload -- migrate:create periksa --skip-empty
             if [ -n "$(git status --porcelain -- src/migrations)" ]; then
               git status --porcelain -- src/migrations
-              echo "::error::Skema Payload berubah tanpa migrasi. Jalankan pnpm payload migrate:create <nama>, periksa SQL-nya, lalu commit file di src/migrations."
+              echo "::error::Skema Payload berubah tanpa migrasi. Jalankan npm run payload -- migrate:create <nama>, periksa SQL-nya, lalu commit file di src/migrations."
               exit 1
             fi
         - name: Tes integrasi
-          run: pnpm test:int
+          run: npm run test:int
         - name: Migrasi di database kosong, lalu build terhadap database itu
           env:
             DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/pointlat_ci
           run: |
-            pnpm migrate
-            pnpm build
+            npm run migrate
+            npm run build
 
     e2e:
       name: E2E (build produksi, Playwright, axe)
@@ -1810,19 +1816,19 @@ Workflow tanpa secret: `PAYLOAD_SECRET` di workflow hanya untuk build CI dan sen
         - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           with:
             persist-credentials: false
-        - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        - uses: npm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
           with:
             version: 10.28.0
         - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
           with:
             node-version: 22.23.4
-            cache: pnpm
+            cache: npm
         - name: Pasang dependensi
-          run: pnpm install --frozen-lockfile
+          run: npm ci
         - name: Pasang Chromium Playwright
-          run: pnpm exec playwright install --with-deps chromium
+          run: npx playwright install --with-deps chromium
         - name: Tes E2E
-          run: pnpm test:e2e
+          run: npm run test:e2e
         - name: Simpan jejak tes yang gagal
           if: failure()
           uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -1839,26 +1845,26 @@ Workflow tanpa secret: `PAYLOAD_SECRET` di workflow hanya untuk build CI dan sen
 
   ```bash
   rm -rf .next
-  pnpm install --frozen-lockfile
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm payload migrate:create periksa --skip-empty
+  npm ci
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run payload -- migrate:create periksa --skip-empty
   git status --porcelain -- src/migrations
-  pnpm test:int > /tmp/int-task7.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task7.log
+  npm run test:int > /tmp/int-task7.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task7.log
   psql -q postgres://postgres:postgres@127.0.0.1:5432/postgres -c "DROP DATABASE IF EXISTS pointlat_ci WITH (FORCE)"
-  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_ci PAYLOAD_SECRET=ci-hanya-untuk-build-0123456789abcdef pnpm migrate
-  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_ci PAYLOAD_SECRET=ci-hanya-untuk-build-0123456789abcdef pnpm build
+  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_ci PAYLOAD_SECRET=ci-hanya-untuk-build-0123456789abcdef npm run migrate
+  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_ci PAYLOAD_SECRET=ci-hanya-untuk-build-0123456789abcdef npm run build
   psql -q postgres://postgres:postgres@127.0.0.1:5432/postgres -c "DROP DATABASE pointlat_ci WITH (FORCE)"
   ```
 
-  Hasil yang diharapkan: semua berhasil; `git status` tanpa keluaran; unit 550 tes (80 file); integrasi 164 tes (49 file); `pnpm migrate` mencetak `Database "pointlat_ci" does not exist, creating...` lalu `Migrated:  20261106_152942_awal`; build berhasil.
+  Hasil yang diharapkan: semua berhasil; `git status` tanpa keluaran; unit 550 tes (80 file); integrasi 164 tes (49 file); `npm run migrate` mencetak `Database "pointlat_ci" does not exist, creating...` lalu `Migrated:  20261106_152942_awal`; build berhasil.
 
 - [ ] **Langkah 3: Pastikan cek migrasi menangkap skema yang berubah tanpa migrasi**
 
   ```bash
   sed -i "s|^    { name: 'namaSitus', type: 'text', required: true, defaultValue: 'point.' },$|&\n    { name: 'ujiDrift', type: 'text' },|" src/globals/PengaturanSEO.ts
-  pnpm payload migrate:create periksa --skip-empty
+  npm run payload -- migrate:create periksa --skip-empty
   git status --porcelain -- src/migrations
   git checkout src/globals/PengaturanSEO.ts src/migrations/index.ts
   rm src/migrations/*_periksa.ts src/migrations/*_periksa.json
@@ -1870,8 +1876,8 @@ Workflow tanpa secret: `PAYLOAD_SECRET` di workflow hanya untuk build CI dan sen
 - [ ] **Langkah 4: Jalankan E2E**
 
   ```bash
-  pnpm test:e2e
-  pnpm build
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: E2E 153 tes (langkah job `e2e`; `playwright install` di CI tidak dijalankan lokal karena Chromium sudah terpasang); build berhasil.
@@ -1891,7 +1897,7 @@ Workflow tanpa secret: `PAYLOAD_SECRET` di workflow hanya untuk build CI dan sen
 - Create: `scripts/cadangkan-database.sh`, `scripts/pulihkan-database.sh` (keduanya executable), `.github/workflows/backup.yml`, `docs/operasional/pemulihan-database.md`
 
 **Interfaces:**
-- Consumes: migrasi (Task 3) dan `pnpm migrate` untuk database hasil pulih; `pg_dump`, `pg_restore`, `psql`, `gpg`, `sha256sum`.
+- Consumes: migrasi (Task 3) dan `npm run migrate` untuk database hasil pulih; `pg_dump`, `pg_restore`, `psql`, `gpg`, `sha256sum`.
 - Produces:
   - `scripts/cadangkan-database.sh <folder>` dengan env `BACKUP_DATABASE_URL`, `BACKUP_KUNCI_PUBLIK` (kunci publik GPG ASCII armor), dan `PG_BIN` opsional: menolak `pg_dump` yang lebih lama dari server, `pg_dump --schema=public --no-owner --no-privileges --format=custom`, menolak cadangan tanpa data tabel, mengenkripsi ke kunci publik di `GNUPGHOME` sementara, menulis `pointlat-<waktu UTC>.dump.gpg` dan `.sha256`, lalu mencetak `Cadangan <berkas>: data <n> tabel, <ukuran> byte terenkripsi.`
   - `scripts/pulihkan-database.sh <berkas.dump.gpg> <url-database-kosong>`: memeriksa checksum, mendekripsi dengan kunci rahasia di keyring, menolak database tujuan yang sudah berisi tabel di `public`, memulihkan dalam satu transaksi, lalu mencetak `Dipulihkan: <n> tabel. Migrasi tercatat: <nama migrasi>.`
@@ -2075,7 +2081,7 @@ Kunci rahasia GPG tidak pernah ada di GitHub, jadi artifact yang bocor tidak ter
   ## Prasyarat
 
   - [ ] Akses Owner di organisasi Supabase dan admin di repo GitHub `vanhallen28/point.lat`.
-  - [ ] Komputer dengan `gpg` (GnuPG 2.2 atau lebih baru), `psql` dan `pg_restore` versi sama dengan Postgres Supabase (lihat Settings, Infrastructure), Node dan pnpm, serta salinan repo.
+  - [ ] Komputer dengan `gpg` (GnuPG 2.2 atau lebih baru), `psql` dan `pg_restore` versi sama dengan Postgres Supabase (lihat Settings, Infrastructure), Node dan npm, serta salinan repo.
   - [ ] Kunci rahasia GPG cadangan di pengelola password pemilik (dibuat di bagian A).
 
   ## A. Penyiapan sekali
@@ -2176,15 +2182,15 @@ Kunci rahasia GPG tidak pernah ada di GitHub, jadi artifact yang bocor tidak ter
   ### B4. Jalankan situs dari database hasil pulih
 
   ```bash
-  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih pnpm migrate
-  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih pnpm build
+  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih npm run migrate
+  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih npm run build
   DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih INDEXER_ADAPTER=palsu AI_ADAPTER=palsu \
-    CLOUDINARY_CLOUD_NAME=<cloud-name-produksi> CLOUDINARY_API_KEY=uji-pulih CLOUDINARY_API_SECRET=uji-pulih PORT=3200 pnpm start
+    CLOUDINARY_CLOUD_NAME=<cloud-name-produksi> CLOUDINARY_API_KEY=uji-pulih CLOUDINARY_API_SECRET=uji-pulih PORT=3200 npm run start
   ```
 
   Cloud name asli membuat gambar tampil dari CDN Cloudinary; API key dan secret tiruan cukup karena uji pulih tidak mengunggah apa pun. Adapter palsu memastikan uji ini tidak mengabari Google atau memanggil Claude.
 
-  **Hasil yang diharapkan:** `pnpm migrate` hanya mencetak `Done.` (semua migrasi sudah tercatat, kecuali migrasi yang lebih baru dari cadangan); build berhasil; `http://localhost:3200/`, satu artikel, satu rubrik, satu tools, `/sitemap.xml`, dan `/admin/login` menjawab 200; login admin dengan akun produksi berhasil; jumlah artikel di admin sama dengan produksi saat cadangan dibuat.
+  **Hasil yang diharapkan:** `npm run migrate` hanya mencetak `Done.` (semua migrasi sudah tercatat, kecuali migrasi yang lebih baru dari cadangan); build berhasil; `http://localhost:3200/`, satu artikel, satu rubrik, satu tools, `/sitemap.xml`, dan `/admin/login` menjawab 200; login admin dengan akun produksi berhasil; jumlah artikel di admin sama dengan produksi saat cadangan dibuat.
 
   ### B5. Bersihkan
 
@@ -2201,7 +2207,7 @@ Kunci rahasia GPG tidak pernah ada di GitHub, jadi artifact yang bocor tidak ter
 
   Supabase, Database, Backups, pilih backup harian sebelum kejadian, **Restore**. Proyek tidak bisa diakses selama pemulihan (situs publik tetap tampil dari cache ISR, admin dan halaman yang belum tercache galat).
 
-  Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**. Build menjalankan `pnpm build:vercel`, jadi migrasi yang lebih baru dari backup diterapkan ulang.
+  Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**. Build menjalankan `npm run build:vercel`, jadi migrasi yang lebih baru dari backup diterapkan ulang.
 
   **Periksa:** beranda, satu artikel, admin login, dan Dashboard SEO (cron berjalan dalam 10 menit).
 
@@ -2253,7 +2259,7 @@ Kunci rahasia GPG tidak pernah ada di GitHub, jadi artifact yang bocor tidak ter
 
   | Tanggal | Oleh | Catatan |
   |---|---|---|
-  | 6 November 2026 | Probe Rencana 8C (Postgres 16 lokal, kunci GPG uji) | Sumber: database hasil migrasi berisi data contoh E2E (108 tabel, 1.244 baris, 60 artikel). Langkah workflow dijalankan lokal: cadangan 101.783 byte, terenkripsi ke subkunci pemilik, tanpa teks tabel terbaca. Kunci lain ditolak (`No secret key`); `pg_dump` yang lebih lama dari server ditolak. Pulih ke database kosong: 108 tabel, jumlah baris setiap tabel dan skema sama dengan sumber; `pnpm migrate` tanpa langkah; build dan server dari database hasil pulih menjawab 200 untuk enam path dan lulus 23 tes E2E (header, artikel, rubrik, tools). |
+  | 6 November 2026 | Probe Rencana 8C (Postgres 16 lokal, kunci GPG uji) | Sumber: database hasil migrasi berisi data contoh E2E (108 tabel, 1.244 baris, 60 artikel). Langkah workflow dijalankan lokal: cadangan 101.783 byte, terenkripsi ke subkunci pemilik, tanpa teks tabel terbaca. Kunci lain ditolak (`No secret key`); `pg_dump` yang lebih lama dari server ditolak. Pulih ke database kosong: 108 tabel, jumlah baris setiap tabel dan skema sama dengan sumber; `npm run migrate` tanpa langkah; build dan server dari database hasil pulih menjawab 200 untuk enam path dan lulus 23 tes E2E (header, artikel, rubrik, tools). |
   ````
 
 - [ ] **Langkah 4: Latihan cadangkan dan pulihkan lokal**
@@ -2268,7 +2274,7 @@ Kunci rahasia GPG tidak pernah ada di GitHub, jadi artifact yang bocor tidak ter
   gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "Cadangan uji <cadangan@contoh.test>" ed25519 sign never
   gpg --batch --pinentry-mode loopback --passphrase '' --quick-add-key "$(gpg --list-keys --with-colons cadangan@contoh.test | awk -F: '/^fpr/{print $10; exit}')" cv25519 encr never
   psql -q $P/postgres -c "DROP DATABASE IF EXISTS pointlat_cadangan_uji WITH (FORCE)" -c "CREATE DATABASE pointlat_cadangan_uji" -c "DROP DATABASE IF EXISTS pointlat_pulih_uji WITH (FORCE)" -c "CREATE DATABASE pointlat_pulih_uji"
-  DATABASE_URL=$P/pointlat_cadangan_uji pnpm seed
+  DATABASE_URL=$P/pointlat_cadangan_uji npm run seed
   BACKUP_DATABASE_URL=$P/pointlat_cadangan_uji BACKUP_KUNCI_PUBLIK="$(gpg --armor --export cadangan@contoh.test)" scripts/cadangkan-database.sh $D/cadangan
   scripts/pulihkan-database.sh $D/cadangan/pointlat-*.dump.gpg $P/pointlat_pulih_uji
   scripts/pulihkan-database.sh $D/cadangan/pointlat-*.dump.gpg $P/pointlat_pulih_uji
@@ -2294,18 +2300,18 @@ Kunci rahasia GPG tidak pernah ada di GitHub, jadi artifact yang bocor tidak ter
 
   Ukuran di probe sekitar 78.500 byte. `Migrasi tercatat: -` karena database sumber latihan ini dibuat push (seed lokal), bukan migrasi; cadangan produksi mencetak nama migrasinya. `Admin: dilewati` bila `.env` tanpa `SEED_ADMIN_EMAIL`.
 
-  Pemulihan kedua ditolak karena database tujuan sudah berisi (`exit 1`). Latihan penuh di probe (Riwayat runbook): sumber hasil migrasi berisi data E2E (108 tabel, 1.244 baris) lewat pooler, langkah workflow dijalankan lokal, cadangan terenkripsi ke subkunci pemilik tanpa teks tabel terbaca, kunci lain ditolak (`No secret key`), `pg_dump` yang lebih lama dari server ditolak, hasil pulih sama baris per baris dan skemanya sama, `pnpm migrate` tanpa langkah, lalu build, server, dan 23 tes E2E lulus terhadap database hasil pulih.
+  Pemulihan kedua ditolak karena database tujuan sudah berisi (`exit 1`). Latihan penuh di probe (Riwayat runbook): sumber hasil migrasi berisi data E2E (108 tabel, 1.244 baris) lewat pooler, langkah workflow dijalankan lokal, cadangan terenkripsi ke subkunci pemilik tanpa teks tabel terbaca, kunci lain ditolak (`No secret key`), `pg_dump` yang lebih lama dari server ditolak, hasil pulih sama baris per baris dan skemanya sama, `npm run migrate` tanpa langkah, lalu build, server, dan 23 tes E2E lulus terhadap database hasil pulih.
 
 - [ ] **Langkah 5: Jalankan semua tes**
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task8.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task8.log
-  pnpm test:e2e
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task8.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task8.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: bersih; unit 550 tes (80 file); integrasi 164 tes (49 file); E2E 153 tes; build berhasil.
@@ -2334,7 +2340,7 @@ Payload tidak memakai Row Level Security, jadi hak bawaan Supabase membuat setia
 - [ ] **Langkah 1: Buat migrasi kosong dan tetapkan nama serta id snapshot**
 
   ```bash
-  pnpm payload migrate:create kunci_data_api --force-accept-warning
+  npm run payload -- migrate:create kunci_data_api --force-accept-warning
   mv src/migrations/*_kunci_data_api.ts src/migrations/20261106_163351_kunci_data_api.ts
   mv src/migrations/*_kunci_data_api.json src/migrations/20261106_163351_kunci_data_api.json
   sed -i -E 's/^  "id": "[0-9a-f-]{36}",$/  "id": "05a54461-729b-49e3-bb86-bb8a7c205a71",/' src/migrations/20261106_163351_kunci_data_api.json
@@ -2419,7 +2425,7 @@ Payload tidak memakai Row Level Security, jadi hak bawaan Supabase membuat setia
   psql -q $P/postgres -c "DROP DATABASE IF EXISTS pointlat_data_api WITH (FORCE)" -c "CREATE DATABASE pointlat_data_api" -c "CREATE ROLE anon NOLOGIN" -c "CREATE ROLE authenticated NOLOGIN"
   psql -q $P/pointlat_data_api -c "GRANT USAGE ON SCHEMA public TO anon, authenticated" -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated" -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated"
   psql -tA $P/pointlat_data_api -c "CREATE TABLE sebelum_migrasi (id int)" -c "select has_table_privilege('anon', 'public.sebelum_migrasi', 'select')" -c "DROP TABLE sebelum_migrasi"
-  DATABASE_URL=$P/pointlat_data_api pnpm migrate
+  DATABASE_URL=$P/pointlat_data_api npm run migrate
   psql -tA $P/pointlat_data_api -c "with t as materialized (select tablename from pg_tables where schemaname = 'public') select count(*) || ' tabel, ' || count(*) filter (where has_table_privilege('anon', 'public.' || quote_ident(tablename), 'select') or has_table_privilege('authenticated', 'public.' || quote_ident(tablename), 'select')) || ' terbuka' from t"
   psql -tA $P/pointlat_data_api -c "CREATE TABLE setelah_migrasi (id int)" -c "select has_table_privilege('anon', 'public.setelah_migrasi', 'select')"
   psql -q $P/postgres -c "DROP DATABASE pointlat_data_api WITH (FORCE)" -c "DROP ROLE anon" -c "DROP ROLE authenticated"
@@ -2439,7 +2445,7 @@ Payload tidak memakai Row Level Security, jadi hak bawaan Supabase membuat setia
   f
   ```
 
-  (Keluaran `pnpm migrate` juga memuat baris `Reading migration files` dan `Migrating`.)
+  (Keluaran `npm run migrate` juga memuat baris `Reading migration files` dan `Migrating`.)
 
   Artinya: sebelum migrasi, tabel baru langsung terbaca `anon`; setelah kedua migrasi, tidak ada tabel Payload yang terbuka dan tabel dari migrasi berikutnya juga tidak. Di probe, `SET ROLE anon` lalu membaca `pengguna` dijawab `permission denied for table pengguna`, dan migrasi yang sama di database tanpa role `anon` tidak mengubah apa pun.
 
@@ -2447,14 +2453,14 @@ Payload tidak memakai Row Level Security, jadi hak bawaan Supabase membuat setia
 
   ```bash
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm payload migrate:create periksa --skip-empty
+  npm run typecheck
+  npm run lint
+  npm run payload -- migrate:create periksa --skip-empty
   git status --porcelain src/migrations
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task9.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task9.log
-  pnpm test:e2e
-  pnpm build
+  npm run test:unit
+  npm run test:int > /tmp/int-task9.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task9.log
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: bersih; tidak ada migrasi baru; unit 550 tes (80 file); integrasi 164 tes (49 file); E2E 153 tes; build berhasil.
@@ -2474,21 +2480,21 @@ Payload tidak memakai Row Level Security, jadi hak bawaan Supabase membuat setia
 
 **Files:**
 - Create: `lighthouserc.json`
-- Modify: `package.json` (devDependency `@lhci/cli` 0.15.1, skrip `lighthouse`), `pnpm-lock.yaml`, `.github/workflows/ci.yml` (langkah Lighthouse di job `e2e`), `.gitignore`
+- Modify: `package.json` (devDependency `@lhci/cli` 0.15.1, skrip `lighthouse`), `package-lock.json`, `.github/workflows/ci.yml` (langkah Lighthouse di job `e2e`), `.gitignore`
 
 **Interfaces:**
-- Consumes: build dan database E2E dari `pnpm test:e2e` (`pointlat_test_e2e`, data `tests/e2e/siapkan.ts`, port 3100), Chromium Playwright (`CHROME_PATH`).
-- Produces: `pnpm lighthouse` (`lhci autorun --config=lighthouserc.json`) dan langkah "Lighthouse (beranda, artikel, rubrik, tools)" di CI; laporan di `lighthouse-laporan/` (artifact `laporan-lighthouse` 14 hari).
+- Consumes: build dan database E2E dari `npm run test:e2e` (`pointlat_test_e2e`, data `tests/e2e/siapkan.ts`, port 3100), Chromium Playwright (`CHROME_PATH`).
+- Produces: `npm run lighthouse` (`lhci autorun --config=lighthouserc.json`) dan langkah "Lighthouse (beranda, artikel, rubrik, tools)" di CI; laporan di `lighthouse-laporan/` (artifact `laporan-lighthouse` 14 hari).
 
 Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan database yang baru diisi E2E, tanpa jaringan: gambar Cloudinary dan domain iklan Google diblokir (`blockedUrlPatterns`), jadi angka ini mengukur kode situs sendiri; iklan nyata diukur pemilik di produksi (runbook J3). Mode HP bawaan Lighthouse (jaringan 4G lambat dan CPU 4x lebih lambat disimulasikan), median 3 kali per halaman. LCP hanya peringatan karena LCP lab kunjungan pertama adalah teks banner persetujuan yang dihitung Lantern setelah font dan JS (Keputusan teknis; Risiko).
 
 - [ ] **Langkah 1: Pasang `@lhci/cli`**
 
   ```bash
-  pnpm add -D -E @lhci/cli@0.15.1
+  npm install -D -E @lhci/cli@0.15.1
   ```
 
-  Hasil yang diharapkan: `devDependencies: + @lhci/cli 0.15.1` dan `Packages: +239`; `pnpm-lock.yaml` bertambah 2.025 baris (`git diff --stat`). pnpm boleh menyebut 0.16.0 tersedia; jangan dipakai.
+  Hasil yang diharapkan: `devDependencies: + @lhci/cli 0.15.1` dan `Packages: +239`; `package-lock.json` bertambah 2.025 baris (`git diff --stat`). npm boleh menyebut 0.16.0 tersedia; jangan dipakai.
 
 - [ ] **Langkah 2: Skrip dan konfigurasi**
 
@@ -2501,8 +2507,8 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
        "indexer": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/jalankan-indexer.ts",
        "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
        "periksa:rilis": "cross-env NODE_OPTIONS=--no-deprecation payload run src/scripts/periksa-rilis.ts",
-  -    "build:vercel": "pnpm periksa:rilis && pnpm migrate && pnpm periksa:rilis && pnpm build"
-  +    "build:vercel": "pnpm periksa:rilis && pnpm migrate && pnpm periksa:rilis && pnpm build",
+  -    "build:vercel": "npm run periksa:rilis && npm run migrate && npm run periksa:rilis && npm run build"
+  +    "build:vercel": "npm run periksa:rilis && npm run migrate && npm run periksa:rilis && npm run build",
   +    "lighthouse": "lhci autorun --config=lighthouserc.json"
      },
      "dependencies": {
@@ -2515,7 +2521,7 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
   {
     "ci": {
       "collect": {
-        "startServerCommand": "pnpm start",
+        "startServerCommand": "npm run start",
         "startServerReadyPattern": "Ready in",
         "url": [
           "http://localhost:3100/",
@@ -2601,7 +2607,7 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
   --- a/.github/workflows/ci.yml
   +++ b/.github/workflows/ci.yml
   @@ -76,7 +76,7 @@ jobs:
-             pnpm build
+             npm run build
    
      e2e:
   -    name: E2E (build produksi, Playwright, axe)
@@ -2610,9 +2616,9 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
        runs-on: ubuntu-24.04
        timeout-minutes: 45
   @@ -111,6 +111,29 @@ jobs:
-           run: pnpm exec playwright install --with-deps chromium
+           run: npx playwright install --with-deps chromium
          - name: Tes E2E
-           run: pnpm test:e2e
+           run: npm run test:e2e
   +      # Build dan database E2E yang sama, tanpa jaringan: gambar Cloudinary dan domain iklan diblokir di
   +      # lighthouserc.json. Mode HP Lighthouse (4G lambat disimulasikan, CPU 4x lebih lambat).
   +      - name: Lighthouse (beranda, artikel, rubrik, tools)
@@ -2627,7 +2633,7 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
   +          AI_ADAPTER: palsu
   +        run: |
   +          export CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")"
-  +          pnpm lighthouse
+  +          npm run lighthouse
   +      - name: Simpan laporan Lighthouse
   +        if: always()
   +        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -2645,8 +2651,8 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
 
   ```bash
   rm -rf .next
-  pnpm test:e2e
-  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_test_e2e PORT=3100 NEXT_PUBLIC_SITE_URL=http://localhost:3100 CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")" pnpm lighthouse
+  npm run test:e2e
+  DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_test_e2e PORT=3100 NEXT_PUBLIC_SITE_URL=http://localhost:3100 CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")" npm run lighthouse
   ```
 
   Hasil yang diharapkan: E2E 153 tes; Lighthouse menjalankan 12 kali (4 halaman, 3 kali), lalu `Checking assertions against 4 URL(s), 12 total run(s)` tanpa baris `failure`. Peringatan `largest-contentful-paint warning for maxNumericValue assertion` boleh muncul untuk artikel atau tools (probe: LCP median artikel 2,6 dan 3,0 detik di dua putaran, tools 1,9 dan 2,6 detik). Keluaran diakhiri `All results processed!` dan `Done running autorun.`, dengan kode keluar 0. Laporan HTML ada di `lighthouse-laporan/` (diabaikan git).
@@ -2654,11 +2660,11 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
 - [ ] **Langkah 5: Jalankan semua tes**
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task10.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task10.log
-  pnpm build
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task10.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task10.log
+  npm run build
   git status --porcelain
   ```
 
@@ -2667,7 +2673,7 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
 - [ ] **Langkah 6: Commit**
 
   ```bash
-  git add .github/workflows/ci.yml .gitignore lighthouserc.json package.json pnpm-lock.yaml
+  git add .github/workflows/ci.yml .gitignore lighthouserc.json package.json package-lock.json
   git commit -m "ci: Lighthouse CI di job E2E (beranda, artikel, rubrik, tools; mode HP; build dan data E2E tanpa jaringan): skor Performance minimal 90, CLS paling banyak 0,1, dan TBT paling lama 200 ms menggagalkan CI, LCP di atas 2,5 detik diperingatkan"
   ```
 
@@ -2702,12 +2708,12 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
    - Vitest (unit + integrasi), Playwright + axe (e2e)
    - Frontend: CSS Module + token CSS (`src/styles/tokens.css`), font Archivo variable lewat `next/font/local`
   @@ -23,6 +24,10 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Data awal: `pnpm seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
-   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `pnpm media:siapkan`
-   - Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit, antrean Mesin Indexing, dan tugas Pantau SEO yang jatuh tempo): `pnpm indexer`
-  +- Migrasi Payload ke database di `DATABASE_URL`: `pnpm migrate`. Migrasi baru setelah skema berubah: `pnpm payload migrate:create <nama>` (lihat Konvensi, database dan migrasi)
-  +- Build Vercel (`buildCommand` di `vercel.json`): `pnpm build:vercel`, yaitu `pnpm periksa:rilis` (env dan penanda database), `pnpm migrate`, `pnpm periksa:rilis` lagi (database baru ditandai), lalu `pnpm build`
-  +- Lighthouse CI (setelah build E2E, port 3100 kosong, `CHROME_PATH` ke Chromium Playwright, env server seperti langkah Lighthouse di `ci.yml`): `pnpm lighthouse`
+   - Data awal: `npm run seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
+   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `npm run media:siapkan`
+   - Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit, antrean Mesin Indexing, dan tugas Pantau SEO yang jatuh tempo): `npm run indexer`
+  +- Migrasi Payload ke database di `DATABASE_URL`: `npm run migrate`. Migrasi baru setelah skema berubah: `npm run payload -- migrate:create <nama>` (lihat Konvensi, database dan migrasi)
+  +- Build Vercel (`buildCommand` di `vercel.json`): `npm run build:vercel`, yaitu `npm run periksa:rilis` (env dan penanda database), `npm run migrate`, `npm run periksa:rilis` lagi (database baru ditandai), lalu `npm run build`
+  +- Lighthouse CI (setelah build E2E, port 3100 kosong, `CHROME_PATH` ke Chromium Playwright, env server seperti langkah Lighthouse di `ci.yml`): `npm run lighthouse`
   +- Cadangan dan pemulihan database: `scripts/cadangkan-database.sh` dan `scripts/pulihkan-database.sh` (runbook `docs/operasional/pemulihan-database.md`)
    
    ## Konvensi
@@ -2716,9 +2722,9 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
    - Tautan internal lewat komponen `Tautan` (`next/link` untuk path situs). Warna pilar lewat atribut `data-warna` (nilai field `warna` pilar) dan selalu bersama nama pilarnya. Ikon lewat `Ikon` (path Lucide yang disalin, tanpa paket ikon).
    - Copy UI: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru. Angka lewat `Intl.NumberFormat('id-ID')` (`teksAngka` modul hitung); rupiah dari `Intl` memakai spasi tak putus setelah "Rp", jadi di kode dan tes tulis `\u00a0`, jangan karakter aslinya. Begitu juga em dash dan en dash yang dibutuhkan kode dan tes (pembersih dan cek pola asisten AI): tulis `\u2014` dan `\u2013`.
    - Tes unit di `tests/unit/*.test.ts`, tes integrasi di `tests/int/*.int.spec.ts` dan memakai `getTestPayload()` + `unik()` dari `tests/int/helpers.ts`.
-  -- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO, dan `PAGINASI_E2E`: 50 tulisan lama di subkategori Persiapan ujian pilar Belajar, bertanggal terbit 2025 dan dibuat sebelum tulisan lain, supaya daftar artikel admin halaman pertama, tulisan terbaru, dan rubrik Uang & Karier tidak berubah). Isi 404 Next 16.3.3 kadang tidak dirender (cangkang `<html id="__next_error__">`, sekitar 0,5% kunjungan 404 di E2E penuh; stylesheet yang dibatalkan saat React mengganti dokumen tidak diminta ulang): tes yang membuka path 404 dan gagal dengan cangkang itu atau beacon `/api/log-404/catat` yang tidak terkirim diulang sekali lewat `pnpm test:e2e`, tanpa menaikkan timeout. `pantau-aksi.spec.ts` (Cek sekarang dan Pindai ulang sekarang menjalankan antrean Mesin Indexing) berjalan setelah `indexing.spec.ts`. Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
-  +- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO, dan `PAGINASI_E2E`: 50 tulisan lama di subkategori Persiapan ujian pilar Belajar, bertanggal terbit 2025 dan dibuat sebelum tulisan lain, supaya daftar artikel admin halaman pertama, tulisan terbaru, dan rubrik Uang & Karier tidak berubah). Isi 404 Next 16.3 (16.3.3 sampai 16.3.8) kadang tidak dirender (cangkang `<html id="__next_error__">`, sekitar 0,5% kunjungan 404 di E2E penuh; stylesheet yang dibatalkan saat React mengganti dokumen tidak diminta ulang): tes yang membuka path 404 dan gagal dengan cangkang itu atau beacon `/api/log-404/catat` yang tidak terkirim diulang sekali lewat `pnpm test:e2e`, tanpa menaikkan timeout. `pantau-aksi.spec.ts` (Cek sekarang dan Pindai ulang sekarang menjalankan antrean Mesin Indexing) berjalan setelah `indexing.spec.ts`. Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
-  +- Database dan migrasi (Rencana 8C): `postgresAdapter` memakai `opsiPool()` dan `pushSkema()` dari `src/lib/database.ts`. Push skema Payload hanya ke database lokal (`databaseLokal`: `localhost`, `127.0.0.1`, `::1`, soket Unix), tidak pernah ke Supabase, termasuk saat `pnpm seed` atau skrip `payload run` dijalankan dari komputer pemilik. Database bersama hanya diubah migrasi di `src/migrations` (`20261106_152942_awal` dari skema Rencana 8B, `20261106_163351_kunci_data_api` mencabut hak `anon` dan `authenticated` Supabase atas skema `public`), yang dijalankan build Vercel sebelum `next build`; deploy lama masih melayani saat migrasi berjalan, jadi perubahan skema harus aditif (hapus atau ganti nama kolom lewat dua deploy). Setelah mengubah field: `pnpm generate:types`, uji dengan push seperti biasa, lalu `pnpm payload migrate:create <nama>`, baca SQL-nya (tanpa `DROP` yang tidak direncanakan), dan commit `.ts`, `.json`, dan `index.ts` migrasi bersama perubahan field. CI gagal bila skema berubah tanpa migrasi. Jangan menjalankan `pnpm migrate` di database dev lokal hasil push (Payload bertanya soal data loss); uji migrasi di database terpisah (`DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_migrasi pnpm migrate`). Koneksi Supabase: pooler mode transaksi port 6543 (IPv4; statement `pg` tanpa nama), pool 5 koneksi per instance, koneksi menganggur ditutup 5 detik, batas sambung 10 detik, TLS terverifikasi lewat `DATABASE_CA`.
+  -- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO, dan `PAGINASI_E2E`: 50 tulisan lama di subkategori Persiapan ujian pilar Belajar, bertanggal terbit 2025 dan dibuat sebelum tulisan lain, supaya daftar artikel admin halaman pertama, tulisan terbaru, dan rubrik Uang & Karier tidak berubah). Isi 404 Next 16.3.3 kadang tidak dirender (cangkang `<html id="__next_error__">`, sekitar 0,5% kunjungan 404 di E2E penuh; stylesheet yang dibatalkan saat React mengganti dokumen tidak diminta ulang): tes yang membuka path 404 dan gagal dengan cangkang itu atau beacon `/api/log-404/catat` yang tidak terkirim diulang sekali lewat `npm run test:e2e`, tanpa menaikkan timeout. `pantau-aksi.spec.ts` (Cek sekarang dan Pindai ulang sekarang menjalankan antrean Mesin Indexing) berjalan setelah `indexing.spec.ts`. Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
+  +- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO, dan `PAGINASI_E2E`: 50 tulisan lama di subkategori Persiapan ujian pilar Belajar, bertanggal terbit 2025 dan dibuat sebelum tulisan lain, supaya daftar artikel admin halaman pertama, tulisan terbaru, dan rubrik Uang & Karier tidak berubah). Isi 404 Next 16.3 (16.3.3 sampai 16.3.8) kadang tidak dirender (cangkang `<html id="__next_error__">`, sekitar 0,5% kunjungan 404 di E2E penuh; stylesheet yang dibatalkan saat React mengganti dokumen tidak diminta ulang): tes yang membuka path 404 dan gagal dengan cangkang itu atau beacon `/api/log-404/catat` yang tidak terkirim diulang sekali lewat `npm run test:e2e`, tanpa menaikkan timeout. `pantau-aksi.spec.ts` (Cek sekarang dan Pindai ulang sekarang menjalankan antrean Mesin Indexing) berjalan setelah `indexing.spec.ts`. Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
+  +- Database dan migrasi (Rencana 8C): `postgresAdapter` memakai `opsiPool()` dan `pushSkema()` dari `src/lib/database.ts`. Push skema Payload hanya ke database lokal (`databaseLokal`: `localhost`, `127.0.0.1`, `::1`, soket Unix), tidak pernah ke Supabase, termasuk saat `npm run seed` atau skrip `payload run` dijalankan dari komputer pemilik. Database bersama hanya diubah migrasi di `src/migrations` (`20261106_152942_awal` dari skema Rencana 8B, `20261106_163351_kunci_data_api` mencabut hak `anon` dan `authenticated` Supabase atas skema `public`), yang dijalankan build Vercel sebelum `next build`; deploy lama masih melayani saat migrasi berjalan, jadi perubahan skema harus aditif (hapus atau ganti nama kolom lewat dua deploy). Setelah mengubah field: `npm run generate:types`, uji dengan push seperti biasa, lalu `npm run payload -- migrate:create <nama>`, baca SQL-nya (tanpa `DROP` yang tidak direncanakan), dan commit `.ts`, `.json`, dan `index.ts` migrasi bersama perubahan field. CI gagal bila skema berubah tanpa migrasi. Jangan menjalankan `npm run migrate` di database dev lokal hasil push (Payload bertanya soal data loss); uji migrasi di database terpisah (`DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_migrasi npm run migrate`). Koneksi Supabase: pooler mode transaksi port 6543 (IPv4; statement `pg` tanpa nama), pool 5 koneksi per instance, koneksi menganggur ditutup 5 detik, batas sambung 10 detik, TLS terverifikasi lewat `DATABASE_CA`.
   +- Lingkungan deploy (`src/modules/lingkungan`): `VERCEL_ENV` `production` dan `preview` menyalakan `masalahLingkungan`, yang diperiksa saat config Payload dimuat (`tolakEnvSalah`, jadi `payload migrate`, `next build`, dan fungsi berhenti sebelum menyentuh database). Keduanya wajib `DATABASE_URL` bukan lokal dengan TLS (`DATABASE_CA` atau `sslmode`), `PAYLOAD_SECRET` acak minimal 32 karakter, dan kredensial Cloudinary; Production juga wajib `INDEXER_ADAPTER` dan `AI_ADAPTER` (`asli` atau `palsu`) dan `CRON_SECRET` minimal 16 karakter; Preview wajib kedua adapter `palsu`, tanpa `GOOGLE_SERVICE_ACCOUNT_JSON` dan `ANTHROPIC_API_KEY`. `onInit` (`jagaDatabase`) menandai database (`payload_kv`, kunci `lingkungan-database`) dengan lingkungan pertama yang memakainya dan menghentikan proses bila database milik lingkungan lain (setelah init gagal, `getPayload` berikutnya melewati `onInit`). Di luar Vercel (lokal, tes, E2E, CI) tidak ada aturan tambahan. Password pengguna di lingkungan terbuka (deploy Vercel atau database bukan lokal) wajib lolos `periksaPassword` lewat hook `tolakPasswordLemah` (minimal 15 karakter, bukan contoh `.env.example`, tanpa kata terkait situs atau akun); tes memakai `vi.stubEnv('VERCEL_ENV', 'production')`.
   +- Header keamanan: `HEADER_KEAMANAN` (`src/lib/header-keamanan.ts`) dipasang `headers()` di `next.config.ts` untuk semua path, dengan `poweredByHeader: false`. Jangan menulis header dengan membaca permintaan di halaman (halaman publik tetap ISR). CSP hanya `base-uri`, `object-src`, `frame-ancestors`, dan `form-action`: AdSense hanya mendukung CSP skrip dengan nonce per permintaan, yang mematikan ISR. HSTS dari Vercel. Dijaga `tests/e2e/header.spec.ts`.
   +- CI dan operasional: `.github/workflows/ci.yml` setiap push ke `master` dan pull request (type check, lint, unit, cek migrasi, integrasi dengan service Postgres 16, migrasi di database kosong lalu build, E2E, Lighthouse), tanpa rahasia dan dengan action dikunci ke SHA commit; bila E2E gagal hanya karena isi 404 Next yang dikenal di atas, jalankan ulang sekali lewat Re-run failed jobs. Lighthouse (`lighthouserc.json`, mode HP, median 3 kali di beranda, artikel, rubrik, dan tools): skor Performance di bawah 90, CLS di atas 0,1, atau TBT di atas 200 ms menggagalkan CI; LCP di atas 2,5 detik peringatan. `.github/workflows/backup.yml` setiap Minggu 02.23 WIB menyimpan dump terenkripsi GPG sebagai artifact 90 hari.
@@ -2727,9 +2733,9 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
    - Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, `INDEXER_ADAPTER=asli`, `ANTHROPIC_API_KEY`, atau `AI_ADAPTER=asli`. Kredensial Google dan kunci API Claude hanya di env server Vercel, tidak pernah di CMS, log, atau tes.
    - Tanya dulu sebelum menambah dependensi baru di luar rencana.
   +- Database Supabase (produksi dan pratinjau) hanya diubah lewat migrasi dan build Vercel. Connection string Supabase hanya di env Vercel, secret GitHub Actions, atau shell pemilik untuk satu perintah, tidak pernah di file yang di-commit. Secret GitHub Actions hanya `BACKUP_DATABASE_URL` (role baca saja) dan `BACKUP_KUNCI_PUBLIK`.
-   - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-   - Jalankan `pnpm test` sebelum commit, dan `pnpm test:e2e` bila halaman publik berubah.
-   - `pnpm build` membaca database dev untuk halaman statis (layout, `/`, `/glosarium`, `/tools`, `/video`, 404). Setelah skema berubah, jalankan `pnpm seed` dulu supaya kolom baru terdorong ke database dev.
+   - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+   - Jalankan `npm test` sebelum commit, dan `npm run test:e2e` bila halaman publik berubah.
+   - `npm run build` membaca database dev untuk halaman statis (layout, `/`, `/glosarium`, `/tools`, `/video`, 404). Setelah skema berubah, jalankan `npm run seed` dulu supaya kolom baru terdorong ke database dev.
   ```
 
 - [ ] **Langkah 2: Spesifikasi**
@@ -2813,16 +2819,16 @@ Lighthouse berjalan setelah E2E di job yang sama, memakai build produksi dan dat
    SEED_ADMIN_PASSWORD=ganti-password-ini
   +# Password admin di Supabase (produksi dan pratinjau) wajib minimal 15 karakter dan bukan contoh di atas.
    # Cloudinary (hanya server). Kosongkan di lokal/tes: aplikasi memakai klien palsu dalam memori.
-   # Wajib diisi di produksi (Vercel). Lalu jalankan sekali: pnpm media:siapkan
+   # Wajib diisi di produksi (Vercel). Lalu jalankan sekali: npm run media:siapkan
    CLOUDINARY_CLOUD_NAME=
   ```
 
 - [ ] **Langkah 4: Periksa**
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
+  npm run typecheck
+  npm run lint
+  npm run test:unit
   python3 -c "import sys; t=open('CLAUDE.md',encoding='utf-8').read()+open('docs/superpowers/specs/2026-11-03-point-lat-design.md',encoding='utf-8').read(); sys.exit(any(c in t for c in (chr(0x2014), chr(0x2013), chr(0xa0))))" && echo "tanpa em dash, en dash, dan spasi tak putus"
   git status --porcelain
   ```
@@ -2883,7 +2889,7 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
 
   - [ ] Akses Owner di organisasi Supabase berpaket Pro, tim Vercel berpaket Pro, admin repo GitHub `vanhallen28/point.lat`, dan pengelola DNS domain `point.lat`.
   - [ ] Akun Cloudinary, akun Google (Search Console dan Google Cloud), Claude Console, dan nanti AdSense.
-  - [ ] Komputer dengan `git`, Node 22.23.4 atau lebih baru (atau 24.22.1 ke atas), `pnpm`, `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
+  - [ ] Komputer dengan `git`, Node 22.23.4 atau lebih baru (atau 24.22.1 ke atas), `npm`, `psql`, `openssl`, `curl`, dan `gpg`, serta salinan repo yang biasa dipakai untuk pengembangan lokal (berisi `.env` lokal; bila belum ada, `cp .env.example .env`).
   - [ ] Pengelola password untuk menyimpan setiap rahasia yang dibuat di runbook ini.
 
   ## B. Repo dan CI
@@ -2900,7 +2906,7 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   ```bash
   git switch master
   git pull
-  pnpm install
+  npm install
   ```
 
   **Hasil yang diharapkan:** `git log -1 --oneline` sama dengan commit yang hijau di B1, dan `ls src/migrations` menampilkan `20261106_152942_awal.ts` dan `20261106_163351_kunci_data_api.ts`.
@@ -2953,10 +2959,10 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
 
   ```bash
   export DATABASE_CA="$(cat ~/point-lat-ca-produksi.crt)"
-  pnpm migrate
+  npm run migrate
   read -r SEED_ADMIN_EMAIL && export SEED_ADMIN_EMAIL
   read -rs SEED_ADMIN_PASSWORD && export SEED_ADMIN_PASSWORD
-  pnpm seed
+  npm run seed
   unset DATABASE_URL DATABASE_CA SEED_ADMIN_EMAIL SEED_ADMIN_PASSWORD
   ```
 
@@ -2974,7 +2980,7 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   INFO: Seed selesai. Admin: dibuat. Pilar: 4. Halaman draf: 6. Tools baru: 6. Parameter baru: 22.
   ```
 
-  **Bila gagal:** `Seed dihentikan. password: ...` berarti password ditolak aturan password produksi; buat frasa lain dan ulangi dua perintah `read` dan `pnpm seed`. Bila `pnpm migrate` bertanya soal data loss atau migrasi `dev`, hentikan (Ctrl+C) dan pastikan `DATABASE_URL` menunjuk proyek Supabase yang baru dibuat, bukan database lokal.
+  **Bila gagal:** `Seed dihentikan. password: ...` berarti password ditolak aturan password produksi; buat frasa lain dan ulangi dua perintah `read` dan `npm run seed`. Bila `npm run migrate` bertanya soal data loss atau migrasi `dev`, hentikan (Ctrl+C) dan pastikan `DATABASE_URL` menunjuk proyek Supabase yang baru dibuat, bukan database lokal.
 
   ### C6. Proyek pratinjau di organisasi Free terpisah
 
@@ -2987,9 +2993,9 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
 
   ### D1. Impor repo
 
-  Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`pnpm build:vercel`). Jangan isi env di layar impor. Pilih **Deploy**.
+  Di tim Vercel berpaket Pro: **Add New**, **Project**, **Import Git Repository**. Bila diminta, pasang Vercel GitHub App hanya untuk repo `vanhallen28/point.lat`. Framework terdeteksi Next.js; perintah build diambil dari `vercel.json` (`npm run build:vercel`). Jangan isi env di layar impor. Pilih **Deploy**.
 
-  **Hasil yang diharapkan:** deploy pertama **gagal** di langkah `pnpm periksa:rilis` dengan `Env deploy belum benar:` dan daftar yang diawali `DATABASE_URL belum diisi.` Ini bukti penjaga lingkungan aktif dan `VERCEL_ENV` terbaca; database belum tersentuh.
+  **Hasil yang diharapkan:** deploy pertama **gagal** di langkah `npm run periksa:rilis` dengan `Env deploy belum benar:` dan daftar yang diawali `DATABASE_URL belum diisi.` Ini bukti penjaga lingkungan aktif dan `VERCEL_ENV` terbaca; database belum tersentuh.
   **Bila gagal dengan galat lain:** `missing secret key. A secret key is needed to secure Payload.` berarti `VERCEL_ENV` tidak terbaca (penjaga mati); lanjutkan ke D2 dulu.
 
   ### D2. System Environment Variables
@@ -3084,8 +3090,8 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   read -r CLOUDINARY_CLOUD_NAME && export CLOUDINARY_CLOUD_NAME
   read -rs CLOUDINARY_API_KEY && export CLOUDINARY_API_KEY
   read -rs CLOUDINARY_API_SECRET && export CLOUDINARY_API_SECRET
-  pnpm media:siapkan
-  pnpm media:siapkan
+  npm run media:siapkan
+  npm run media:siapkan
   unset CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET
   ```
 
@@ -3293,7 +3299,7 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   | Build: `unable to verify the first certificate` atau `self-signed certificate in certificate chain` | `DATABASE_CA` bukan sertifikat proyek itu, atau terpotong | Tempel ulang seluruh isi file sertifikat proyek yang sama dengan `DATABASE_URL` |
   | Build: `password authentication failed` | Password di `DATABASE_URL` salah | Salin ulang URI transaction pooler (C4) |
   | Build pratinjau gagal terhubung setelah lama tidak dipakai | Proyek Free dijeda | Dashboard Supabase, organisasi pratinjau, proyek pratinjau, **Resume project** |
-  | `pnpm seed` mencetak `Seed dihentikan. password: ...` | Password admin ditolak | Pakai frasa lain minimal 15 karakter (C5) |
+  | `npm run seed` mencetak `Seed dihentikan. password: ...` | Password admin ditolak | Pakai frasa lain minimal 15 karakter (C5) |
   | Cron di Logs berstatus 401 | `CRON_SECRET` berubah tanpa deploy ulang | Redeploy produksi |
   | Log indexing: Google 403 | Akun layanan belum Owner | G3 |
   | Log indexing: IndexNow 403 | File kunci tidak cocok | Buka `https://point.lat/<kunci>.txt`, cocokkan dengan Pengaturan SEO (G5) |
@@ -3321,7 +3327,7 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
 
   | Tanggal | Oleh | Catatan |
   |---|---|---|
-  | 7 November 2026 | Probe Rencana 8C (Postgres 16 lokal, PgBouncer mode transaksi dengan TLS dan CA tiruan sebagai pengganti Supabase) | C5 diuji: `pnpm migrate` dan `pnpm seed` dari shell dengan `DATABASE_URL` dan `DATABASE_CA` ter-export (nilai lewat `read -rs`) mengenai database pooler, bukan database di `.env` lokal; tanpa baris push `dev`; admin hasil seed bisa login dengan `PAYLOAD_SECRET` lain (seperti runtime Vercel), password salah ditolak. D1 diuji tanpa `.env`: dengan `VERCEL_ENV=production` dan tanpa env lain `pnpm periksa:rilis` menolak dengan enam butir yang diawali `DATABASE_URL belum diisi.`; tanpa `VERCEL_ENV` galatnya `missing secret key`. D4 diuji dengan `pnpm build:vercel` ber-`VERCEL_ENV=production` setelah C5: penanda `produksi`, migrasi hanya `Done.`, build berhasil, server menjawab 200 untuk beranda, rubrik, `/tools`, robots, sitemap, dan login admin dengan menu pilar dari seed, header keamanan, dan robots persis seperti I2. Penjaga, header, migrasi, dan backup juga diuji di task kode Rencana 8C. Langkah di layanan luar belum dijalankan. |
+  | 7 November 2026 | Probe Rencana 8C (Postgres 16 lokal, PgBouncer mode transaksi dengan TLS dan CA tiruan sebagai pengganti Supabase) | C5 diuji: `npm run migrate` dan `npm run seed` dari shell dengan `DATABASE_URL` dan `DATABASE_CA` ter-export (nilai lewat `read -rs`) mengenai database pooler, bukan database di `.env` lokal; tanpa baris push `dev`; admin hasil seed bisa login dengan `PAYLOAD_SECRET` lain (seperti runtime Vercel), password salah ditolak. D1 diuji tanpa `.env`: dengan `VERCEL_ENV=production` dan tanpa env lain `npm run periksa:rilis` menolak dengan enam butir yang diawali `DATABASE_URL belum diisi.`; tanpa `VERCEL_ENV` galatnya `missing secret key`. D4 diuji dengan `npm run build:vercel` ber-`VERCEL_ENV=production` setelah C5: penanda `produksi`, migrasi hanya `Done.`, build berhasil, server menjawab 200 untuk beranda, rubrik, `/tools`, robots, sitemap, dan login admin dengan menu pilar dari seed, header keamanan, dan robots persis seperti I2. Penjaga, header, migrasi, dan backup juga diuji di task kode Rencana 8C. Langkah di layanan luar belum dijalankan. |
   ````
 
 - [ ] **Langkah 2: Runbook pemulihan dan CLAUDE.md**
@@ -3333,7 +3339,7 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   +++ b/docs/operasional/pemulihan-database.md
   @@ -145,6 +145,8 @@ Supabase, Database, Backups, pilih backup harian sebelum kejadian, **Restore**.
    
-   Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**. Build menjalankan `pnpm build:vercel`, jadi migrasi yang lebih baru dari backup diterapkan ulang.
+   Setelah selesai: Vercel, Deployments, deployment produksi terakhir, **Redeploy**. Build menjalankan `npm run build:vercel`, jadi migrasi yang lebih baru dari backup diterapkan ulang.
    
   +Password role buatan sendiri tidak ikut backup Supabase. Setelah pemulihan, di SQL Editor jalankan `alter role cadangan_baca with password '<password-cadangan_baca-dari-pengelola-password>';` dengan password yang sama seperti di A2, supaya secret `BACKUP_DATABASE_URL` tetap berlaku.
   +
@@ -3348,8 +3354,8 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   --- a/CLAUDE.md
   +++ b/CLAUDE.md
   @@ -28,6 +28,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Build Vercel (`buildCommand` di `vercel.json`): `pnpm build:vercel`, yaitu `pnpm periksa:rilis` (env dan penanda database), `pnpm migrate`, `pnpm periksa:rilis` lagi (database baru ditandai), lalu `pnpm build`
-   - Lighthouse CI (setelah build E2E, port 3100 kosong, `CHROME_PATH` ke Chromium Playwright, env server seperti langkah Lighthouse di `ci.yml`): `pnpm lighthouse`
+   - Build Vercel (`buildCommand` di `vercel.json`): `npm run build:vercel`, yaitu `npm run periksa:rilis` (env dan penanda database), `npm run migrate`, `npm run periksa:rilis` lagi (database baru ditandai), lalu `npm run build`
+   - Lighthouse CI (setelah build E2E, port 3100 kosong, `CHROME_PATH` ke Chromium Playwright, env server seperti langkah Lighthouse di `ci.yml`): `npm run lighthouse`
    - Cadangan dan pemulihan database: `scripts/cadangkan-database.sh` dan `scripts/pulihkan-database.sh` (runbook `docs/operasional/pemulihan-database.md`)
   +- Rilis dan uji langsung (langkah pemilik dari nol sampai live, lalu uji layanan luar): runbook `docs/operasional/rilis.md`
    
@@ -3362,11 +3368,11 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
   ```bash
   psql -q postgres://postgres:postgres@127.0.0.1:5432/postgres -c "DROP DATABASE IF EXISTS pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test" -c "DROP DATABASE IF EXISTS pointlat_test_e2e WITH (FORCE)"
   rm -rf .next
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int > /tmp/int-task12.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task12.log
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int > /tmp/int-task12.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task12.log
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 550 tes (80 file); integrasi 164 tes (49 file); E2E 153 tes.
@@ -3374,9 +3380,9 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
 - [ ] **Langkah 4: Putaran kedua tanpa membuat ulang database**
 
   ```bash
-  pnpm test:e2e
-  pnpm test:int > /tmp/int-task12-2.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task12-2.log
-  pnpm build
+  npm run test:e2e
+  npm run test:int > /tmp/int-task12-2.log 2>&1; grep -E "Test Files|Tests " /tmp/int-task12-2.log
+  npm run build
   git status --porcelain
   ```
 
@@ -3393,10 +3399,10 @@ Urutan runbook dirancang supaya setiap langkah bisa diperiksa sebelum lanjut: pr
 
 ## Selesai bila
 
-- Dua belas commit, satu per task, masing-masing hijau saat dibuat: type check dan lint bersih, unit, integrasi, dan E2E sesuai tabel Jumlah tes (akhir: unit 550 tes di 80 file, integrasi 164 tes di 49 file, E2E 153 tes), dan `pnpm build` berhasil.
+- Dua belas commit, satu per task, masing-masing hijau saat dibuat: type check dan lint bersih, unit, integrasi, dan E2E sesuai tabel Jumlah tes (akhir: unit 550 tes di 80 file, integrasi 164 tes di 49 file, E2E 153 tes), dan `npm run build` berhasil.
 - Di commit terakhir, integrasi dan E2E lulus dua kali tanpa membuat ulang database (Task 12 langkah 4).
-- `pnpm payload migrate:create periksa --skip-empty` tidak membuat file; skema database hasil `pnpm migrate` sama dengan skema hasil push, dan `pnpm build` berhasil dari database yang hanya dimigrasi tanpa baris `dev` (Task 3).
-- `pnpm periksa:rilis` mencetak `Lingkungan lokal siap: env dan database cocok.` dan menolak `VERCEL_ENV=production` dengan env lokal (Task 4); password contoh ditolak di lingkungan terbuka (Task 5).
+- `npm run payload -- migrate:create periksa --skip-empty` tidak membuat file; skema database hasil `npm run migrate` sama dengan skema hasil push, dan `npm run build` berhasil dari database yang hanya dimigrasi tanpa baris `dev` (Task 3).
+- `npm run periksa:rilis` mencetak `Lingkungan lokal siap: env dan database cocok.` dan menolak `VERCEL_ENV=production` dengan env lokal (Task 4); password contoh ditolak di lingkungan terbuka (Task 5).
 - Server produksi lokal mengirim lima header keamanan tanpa `X-Powered-By`, dan beranda tetap `x-nextjs-cache: HIT` (Task 6).
 - Langkah job `cek` dan `e2e` CI berjalan lokal tanpa galat, dan cek migrasi gagal bila skema berubah tanpa migrasi (Task 7); latihan cadangkan dan pulihkan lokal sesuai Task 8; migrasi `kunci_data_api` menutup semua tabel dari `anon` dan `authenticated` (Task 9); Lighthouse lulus anggaran bila Task 10 tidak dilepas.
 - Rencana, workflow, runbook, dan commit tanpa rahasia asli, tanpa em dash dan en dash.
@@ -3437,7 +3443,7 @@ Kode rencana ini tidak menghubungi layanan luar. Langkah pemilik, berurutan:
 | Menit GitHub Actions repo privat terbatas sesuai paket GitHub pemilik; satu push ke `master` memakai sekitar 20 sampai 25 menit runner (di probe: job `cek` sekitar 14 menit, job `e2e` sekitar 8 menit ditambah pemasangan Chromium). | CI hanya berjalan untuk push ke `master`, pull request, dan jalan manual (bukan setiap push branch), dan `concurrency` membatalkan run lama di ref yang sama. **Keputusan pemilik (7 November 2026): job `e2e` tetap otomatis** di setiap push ke `master` dan pull request (GitHub Free 2.000 menit per bulan untuk repo privat; push dilakukan sekali per rencana); diubah ke manual bila menit menipis. |
 | Migrasi berjalan saat deploy lama masih melayani. | Aturan CLAUDE.md: perubahan skema aditif; hapus atau ganti nama kolom lewat dua deploy. Migrasi gagal membuat deploy gagal dan deploy lama tetap melayani. |
 | `payload migrate` lewat pooler mode transaksi bisa gagal bila versi Payload berikutnya memakai fitur sesi (advisory lock atau prepared statement bernama). | Probe 3.92.1 lulus. Bila terjadi setelah upgrade Payload, ganti `DATABASE_URL` build sementara ke session pooler (port 5432) dan catat; runtime tetap mode transaksi. |
-| Halaman buat admin pertama tidak selalu menampilkan pesan aturan password di bawah isian (hanya ringkasan "Isian berikut tidak valid"). | Runbook membuat admin lewat `pnpm seed` yang mencetak pesan lengkap; halaman itu tetap menolak password lemah. |
+| Halaman buat admin pertama tidak selalu menampilkan pesan aturan password di bawah isian (hanya ringkasan "Isian berikut tidak valid"). | Runbook membuat admin lewat `npm run seed` yang mencetak pesan lengkap; halaman itu tetap menolak password lemah. |
 | `vercel.json` `crons` disebut fitur lama di dokumentasi Vercel (penggantinya Schedules). | Masih didukung; runbook D5 memeriksa cron terdaftar dan berjalan. Pindah ke Schedules bila Vercel mengumumkan batas waktu. |
 | Cloudinary pratinjau memakai akun yang sama dengan produksi. | Database pratinjau terpisah, jadi hanya aset unggahan pratinjau yang bisa dihapus dari pratinjau; jangan memulihkan data produksi ke database pratinjau (penanda juga menolaknya). Bawaan rencana dipakai (pengawas, 7 November 2026): akun yang sama dulu; product environment terpisah bisa dipakai kapan saja dengan mengganti env `CLOUDINARY_*` Preview di Vercel, tanpa ubah kode. |
 | Supabase tidak menyimpan password role buatan sendiri di backup harian. | Runbook pemulihan C1 meminta pengaturan ulang password `cadangan_baca`. |
@@ -3449,7 +3455,7 @@ Kode rencana ini tidak menghubungi layanan luar. Langkah pemilik, berurutan:
 |---|---|
 | `next build` dengan `.next/cache/fetch-cache` yang tersisa tidak menyentuh database, jadi penanda tidak tertulis di deploy produksi pertama. | `build:vercel` menjalankan `periksa:rilis` sebelum dan sesudah migrasi (Task 4); uji build lain selalu diawali `rm -rf .next`. |
 | Setelah `onInit` melempar galat, `getPayload` berikutnya membuat Payload tanpa `onInit`, sehingga server pratinjau dengan database produksi melayani permintaan kedua. | `jagaDatabase` menghentikan proses (Task 4); tes unit memeriksa `process.exit(1)`. |
-| Push Payload bergantung `NODE_ENV`, jadi `pnpm seed` dari komputer pemilik ke Supabase akan mendorong skema produksi. | Push ditentukan host `DATABASE_URL` (Task 2). |
+| Push Payload bergantung `NODE_ENV`, jadi `npm run seed` dari komputer pemilik ke Supabase akan mendorong skema produksi. | Push ditentukan host `DATABASE_URL` (Task 2). |
 | `migrate:create` menulis `"id"` acak di snapshot JSON dan nama berwaktu. | Nama dan id ditetapkan lewat `mv` dan `sed`, isi diperiksa dengan `sha256sum` (Task 3 dan 9). |
 | Pesan seed yang ditolak hanya menyebut nama isian. | Seed mencetak pesan per isian (Task 5). |
 | `pg_restore` gagal karena skema `public` sudah ada di database tujuan. | Daftar pemulihan membuang entri skema `public` (Task 8). |
@@ -3460,7 +3466,7 @@ Kode rencana ini tidak menghubungi layanan luar. Langkah pemilik, berurutan:
 | Seed lewat `payload run` tidak bisa merevalidasi cache halaman di Vercel. | Runbook menjalankan migrasi dan seed sebelum build pertama (rilis C5). |
 | Penjaga Preview mewajibkan kredensial Cloudinary. | Runbook memakai akun Cloudinary yang sama untuk Preview (Risiko). |
 | Satu putaran E2E Task 1 gagal di `galat.spec.ts` (isi 404 Next yang dikenal) dan lulus saat diulang. | Aturan ulang sekali di Global Constraints mencakup Next 16.3.8. |
-| Keputusan pemilik setelah rencana selesai (7 November 2026): jalankan sekarang dengan Lighthouse CI (`@lhci/cli` 0.15.1 disetujui); runbook tetap memakai terminal pemilik (git, Node, pnpm, psql, openssl, curl, gpg); LCP lab diterima dulu; job `e2e` CI otomatis. | Rencana diikuti apa adanya. Review pengawas sebelum eksekusi: tanpa rahasia asli (contoh `kata-sandi-tiruan`, proyek `abcdefghijklmnopqrst`), tanpa em dash dan en dash; skema hasil migrasi dan push dibandingkan ulang (108 tabel, beda 0 byte); hitungan baris dan skema latihan pulih dibandingkan ulang (sama); `npm view` memastikan `@lhci/cli` 0.15.1 (25 Juni 2025) dan `next` 16.3.8; GitHub Free 2.000 menit Actions per bulan, aturan branch repo privat hanya di GitHub Pro. |
+| Keputusan pemilik setelah rencana selesai (7 November 2026): jalankan sekarang dengan Lighthouse CI (`@lhci/cli` 0.15.1 disetujui); runbook tetap memakai terminal pemilik (git, Node, npm, psql, openssl, curl, gpg); LCP lab diterima dulu; job `e2e` CI otomatis. | Rencana diikuti apa adanya. Review pengawas sebelum eksekusi: tanpa rahasia asli (contoh `kata-sandi-tiruan`, proyek `abcdefghijklmnopqrst`), tanpa em dash dan en dash; skema hasil migrasi dan push dibandingkan ulang (108 tabel, beda 0 byte); hitungan baris dan skema latihan pulih dibandingkan ulang (sama); `npm view` memastikan `@lhci/cli` 0.15.1 (25 Juni 2025) dan `next` 16.3.8; GitHub Free 2.000 menit Actions per bulan, aturan branch repo privat hanya di GitHub Pro. |
 | Eksekusi (subagen per kelompok task 1 sampai 3, 4 dan 5, 6 dan 7, 8 dan 9, 10 sampai 12). | Setiap commit identik dengan commit probe (diff kosong di luar file rencana); jumlah tes sama dengan tabel di setiap task; tidak ada kegagalan sekali jalan. Pemeriksaan akhir Task 12: unit 550, integrasi 164 dua kali di database yang sama, E2E 153 dua kali. Lighthouse Task 10 (median 3 run): beranda 0,98 (LCP 2,33 detik), artikel 0,98 (2,28 detik), rubrik 0,99 (1,98 detik), tools 0,98 (2,42 detik); CLS 0; TBT 50 sampai 54 ms. Catatan teks rencana: lockfile Task 1 64 dan 64 baris (dikoreksi di atas); `git status` antara di Task 3 Langkah 6 dan Task 7 Langkah 3 juga menampilkan file task yang belum di-commit (`?? src/migrations/`, `?? .github/`), kosong setelah commit. |
 
 ## Sumber riset
@@ -3478,7 +3484,7 @@ Diakses 6 November 2026 kecuali disebut lain.
 - Next.js: https://github.com/vercel/next.js/releases/tag/v16.3.8 dan `git log v16.3.3..v16.3.8` (repo https://github.com/vercel/next.js), https://nextjs.org/docs/app/api-reference/config/next-config-js/headers, https://nextjs.org/docs/app/guides/content-security-policy
 - Header keamanan: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html; CSP AdSense: https://support.google.com/adsense/answer/16283098?hl=en
 - Password: https://pages.nist.gov/800-63-4/sp800-63b.html, ringkasan https://www.enzoic.com/blog/nist-sp-800-63b-rev4/
-- GitHub Actions: https://docs.github.com/en/actions/tutorials/store-and-share-data, https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization, https://github.com/actions/upload-artifact/pull/126, https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260906.298 (gnupg2 2.4.4, tanpa `age`, PostgreSQL 16), https://cronuru.com/guides/github-actions-scheduled-workflows (jadwal UTC dan penundaan di awal jam); SHA tag rilis `actions/checkout`, `actions/setup-node`, `pnpm/action-setup`, `actions/upload-artifact` lewat `git ls-remote --tags`
+- GitHub Actions: https://docs.github.com/en/actions/tutorials/store-and-share-data, https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization, https://github.com/actions/upload-artifact/pull/126, https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260906.298 (gnupg2 2.4.4, tanpa `age`, PostgreSQL 16), https://cronuru.com/guides/github-actions-scheduled-workflows (jadwal UTC dan penundaan di awal jam); SHA tag rilis `actions/checkout`, `actions/setup-node`, `npm/action-setup`, `actions/upload-artifact` lewat `git ls-remote --tags`
 - Klien PostgreSQL di Ubuntu: https://www.postgresql.org/download/linux/ubuntu/
 - Registry npm (`npm view`): `@lhci/cli` 0.15.1 dan 0.16.0, `lighthouse` 12.6.1 dan 13.5.0 (versi, tanggal rilis, ukuran, `engines`)
 

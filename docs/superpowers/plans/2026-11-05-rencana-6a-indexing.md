@@ -1,12 +1,18 @@
 # Rencana 6A: Mesin Indexing point.lat (kabar ke mesin pencari, antrean, log, status indeks, dan cron)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Membangun Mesin Indexing (spesifikasi §8): setiap artikel, tools, video, halaman, dan pilar yang terbit, berubah besar, pindah alamat, batal terbit, atau dihapus dicatat di antrean Postgres, lalu dikirim ke Search Console (`sitemaps.submit`), IndexNow, dan (bila saklarnya dinyalakan) Google Indexing API, status indeksnya dicek dengan URL Inspection API pada +6 jam sampai +7 hari, dan setiap langkah tercatat di log; dijalankan Vercel Cron setiap 10 menit lewat `GET /api/jobs/run` dan langsung lewat `after()` saat terbit, dengan adapter palsu di tes dan dev, tanpa jaringan di tes, dan tanpa dependensi baru.
 
 **Architecture:** `src/modules/indexer` adalah modul dalam dengan antarmuka kecil: `kabari(payload, kabar, { req })` (dipanggil hook koleksi) dan `jalankanIndexer(payload, { sekarang, adapter })` (dipanggil cron dan `after()`). Di dalamnya: aturan murni (`aturan.ts`: kabar dari dua versi publik, dedup antrean, jendela kirim, jeda ulang 1/5/30 menit, hari kuota Google, jadwal cek status, arti hasil inspeksi), penyimpanan di tiga koleksi Payload (`antrean.ts`), pelari antrean (`jalan.ts`), dan seam adapter (`adapter.ts`) dengan dua adapter: `asli.ts` (`fetch` + JWT RS256 akun layanan dari `node:crypto`) dan `palsu.ts` (dalam memori). Hook `kabariMesinPencari` membandingkan versi publik sebelum dan sesudah simpan (pola `req.context` yang sama dengan `redirectSaatPathBerubah` dan `revalidasiPublik`). Admin melihat log, antrean, status indeks, kolom status di daftar artikel, serta status pemasangan dan peringatan Indexing API di Pengaturan SEO.
 
-**Tech Stack:** Next.js 16.3.3 (route handler, `rewrites`, `after()` dari `next/server`), Payload 3.92.1 (koleksi, hook, root endpoint, field `ui` dengan komponen server admin, Jobs Queue bawaan untuk `schedulePublish`), PostgreSQL 16/17 (satu `UPDATE ... RETURNING` lewat `sql` dari `@payloadcms/db-postgres` untuk klaim antrean), `node:crypto` (`createSign`, `timingSafeEqual`), `fetch` dan `AbortSignal.timeout`, `Intl.DateTimeFormat` zona `America/Los_Angeles`, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, Vercel Cron, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (route handler, `rewrites`, `after()` dari `next/server`), Payload 3.92.1 (koleksi, hook, root endpoint, field `ui` dengan komponen server admin, Jobs Queue bawaan untuk `schedulePublish`), PostgreSQL 16/17 (satu `UPDATE ... RETURNING` lewat `sql` dari `@payloadcms/db-postgres` untuk klaim antrean), `node:crypto` (`createSign`, `timingSafeEqual`), `fetch` dan `AbortSignal.timeout`, `Intl.DateTimeFormat` zona `America/Los_Angeles`, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, Vercel Cron, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§1 kriteria sukses 2; §2 Indexing dan Vercel Pro; §5 Arsitektur, Penjadwal, dan modul `indexer`; §6 `logIndexing`, `statusIndeks`, `pengaturanSEO`; §7 `/{indexnow-key}.txt`; §8 Mesin Indexing; §15 langkah indexing gagal dan kuota Google habis; §16 tes `indexer` dengan adapter palsu dan E2E "buat artikel, terbitkan, sitemap, news sitemap, log indexing"; §17 Cakupan; §18 Setup dari pemilik; §19 Risiko).
 
@@ -26,22 +32,22 @@
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru** (lihat bagian sebelumnya).
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru** (lihat bagian sebelumnya).
 - Nama domain berbahasa Indonesia seperti rencana sebelumnya (`kabari`, `jalankanIndexer`, `antrean-indexing`, `kunciIndexNow`, `kabariMesinPencari`). Nama teknis framework dan nama field API luar tetap seperti aslinya (`inspectionUrl`, `urlList`, `URL_UPDATED`).
 - Copy admin dan pesan log: bahasa Indonesia, sapaan "kamu" bila menyapa, tanpa em dash dan en dash (juga di komentar), tanpa tanda seru. Pesan galat menyebut penyebab dan cara memperbaikinya ("Kunci IndexNow belum diisi di Pengaturan SEO.").
 - **Tes tidak pernah memanggil jaringan.** Unit memakai `fetch` tiruan; integrasi dan E2E memakai adapter palsu (`adapterPalsu()` dan `pakaiAdapterIndexer()`, atau env `INDEXER_ADAPTER=palsu` di server E2E). Waktu di tes selalu lewat opsi `sekarang` (waktu tiruan), tidak pernah menunggu sungguhan.
 - **Kredensial hanya di env server**: `GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, `INDEXER_ADAPTER`. Jangan pernah menuliskannya di kode, tes, log, atau CMS; panel admin hanya menyebut terpasang atau belum. Kunci IndexNow boleh di CMS (spesifikasi §6) karena memang publik di `/{kunci}.txt`.
 - Path publik lewat `pathFor()` (`src/lib/paths.ts`), URL absolut lewat `urlAbsolut()` dari `src/modules/seo/dokumen`. Jangan merangkai URL manual.
-- **Perubahan skema harus aditif.** Rencana ini menambah tiga koleksi (`antrean-indexing`, `log-indexing`, `status-indeks`) dan grup `indexing` di global `pengaturan-seo`, tanpa field `required` baru di tabel lama. Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
+- **Perubahan skema harus aditif.** Rencana ini menambah tiga koleksi (`antrean-indexing`, `log-indexing`, `status-indeks`) dan grup `indexing` di global `pengaturan-seo`, tanpa field `required` baru di tabel lama. Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
 - Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai database `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, dan (mulai Task 9) `INDEXER_ADAPTER=palsu`.
-- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang setelah task selesai.
 - `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md` bila mendeteksi agen AI. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 10 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja).
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau.
 - **Tulis `req.context` setelah `await`.** Operasi Payload yang menerima `req` (misalnya `findByID({ req })`) bisa mengganti objek `req.context`, jadi `req.context[k] = await ...` kehilangan nilainya. Simpan hasil ke variabel dulu, lalu tulis (ditemukan di probe Task 6).
 - Tes integrasi berbagi database dan berjalan berurutan dengan urutan file yang tidak pasti. Tes Mesin Indexing yang menjalankan pelari antrean mengosongkan antrean, log, dan status indeks lebih dulu, lalu mengembalikan pengaturan SEO yang diubahnya.
-- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 
 ## Keputusan teknis (hasil riset dan probe, dipakai di semua task)
 
@@ -50,7 +56,7 @@
 | Pembagian | 6A Mesin Indexing (10 task), 6B dashboard SEO dan butir tunda frontend. | Batas rencana sehat sekitar 10 sampai 12 task; inti indexing didahulukan karena kriteria sukses 2 dan §16 bergantung padanya. |
 | Antrean | Koleksi Payload `antrean-indexing` di Postgres, bukan Payload Jobs Queue. Satu baris per langkah dan path (`kunci` unik `"{langkah} {path}"`, jadi kabar berulang tergabung), dihapus setelah selesai. Langkah: `sitemap` (satu baris untuk seluruh situs, path `/sitemap.xml`), `indexnow`, `indexing-api`, `cek-status`. | Jobs Queue Payload 3.92 (`node_modules/payload/dist/queues`) hanya punya backoff `fixed` dan `exponential` (jeda 1/5/30 menit tidak bisa), satu job per tugas (IndexNow harus satu POST untuk banyak URL), tanpa kuota harian bersama, dan memakai `new Date()` di dalam (waktu tiruan di tes tidak bisa). Jobs Queue tetap dipakai untuk `schedulePublish` bawaan Payload. |
 | Jadwal terbit | `GET /api/jobs/run` juga menjalankan `payload.jobs.run({ allQueues: true })`. | Probe: tabel `payload_jobs` sudah ada sejak Rencana 1 karena `schedulePublish: true` di artikel, tetapi tidak ada yang menjalankannya, jadi jadwal terbit belum pernah bekerja. Artikel yang terbit terjadwal langsung dikabarkan pada jalan yang sama. |
-| Endpoint cron | Root endpoint Payload `GET /api/jobs/run` (path sesuai §5), menerima `Authorization: Bearer CRON_SECRET` (dibandingkan `timingSafeEqual`) atau admin yang masuk; jawabannya ringkasan `{ jadwalTerbit, indexer }`. Tanpa `CRON_SECRET` di env, permintaan anonim selalu 401. `vercel.json`: `*/10 * * * *`. Lokal tanpa Vercel: `pnpm indexer` (skrip `payload run`) atau buka endpoint itu sebagai admin. | Dokumentasi Vercel Cron: GET ke deployment produksi, user agent `vercel-cron/1.0`, header `Authorization: Bearer <CRON_SECRET>`, zona UTC, dan pengiriman bisa terlewat atau dobel (harus idempoten). Endpoint `/api/*` dilayani rute Payload, jadi root endpoint lebih sederhana daripada rute Next bersaudara. |
+| Endpoint cron | Root endpoint Payload `GET /api/jobs/run` (path sesuai §5), menerima `Authorization: Bearer CRON_SECRET` (dibandingkan `timingSafeEqual`) atau admin yang masuk; jawabannya ringkasan `{ jadwalTerbit, indexer }`. Tanpa `CRON_SECRET` di env, permintaan anonim selalu 401. `vercel.json`: `*/10 * * * *`. Lokal tanpa Vercel: `npm run indexer` (skrip `payload run`) atau buka endpoint itu sebagai admin. | Dokumentasi Vercel Cron: GET ke deployment produksi, user agent `vercel-cron/1.0`, header `Authorization: Bearer <CRON_SECRET>`, zona UTC, dan pengiriman bisa terlewat atau dobel (harus idempoten). Endpoint `/api/*` dilayani rute Payload, jadi root endpoint lebih sederhana daripada rute Next bersaudara. |
 | `after()` | Hook memanggil `jalankanSetelahRespons(payload)`: `after(() => jalankanIndexer(payload))`. Di luar permintaan Next (seed, tes, `payload run`) `after` melempar "outside a request scope" dan galat itu diabaikan; antrean menunggu cron. Galat pelari dicatat `payload.logger.error`, tidak pernah menggagalkan simpan. | Spesifikasi §5 ("job pertama langsung dijalankan lewat `after()`"); `node_modules/next/dist/docs/.../after.md` dan `next/dist/server/after/after.js` (melempar E468 di luar request). Probe E2E: IndexNow terkirim lewat `after()` setelah REST `PATCH` terbit. |
 | Pemicu | Hook `kabariMesinPencari(keTarget, { tanda })` di artikel, tools, video, halaman, pilar, dipasang setelah hook revalidasi. `beforeChange` mencatat versi publik (path dari `pathFor`, tanda perubahan besar) di `req.context`; `afterChange` membandingkannya dengan versi publik sesudah simpan (`bandingkanVersi`): belum publik ke publik `terbit`, publik ke tidak publik `hapus`, path berubah `pindah` (path lama) + `terbit` (path baru), tanda berubah `ubah-besar`. Simpan draf dan suntingan kecil tidak dikabarkan. Noindex dianggap tidak publik. `afterDelete` dokumen publik `hapus`. Artikel memakai `diperbaruiBesar` sebagai tanda; koleksi lain tidak punya saklar perubahan besar, jadi hanya terbit, pindah, dan hapus. Parameter tools yang disimpan atau dihapus mengabari `ubah-besar` untuk tools terbit yang memakainya (`sumberParameter`). | Spesifikasi §8 (pemicu `terbit`, `ubah-besar`, `hapus` untuk lima koleksi); Rencana 3 (pola `req.context` di `beforeChange`, karena di `afterChange` dokumen utama sudah tertimpa dan `previousDoc` bisa draf); Rencana 5 "Cakupan yang ditunda" (kabari saat tools terbit atau parameter berubah). |
 | Jenis `pindah` | Jenis keempat di samping tiga jenis spesifikasi: path lama setelah slug berganti. Dikabarkan ke sitemap dan IndexNow, tidak ke Indexing API, dan cek status serta status indeksnya dibuang. | Path lama kini dialihkan 308, sedangkan dokumentasi Indexing API meminta `URL_DELETED` hanya untuk halaman 404, 410, atau noindex. FAQ IndexNow meminta URL yang dialihkan ikut dikirim. |
@@ -89,7 +95,7 @@ src/modules/indexer/
 src/collections/AntreanIndexing.ts, LogIndexing.ts, StatusIndeks.ts
 src/hooks/kabariMesinPencari.ts            pemicu di lima koleksi dan parameter tools
 src/app/(frontend)/kunci-indexnow/[kunci]/route.ts   /{kunci}.txt lewat rewrite di next.config.ts
-src/scripts/jalankan-indexer.ts            pnpm indexer
+src/scripts/jalankan-indexer.ts            npm run indexer
 vercel.json                                cron */10 * * * * ke /api/jobs/run
 src/globals/PengaturanSEO.ts (+ grup indexing), src/collections/{Artikel,Tools,Video,Halaman,Pilar,ParameterTools}.ts (+ hook)
 tests/unit/indexer-*.test.ts, tests/int/indexer-*.int.spec.ts, tests/e2e/indexing.spec.ts
@@ -209,8 +215,8 @@ File kunci dilayani route handler `/kunci-indexnow/[kunci]` dan `next.config.ts`
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/indexer-kunci.test.ts` dengan `Error: Cannot find package '@/modules/indexer/kunci'`; integrasi FAIL satu tes di `tests/int/global.int.spec.ts` ("pengaturan Mesin Indexing: bawaan aman ...") dengan `AssertionError: expected undefined to match object { …(4) }`.
@@ -340,12 +346,12 @@ File kunci dilayani route handler `/kunci-indexnow/[kunci]` dan `next.config.ts`
   Jalankan:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
-  pnpm seed
+  npm run seed
   ```
 
-  Hasil yang diharapkan: `src/payload-types.ts | 34 ++++++++++++++++++++++++++++++++++` (grup `indexing` di `PengaturanSeo` dan `PengaturanSeoSelect`); `pnpm seed` selesai tanpa pertanyaan DATA LOSS (kolom baru tanpa `NOT NULL`).
+  Hasil yang diharapkan: `src/payload-types.ts | 34 ++++++++++++++++++++++++++++++++++` (grup `indexing` di `PengaturanSeo` dan `PengaturanSeoSelect`); `npm run seed` selesai tanpa pertanyaan DATA LOSS (kolom baru tanpa `NOT NULL`).
 
 - [ ] **Langkah 5: File kunci `/{kunci}.txt`**
 
@@ -478,11 +484,11 @@ File kunci dilayani route handler `/kunci-indexnow/[kunci]` dan `next.config.ts`
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 52 passed (52)`, `Tests 348 passed (348)`; integrasi `Test Files 27 passed (27)`, `Tests 79 passed (79)`; E2E `89 passed`. Build mencantumkan `ƒ /kunci-indexnow/[kunci]`.
@@ -717,7 +723,7 @@ Semua keputusan Mesin Indexing yang tidak menyentuh database atau jaringan ada d
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/indexer-aturan.test.ts` dengan `Error: Cannot find package '@/modules/indexer/aturan'`.
@@ -1033,11 +1039,11 @@ Semua keputusan Mesin Indexing yang tidak menyentuh database atau jaringan ada d
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 53 passed (53)`, `Tests 366 passed (366)`; integrasi `Test Files 27 passed (27)`, `Tests 79 passed (79)`; E2E `89 passed`.
@@ -1302,7 +1308,7 @@ Seam modul indexer (spesifikasi §5): tiga layanan luar dengan satu antarmuka, v
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/indexer-adapter.test.ts` dengan `Error: Cannot find package '@/modules/indexer/adapter'`.
@@ -1688,11 +1694,11 @@ Seam modul indexer (spesifikasi §5): tiga layanan luar dengan satu antarmuka, v
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 54 passed (54)`, `Tests 379 passed (379)`; integrasi `Test Files 27 passed (27)`, `Tests 79 passed (79)`; E2E `89 passed`.
@@ -1826,7 +1832,7 @@ Ketiga koleksi tampil di grup SEO admin. Antrean dan log hanya bisa dibaca dan d
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/indexer-antrean.int.spec.ts` dengan `Error: Cannot find package '@/modules/indexer'`.
@@ -2199,12 +2205,12 @@ Ketiga koleksi tampil di grup SEO admin. Antrean dan log hanya bisa dibaca dan d
 - [ ] **Langkah 5: Tipe Payload, database dev, dan data E2E**
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
-  pnpm seed
+  npm run seed
   ```
 
-  Hasil yang diharapkan: `1 file changed, 137 insertions(+)` (tipe `AntreanIndexing`, `LogIndexing`, `StatusIndeks`, select-nya, dan relasi `payload-locked-documents`); `pnpm seed` selesai tanpa pertanyaan DATA LOSS (tiga tabel baru).
+  Hasil yang diharapkan: `1 file changed, 137 insertions(+)` (tipe `AntreanIndexing`, `LogIndexing`, `StatusIndeks`, select-nya, dan relasi `payload-locked-documents`); `npm run seed` selesai tanpa pertanyaan DATA LOSS (tiga tabel baru).
 
   Data E2E dibersihkan setiap run, termasuk tiga koleksi baru (kabar dari konten contoh dibuat ulang saat `siapkan.ts` menerbitkannya mulai Task 6):
 
@@ -2229,11 +2235,11 @@ Ketiga koleksi tampil di grup SEO admin. Antrean dan log hanya bisa dibaca dan d
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 54 passed (54)`, `Tests 379 passed (379)`; integrasi `Test Files 28 passed (28)`, `Tests 83 passed (83)`; E2E `89 passed`.
@@ -2464,7 +2470,7 @@ Tes integrasi memakai adapter palsu dan waktu tiruan (`sekarang`): satu kabar di
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/indexer-jalan.int.spec.ts` dengan `TypeError: (0 , __vite_ssr_import_1__.adapterPalsu) is not a function`.
@@ -2878,14 +2884,14 @@ Tes integrasi memakai adapter palsu dan waktu tiruan (`sekarang`): satu kabar di
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
-  Hasil yang diharapkan: bersih; unit `Test Files 54 passed (54)`, `Tests 379 passed (379)`; integrasi `Test Files 29 passed (29)`, `Tests 90 passed (90)`; E2E `89 passed`. Jalankan `tests/int/indexer-jalan.int.spec.ts` tiga kali (`pnpm vitest run --config ./vitest.int.config.mts tests/int/indexer-jalan.int.spec.ts`); tes "dua pelari bersamaan" harus lulus setiap kali.
+  Hasil yang diharapkan: bersih; unit `Test Files 54 passed (54)`, `Tests 379 passed (379)`; integrasi `Test Files 29 passed (29)`, `Tests 90 passed (90)`; E2E `89 passed`. Jalankan `tests/int/indexer-jalan.int.spec.ts` tiga kali (`npx vitest run --config ./vitest.int.config.mts tests/int/indexer-jalan.int.spec.ts`); tes "dua pelari bersamaan" harus lulus setiap kali.
 
 - [ ] **Langkah 6: Commit**
 
@@ -3028,7 +3034,7 @@ Parameter tools yang disimpan atau dihapus mengubah angka aturan dan hasil conto
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL tiga tes di `tests/int/indexer-hook.int.spec.ts`: "artikel: terbit, ..." dengan `AssertionError: expected [] to deeply equal [ 'terbit' ]`, "ganti slug: ..." dengan `AssertionError: expected [] to deeply equal [ 'terbit', 'pindah' ]`, dan "pilar, halaman, video, dan tools ..." dengan `AssertionError: expected [] to deeply equal [ 'terbit' ]`.
@@ -3438,14 +3444,14 @@ Parameter tools yang disimpan atau dihapus mengubah angka aturan dan hasil conto
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
-  Hasil yang diharapkan: bersih; unit `Test Files 54 passed (54)`, `Tests 379 passed (379)`; integrasi `Test Files 30 passed (30)`, `Tests 93 passed (93)`; E2E `89 passed`. Skema tidak berubah (`pnpm generate:types` tidak mengubah `payload-types.ts`).
+  Hasil yang diharapkan: bersih; unit `Test Files 54 passed (54)`, `Tests 379 passed (379)`; integrasi `Test Files 30 passed (30)`, `Tests 93 passed (93)`; E2E `89 passed`. Skema tidak berubah (`npm run generate:types` tidak mengubah `payload-types.ts`).
 
 - [ ] **Langkah 7: Commit**
 
@@ -3456,7 +3462,7 @@ Parameter tools yang disimpan atau dihapus mengubah angka aturan dan hasil conto
 
 ---
 
-### Task 7: Cron `GET /api/jobs/run` dengan `CRON_SECRET`, jadwal terbit, `vercel.json`, dan `pnpm indexer`
+### Task 7: Cron `GET /api/jobs/run` dengan `CRON_SECRET`, jadwal terbit, `vercel.json`, dan `npm run indexer`
 
 **Files:**
 - Create: `src/modules/indexer/endpoint.ts`, `src/scripts/jalankan-indexer.ts`, `vercel.json`
@@ -3467,14 +3473,14 @@ Parameter tools yang disimpan atau dihapus mengubah angka aturan dan hasil conto
 - Consumes: `jalankanIndexer`, `RingkasanJalan`, `adapterPalsu`, `pakaiAdapterIndexer` (Task 5); `payload.jobs.run` dan task `schedulePublish` bawaan Payload (aktif karena `schedulePublish: true` di artikel sejak Rencana 1).
 - Produces:
   - `endpoint.ts`: `izinCron(header, rahasia): boolean`, `HasilJadwal = { jadwalTerbit: number; indexer: RingkasanJalan }`, `jalankanJadwal(payload, opsi?): Promise<HasilJadwal>`, `endpointJalankanJob` (root endpoint `GET /api/jobs/run`).
-  - Skrip `pnpm indexer` (`src/scripts/jalankan-indexer.ts`).
+  - Skrip `npm run indexer` (`src/scripts/jalankan-indexer.ts`).
   - `vercel.json`: cron `*/10 * * * *` ke `/api/jobs/run`.
 
 Vercel Cron memanggil `GET` ke deployment produksi dan, bila env `CRON_SECRET` ada, mengirim `Authorization: Bearer <CRON_SECRET>` (dokumentasi Vercel "Managing Cron Jobs"). Endpoint membandingkan header itu dengan `timingSafeEqual`; tanpa `CRON_SECRET`, permintaan anonim selalu 401. Admin yang sedang masuk juga boleh membukanya (menjalankan antrean sekarang, berguna di lokal). Vercel juga mengingatkan bahwa cron bisa terlewat atau terkirim dua kali: pelari antrean sudah aman untuk itu (klaim atomik dan baris yang selesai dihapus, Task 5).
 
 Endpoint ini juga menjalankan job Payload yang jatuh tempo (`payload.jobs.run({ allQueues: true })`). Tabel `payload_jobs` sudah ada sejak Rencana 1 karena artikel memakai `schedulePublish: true`, tetapi belum ada yang menjalankannya, jadi jadwal terbit di admin belum pernah bekerja. Job jalan lebih dulu, sehingga artikel yang terbit terjadwal langsung masuk antrean dan dikabarkan pada jalan yang sama.
 
-Tanpa Vercel (lokal): `pnpm indexer` menjalankan pekerjaan yang sama sekali lalu mencetak ringkasannya, atau buka `http://localhost:3000/api/jobs/run` sebagai admin.
+Tanpa Vercel (lokal): `npm run indexer` menjalankan pekerjaan yang sama sekali lalu mencetak ringkasannya, atau buka `http://localhost:3000/api/jobs/run` sebagai admin.
 
 - [ ] **Langkah 1: Tulis tes yang gagal**
 
@@ -3576,8 +3582,8 @@ Tanpa Vercel (lokal): `pnpm indexer` menjalankan pekerjaan yang sama sekali lalu
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/indexer-cron.test.ts` dengan `Error: Cannot find package '@/modules/indexer/endpoint'`; integrasi FAIL di `tests/int/indexer-cron.int.spec.ts` dengan pesan yang sama untuk file itu.
@@ -3678,7 +3684,7 @@ Tanpa Vercel (lokal): `pnpm indexer` menjalankan pekerjaan yang sama sekali lalu
   import { jalankanJadwal } from '@/modules/indexer/endpoint'
 
   /**
-   * `pnpm indexer`: menjalankan sekali pekerjaan cron (jadwal terbit dan antrean Mesin Indexing) tanpa
+   * `npm run indexer`: menjalankan sekali pekerjaan cron (jadwal terbit dan antrean Mesin Indexing) tanpa
    * Vercel. Adapter mengikuti `INDEXER_ADAPTER` (lokal: palsu, tanpa jaringan).
    */
   const payload = await getPayload({ config })
@@ -3710,7 +3716,7 @@ Tanpa Vercel (lokal): `pnpm indexer` menjalankan pekerjaan yang sama sekali lalu
   Coba di database dev:
 
   ```bash
-  pnpm indexer
+  npm run indexer
   ```
 
   Hasil yang diharapkan: satu baris log yang diawali `Jadwal terbit: 0 job. Mesin Indexing:` lalu jumlah langkah per status (berhasil, dicoba lagi, gagal, dilewati, ditunda). Adapter palsu, tanpa jaringan.
@@ -3720,11 +3726,11 @@ Tanpa Vercel (lokal): `pnpm indexer` menjalankan pekerjaan yang sama sekali lalu
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 55 passed (55)`, `Tests 381 passed (381)`; integrasi `Test Files 31 passed (31)`, `Tests 95 passed (95)`; E2E `89 passed`.
@@ -3733,7 +3739,7 @@ Tanpa Vercel (lokal): `pnpm indexer` menjalankan pekerjaan yang sama sekali lalu
 
   ```bash
   git add src/modules/indexer/endpoint.ts src/scripts/jalankan-indexer.ts src/payload.config.ts package.json vercel.json tests/unit/indexer-cron.test.ts tests/int/indexer-cron.int.spec.ts
-  git commit -m "feat(indexer): cron /api/jobs/run dengan CRON_SECRET untuk jadwal terbit dan Mesin Indexing, vercel.json setiap 10 menit, dan pnpm indexer untuk lokal"
+  git commit -m "feat(indexer): cron /api/jobs/run dengan CRON_SECRET untuk jadwal terbit dan Mesin Indexing, vercel.json setiap 10 menit, dan npm run indexer untuk lokal"
   ```
 
 ---
@@ -3867,7 +3873,7 @@ Gaya memakai variabel tema Payload (`--theme-warning-*`, `--theme-success-*`, `-
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/indexer-pemasangan.test.ts` dengan `Error: Cannot find package '@/modules/indexer/pemasangan'`. (Tes E2E admin baru dijalankan di Langkah 5; sebelum komponen ada, tes itu gagal dengan `Error: expect(locator).toContainText(expected) failed` untuk `getByRole('region', { name: 'Status pemasangan Mesin Indexing' })` (`Error: element(s) not found`).)
@@ -4205,9 +4211,9 @@ Gaya memakai variabel tema Payload (`--theme-warning-*`, `--theme-success-*`, `-
   ```
 
   ```bash
-  pnpm generate:importmap
+  npm run generate:importmap
   git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
   ```
 
@@ -4218,11 +4224,11 @@ Gaya memakai variabel tema Payload (`--theme-warning-*`, `--theme-success-*`, `-
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 56 passed (56)`, `Tests 383 passed (383)`; integrasi `Test Files 31 passed (31)`, `Tests 95 passed (95)`; E2E `90 passed` (axe tanpa pelanggaran di `.indexing-pemasangan` dan `.indexing-peringatan`, tautan peringatan bercincin fokus setelah Tab).
@@ -4344,7 +4350,7 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: tes "alur editor: ..." FAIL di `expect.poll(log)` dengan `Error: expect(received).toEqual(expected) // deep equality` (baris `"indexnow terbit berhasil palsu"` tidak pernah muncul, `Timeout 5000ms exceeded while waiting on the predicate`); log server memuat `Mesin Indexing gagal dijalankan setelah simpan.` dengan galat `INDEXER_ADAPTER wajib diisi di produksi`. Tes lain lulus.
@@ -4372,11 +4378,11 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 56 passed (56)`, `Tests 383 passed (383)`; integrasi `Test Files 31 passed (31)`, `Tests 95 passed (95)`; E2E `91 passed`.
@@ -4407,10 +4413,10 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
   --- a/CLAUDE.md
   +++ b/CLAUDE.md
   @@ -22,6 +22,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Import map admin: `pnpm generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
-   - Data awal: `pnpm seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
-   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `pnpm media:siapkan`
-  +- Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit dan antrean Mesin Indexing): `pnpm indexer`
+   - Import map admin: `npm run generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
+   - Data awal: `npm run seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
+   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `npm run media:siapkan`
+  +- Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit dan antrean Mesin Indexing): `npm run indexer`
    
    ## Konvensi
    - Nama domain memakai bahasa Indonesia, sama dengan spesifikasi: slug koleksi (`artikel`, `pilar`), nama field (`judul`, `intinya`), nama fungsi modul (`kabari`, `hitung`, `pathFor` adalah pengecualian yang sudah ada).
@@ -4430,8 +4436,8 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
   -- Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`.
   +- Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, atau `INDEXER_ADAPTER=asli`. Kredensial Google hanya di env server Vercel, tidak pernah di CMS, log, atau tes.
    - Tanya dulu sebelum menambah dependensi baru di luar rencana.
-   - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-   - Jalankan `pnpm test` sebelum commit, dan `pnpm test:e2e` bila halaman publik berubah.
+   - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+   - Jalankan `npm test` sebelum commit, dan `npm run test:e2e` bila halaman publik berubah.
   ```
 
   ```diff
@@ -4492,7 +4498,7 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
   +Kegagalan: retry 3 kali dengan jeda 1, 5, 30 menit; setelah itu status Gagal di log (cek status: status indeks Error) dan peringatan di dashboard. Kuota Google habis (429): ditunda ke awal hari kuota berikutnya (tengah malam waktu Pasifik). Penghapusan dan batal terbit: URL keluar dari sitemap, halaman menjawab 404, atau 308 ke tujuan bila ada redirect (keputusan pemilik di Rencana 4A: redirect lewat `permanentRedirect()`, kode 410 di CMS menjawab 404), IndexNow tetap dikabari, dan `URL_DELETED` bila Indexing API aktif.
    
   -Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cloud dengan Search Console API + Indexing API aktif, ditambahkan sebagai **Owner** properti. Kredensial disimpan di env Vercel.
-  +Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) setiap 10 menit; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `pnpm indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
+  +Antrean ada di Postgres. Vercel Cron memanggil `GET /api/jobs/run` (header `Authorization: Bearer CRON_SECRET`) setiap 10 menit; endpoint itu juga menjalankan job Payload yang jatuh tempo (jadwal terbit artikel). Saat konten terbit, antrean langsung dijalankan lewat `after()`. Lokal tanpa Vercel: `npm run indexer`. Adapter dipilih env `INDEXER_ADAPTER` (`asli` di produksi, `palsu` di pratinjau, lokal, dan tes).
   +
   +Prasyarat: properti domain `point.lat` di Search Console; akun layanan Google Cloud dengan Search Console API aktif (Indexing API hanya bila saklarnya kelak dipakai), ditambahkan sebagai **Owner** properti. Kredensial disimpan di env Vercel (`GOOGLE_SERVICE_ACCOUNT_JSON`), tanpa pustaka Google: token akses dari JWT RS256 akun layanan.
    
@@ -4536,15 +4542,15 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
-  pnpm seed
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
+  npm run seed
+  npm run build
   git status --short
   ```
 
@@ -4552,16 +4558,16 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
 
 - [ ] **Langkah 3: Uji visual admin di tiga ukuran layar**
 
-  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh, kunci IndexNow, dan antrean dari `pnpm test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`, sama dengan `playwright.config.ts`):
+  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh, kunci IndexNow, dan antrean dari `npm run test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`, sama dengan `playwright.config.ts`):
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`), lalu buka di 375, 768, dan 1440 px (DevTools): Pengaturan SEO (grup Mesin Indexing), Artikel, Log indexing, Status indeks, dan Antrean indexing. Harus terlihat: status pemasangan dengan label sejajar di 768 dan 1440 px dan satu kolom di 375 px, setiap butir bertanda teks "Siap" atau "Perlu diatur"; peringatan Indexing API tepat di atas saklar yang mati, tautannya bisa dicapai dengan Tab dan cincin fokusnya terlihat; kolom "Status indeks" di daftar artikel ("Belum dicek" untuk artikel terbit, "Belum terbit" untuk draf); log dengan URL panjang terbungkus dan pesan panjang terpotong rapi; daftar kosong (misalnya Status indeks dengan filter path yang tidak ada) menampilkan keadaan kosong Payload; tanpa geser horizontal halaman. Lalu panggil cron sebagai admin di tab yang sama: `http://localhost:3200/api/jobs/run` menjawab JSON berisi `jadwalTerbit` dan ringkasan `indexer` (`diproses`, `berhasil`, `diulang`, `gagal`, `dilewati`, `ditunda`), dan tanpa login (jendela privat) menjawab 401. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `pnpm build` lagi dengan env biasa.
+  Masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`), lalu buka di 375, 768, dan 1440 px (DevTools): Pengaturan SEO (grup Mesin Indexing), Artikel, Log indexing, Status indeks, dan Antrean indexing. Harus terlihat: status pemasangan dengan label sejajar di 768 dan 1440 px dan satu kolom di 375 px, setiap butir bertanda teks "Siap" atau "Perlu diatur"; peringatan Indexing API tepat di atas saklar yang mati, tautannya bisa dicapai dengan Tab dan cincin fokusnya terlihat; kolom "Status indeks" di daftar artikel ("Belum dicek" untuk artikel terbit, "Belum terbit" untuk draf); log dengan URL panjang terbungkus dan pesan panjang terpotong rapi; daftar kosong (misalnya Status indeks dengan filter path yang tidak ada) menampilkan keadaan kosong Payload; tanpa geser horizontal halaman. Lalu panggil cron sebagai admin di tab yang sama: `http://localhost:3200/api/jobs/run` menjawab JSON berisi `jadwalTerbit` dan ringkasan `indexer` (`diproses`, `berhasil`, `diulang`, `gagal`, `dilewati`, `ditunda`), dan tanpa login (jendela privat) menjawab 401. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -4574,9 +4580,9 @@ Server E2E adalah build produksi, jadi tanpa `INDEXER_ADAPTER` pelari antrean me
 
 ## Selesai bila
 
-- `pnpm test` lulus (383 tes unit di 56 file dan 95 tes integrasi di 31 file), `pnpm test:e2e` lulus (91 tes E2E, termasuk alur editor dan axe untuk komponen admin Mesin Indexing), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Google.
+- `npm test` lulus (383 tes unit di 56 file dan 95 tes integrasi di 31 file), `npm run test:e2e` lulus (91 tes E2E, termasuk alur editor dan axe untuk komponen admin Mesin Indexing), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Google.
 - Artikel, tools, video, halaman, dan pilar yang terbit, berubah besar (artikel), pindah alamat, batal terbit, atau dihapus tercatat di log (langkah revalidasi) dan antrean; simpan draf dan suntingan kecil tidak. Perubahan angka aturan kalkulator mengabari halaman tools yang memakainya.
-- `after()` mengirim antrean langsung setelah simpan; cron `GET /api/jobs/run` (Bearer `CRON_SECRET`, selain itu 401 kecuali admin) mengirim sisanya setiap 10 menit (`vercel.json`) dan menjalankan jadwal terbit Payload; `pnpm indexer` menjalankannya lokal.
+- `after()` mengirim antrean langsung setelah simpan; cron `GET /api/jobs/run` (Bearer `CRON_SECRET`, selain itu 401 kecuali admin) mengirim sisanya setiap 10 menit (`vercel.json`) dan menjalankan jadwal terbit Payload; `npm run indexer` menjalankannya lokal.
 - Sitemap index dikirim ke Search Console paling sering sekali per 30 menit dan IndexNow sekali per 5 menit dengan semua URL yang antre dalam satu POST; gagal diulang 1, 5, dan 30 menit lalu Gagal; kuota harian Google (Indexing API dan cek status, dari CMS) ditunda ke tengah malam waktu Pasifik; dua pelari bersamaan tidak mengirim baris yang sama dua kali.
 - Cek status +6 jam, +24 jam, +3 hari, +7 hari mengisi `status-indeks` dan berhenti saat Terindeks; statusnya tampil di daftar artikel.
 - URL yang batal terbit atau dihapus keluar dari sitemap, menjawab 404 (atau 308 bila ada redirect), tetap dikabarkan ke IndexNow, dan `URL_DELETED` bila Indexing API aktif. Indexing API mati secara bawaan, dengan peringatan di atas saklarnya.
@@ -4596,7 +4602,7 @@ Langkah ini dikerjakan pemilik di layanan luar; kode rencana ini sudah siap mema
   - `INDEXER_ADAPTER` = `asli` untuk **Production**, `palsu` untuk **Preview** (pratinjau tidak boleh mengabari mesin pencari).
   - `GOOGLE_SERVICE_ACCOUNT_JSON` = seluruh isi file kunci JSON (tempel apa adanya, termasuk `\n` di `private_key`), **Production** saja, tandai Sensitive.
   - `CRON_SECRET` = string acak minimal 16 karakter (misalnya `openssl rand -hex 32`), **Production**. Vercel mengirimnya otomatis sebagai `Authorization: Bearer` ke cron.
-- [ ] **Paket Vercel Pro** aktif (cron setiap 10 menit; paket Hobby hanya sekali sehari, spesifikasi §19). Setelah deploy produksi, pastikan `/api/jobs/run` tercantum di Settings, Cron Jobs.
+- [ ] **Paket Vercel gratis (Hobby)** sesuai keputusan pemilik: cron Vercel sekali sehari (`0 23 * * *`); jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5). Setelah deploy produksi, pastikan `/api/jobs/run` tercantum di Settings, Cron Jobs.
 - [ ] **Periksa Status pemasangan** di Pengaturan SEO: keempat butir bertanda "Siap".
 - [ ] **Uji pertama:** terbitkan satu halaman, lalu buka Log indexing. Harus ada "Revalidasi cache", "Kirim sitemap ke Search Console" (adapter `searchConsole`), dan "IndexNow" (adapter `indexNow`) berstatus Berhasil. Bila Google menjawab 403, periksa izin Owner akun layanan; bila IndexNow menjawab 403, periksa file kunci.
 - [ ] **Biarkan saklar Indexing API mati.**

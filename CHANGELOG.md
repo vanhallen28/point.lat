@@ -8,6 +8,16 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.1.0 (9 November 2026)
+
+Tanpa Docker, logo baru, dan dokumen disesuaikan dengan keputusan pemilik: Vercel gratis, npm, kiriman zip.
+
+- **Tanpa Docker:** `docker-compose.yml`, `Dockerfile`, dan folder `docker/` dihapus. Proyek hanya memakai Next.js, Vercel, dan Supabase. Pratinjau di komputer (`npm run dev`) memakai proyek Supabase kedua (`point-lat-pratinjau`), bukan Postgres di Docker; langkah sekali jalannya ada di runbook rilis C6. Tes di GitHub memakai Postgres bawaan server GitHub (`scripts/ci-postgres.sh`).
+- **Logo baru:** logo POINT. dari file kamu dipasang di header (tinggi 32 px), footer, dan favicon, digambar ulang sebagai SVG supaya tajam dan tanpa unduhan tambahan. Warna biru merek `#2F6BFF` hanya untuk logo.
+- **Dokumen:** spesifikasi, 12 rencana, runbook rilis dan pemulihan, README, dan CLAUDE.md memakai Vercel paket gratis (Hobby), perintah npm, alur zip + perintah terminal, dan tanpa Docker. Spesifikasi menambah aturan pemakaian logo, peta semua skill per tahap, alur pembaruan, dan saran trafik.
+- **Jadwal 10 menit tanpa Vercel Pro (opsional):** runbook rilis H5 memasang Supabase Cron yang memanggil `/api/jobs/run` setiap 10 menit, jadi artikel terjadwal terbit tepat waktu walau Vercel Hobby hanya menjalankan cron sekali sehari.
+- **`.env.example`:** `DATABASE_URL` dan `DATABASE_CA` kini contoh Supabase (Transaction pooler), bukan Postgres lokal.
+
 ## v1.0.0 (7 November 2026)
 
 Versi pertama yang dirilis ke Vercel.

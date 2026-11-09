@@ -1,12 +1,18 @@
 # Rencana 6B: Dashboard SEO point.lat (Search Analytics harian, Paling dibaca, tautan rusak, halaman yatim, 404, dan redirect subkategori)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Melengkapi spesifikasi §8 "Tingkat situs" dan "Dashboard SEO": klik, impresi, CTR, dan posisi per URL dari Search Analytics yang disinkron sekali sehari lewat cron yang sudah ada, dashboard SEO di admin (`/admin/seo`) dengan ringkasan status indeks, log indexing terbaru, tautan rusak, halaman yatim, dan 404 teratas dengan tombol "Buat redirect", blok "Paling dibaca pekan ini" di beranda dan artikel populer di halaman 404 dari klik Google 7 hari, dan redirect otomatis `/{pilar}/{subkategori}`; tanpa jaringan di tes, tanpa dependensi baru, dan tanpa menambah JavaScript halaman publik.
 
 **Architecture:** Modul baru `src/modules/pantau` dengan antarmuka kecil: `jalankanPantau(payload, { sekarang, adapter, tugas })` (dipanggil cron `GET /api/jobs/run` setelah Mesin Indexing) dan `ambilDashboard(payload)` (dibaca view admin). Di dalamnya: aturan murni (`aturan.ts`: tanggal waktu Pasifik, ringkasan klik dan posisi tertimbang, jadwal tugas, arti jawaban pemeriksa tautan), tautan di konten (`tautan.ts`, murni), sinkron Search Analytics (`analitik.ts`), pindai tautan dan pemeriksa tautan luar (`pindai.ts`), klaim tugas atomik (`tugas.ts`), dan seam adapter (`adapter.ts`) dengan dua adapter: `asli.ts` (`fetch`, token akun layanan dari `indexer/google.ts`) dan `palsu.ts` (dalam memori). Data di lima koleksi tersembunyi yang hanya ditulis modul ini; dashboard adalah UI-nya. Modul konten membaca `analitik-halaman` untuk "Paling dibaca pekan ini" (tag cache `analitik`, dibuang setiap sinkron). Redirect subkategori memakai `terapkanRedirect` yang diekstrak dari `redirectSaatPathBerubah`.
 
-**Tech Stack:** Next.js 16.3.3 (App Router, `unstable_cache`, `revalidateTag`), Payload 3.92.1 (koleksi `admin.hidden`, view admin kustom `admin.components.views` dibungkus `DefaultTemplate` dari `@payloadcms/next/templates`, `beforeNavLinks`, sel kolom `ui`, `defaultValue({ req })` dengan `req.query`, `payload.db` untuk transaksi dan hapus massal), PostgreSQL 16 (`INSERT ... ON CONFLICT DO NOTHING` dan `UPDATE ... RETURNING` lewat `sql` dari `@payloadcms/db-postgres`), `fetch` dan `AbortSignal.timeout`, `Intl` id-ID dan `America/Los_Angeles`, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, `unstable_cache`, `revalidateTag`), Payload 3.92.1 (koleksi `admin.hidden`, view admin kustom `admin.components.views` dibungkus `DefaultTemplate` dari `@payloadcms/next/templates`, `beforeNavLinks`, sel kolom `ui`, `defaultValue({ req })` dengan `req.query`, `payload.db` untuk transaksi dan hapus massal), PostgreSQL 16 (`INSERT ... ON CONFLICT DO NOTHING` dan `UPDATE ... RETURNING` lewat `sql` dari `@payloadcms/db-postgres`), `fetch` dan `AbortSignal.timeout`, `Intl` id-ID dan `America/Los_Angeles`, Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§4 beranda "Paling dibaca pekan ini"; §5 Penjadwal (sinkron Search Analytics harian, cek link rusak mingguan) dan tabel modul; §6 koleksi; §7 redirect 301 saat slug berganti; §8 Tingkat situs (halaman yatim, link rusak mingguan, log 404 dengan tombol "buat redirect") dan Dashboard SEO; §12 anggaran JS; §14 aksesibilitas; §15 404 dengan artikel populer; §16 testing; §17 cakupan; §19 risiko).
 
@@ -24,22 +30,22 @@
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
 - Nama domain berbahasa Indonesia (`jalankanPantau`, `ambilDashboard`, `pindaiTautan`, `analitik-halaman`, `tautan-luar`). Nama field API luar tetap seperti aslinya (`startDate`, `rowLimit`, `startRow`, `dataState`, `clicks`, `impressions`, `ctr`, `position`).
 - Copy admin dan publik: bahasa Indonesia, sapaan "kamu" bila menyapa, tanpa em dash dan en dash (juga di komentar), tanpa tanda seru. Pesan galat dan keadaan kosong menyebut penyebab dan langkah berikutnya. Angka lewat `Intl.NumberFormat('id-ID')`; angka ringkas `Intl` memakai spasi tak putus, jadi di kode dan tes tulis `\u00a0`, jangan karakter aslinya.
 - **Tes tidak pernah memanggil jaringan.** Unit memakai `fetch` tiruan; integrasi dan E2E memakai adapter palsu (`adapterPalsu()` dari `@/modules/pantau`, `INDEXER_ADAPTER=palsu` di server E2E). Waktu di tes selalu lewat opsi `sekarang`.
 - Kredensial tetap hanya di env server (`GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, `INDEXER_ADAPTER`); dashboard hanya menampilkan pesan status, tidak pernah isi rahasia.
 - Path publik lewat `pathFor()`, path admin lewat `urlAdmin` (`src/lib/admin.ts`, Task 6). Jangan merangkai URL manual.
-- **Perubahan skema harus aditif.** Rencana ini menambah lima koleksi (`analitik-halaman`, `analitik-situs`, `tugas-seo`, `temuan-tautan`, `tautan-luar`) tanpa mengubah kolom tabel lama; field `ui` dan `defaultValue` tidak mengubah tabel. Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
+- **Perubahan skema harus aditif.** Rencana ini menambah lima koleksi (`analitik-halaman`, `analitik-situs`, `tugas-seo`, `temuan-tautan`, `tautan-luar`) tanpa mengubah kolom tabel lama; field `ui` dan `defaultValue` tidak mengubah tabel. Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
 - **Operasi massal.** Hapus dan update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu transaksi. Setiap koleksi baru dengan kunci unik dan setiap hook baru yang menulis ke tabel dengan kunci unik diuji dengan update massal dan hapus massal dua dokumen atau lebih dalam satu operasi.
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
-- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, dan `INDEXER_ADAPTER=palsu`. E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
+- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, dan `INDEXER_ADAPTER=palsu`. E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang setelah task selesai.
 - `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 10 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja).
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
 - **Tulis `req.context` setelah `await`** (Rencana 6A): simpan hasil operasi Payload ke variabel dulu, lalu tulis ke `req.context`.
 - Tes integrasi berbagi database dan berjalan berurutan dengan urutan file yang tidak pasti. Tes Pantau SEO mengosongkan koleksi pantau yang dipakainya lebih dulu, dan membatasi `jalankanPantau` ke tugas yang diuji (opsi `tugas`).
-- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` atau atribut `lang` kosong karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` atau atribut `lang` kosong karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 - Next 16.3.3 kadang mengirim header `Location` dua kali pada redirect pertama sebuah path ISR (`/a, /a`); tes redirect memakai `toContain`, bukan `toBe`.
 
 ## Keputusan teknis (hasil riset dan probe, dipakai di semua task)
@@ -289,7 +295,7 @@ Semua aturan Pantau SEO yang bisa diuji tanpa database dan tanpa jaringan ada di
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/pantau-aturan.test.ts` dengan `Error: Cannot find package '@/modules/pantau/aturan'`.
@@ -632,11 +638,11 @@ Semua aturan Pantau SEO yang bisa diuji tanpa database dan tanpa jaringan ada di
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 57 passed (57)`, `Tests 394 passed (394)`; integrasi `Test Files 32 passed (32)`, `Tests 98 passed (98)`; E2E `91 passed`.
@@ -838,7 +844,7 @@ Saklar `INDEXER_ADAPTER` dipakai bersama: `asli` di produksi, `palsu` di pratinj
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/pantau-adapter.test.ts` dengan `Error: Cannot find package '@/modules/pantau/adapter'`.
@@ -1102,11 +1108,11 @@ Saklar `INDEXER_ADAPTER` dipakai bersama: `asli` di produksi, `palsu` di pratinj
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 58 passed (58)`, `Tests 401 passed (401)`; integrasi `Test Files 32 passed (32)`, `Tests 98 passed (98)`; E2E `91 passed`.
@@ -1340,7 +1346,7 @@ Sinkron meminta total harian 35 hari sampai kemarin (waktu Pasifik, data final).
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/pantau-analitik.int.spec.ts` dengan `Error: Cannot find package '@/modules/pantau'`.
@@ -1754,7 +1760,7 @@ Sinkron meminta total harian 35 hari sampai kemarin (waktu Pasifik, data final).
   export type { JenisTugas, RingkasanHalaman, StatusTugas } from './tipe'
   ```
 
-- [ ] **Langkah 5: Cron dan `pnpm indexer`**
+- [ ] **Langkah 5: Cron dan `npm run indexer`**
 
   ```diff
   diff --git a/src/modules/indexer/endpoint.ts b/src/modules/indexer/endpoint.ts
@@ -1812,9 +1818,9 @@ Sinkron meminta total harian 35 hari sampai kemarin (waktu Pasifik, data final).
   +import { LABEL_STATUS_TUGAS, LABEL_TUGAS, type JenisTugas } from '@/modules/pantau/tipe'
    
    /**
-  - * `pnpm indexer`: menjalankan sekali pekerjaan cron (jadwal terbit dan antrean Mesin Indexing) tanpa
+  - * `npm run indexer`: menjalankan sekali pekerjaan cron (jadwal terbit dan antrean Mesin Indexing) tanpa
   - * Vercel. Adapter mengikuti `INDEXER_ADAPTER` (lokal: palsu, tanpa jaringan).
-  + * `pnpm indexer`: menjalankan sekali pekerjaan cron (jadwal terbit, antrean Mesin Indexing, dan tugas
+  + * `npm run indexer`: menjalankan sekali pekerjaan cron (jadwal terbit, antrean Mesin Indexing, dan tugas
   + * Pantau SEO yang jatuh tempo) tanpa Vercel. Adapter mengikuti `INDEXER_ADAPTER` (lokal: palsu, tanpa jaringan).
     */
    const payload = await getPayload({ config })
@@ -1833,12 +1839,12 @@ Sinkron meminta total harian 35 hari sampai kemarin (waktu Pasifik, data final).
 - [ ] **Langkah 6: Tipe Payload, database dev, dan data E2E**
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
-  pnpm seed
+  npm run seed
   ```
 
-  Hasil yang diharapkan: `1 file changed, 118 insertions(+)` (tipe `AnalitikHalaman`, `AnalitikSitus`, `TugasSeo`, select-nya, dan relasi `payload-locked-documents`); `pnpm seed` selesai tanpa pertanyaan DATA LOSS (tiga tabel baru).
+  Hasil yang diharapkan: `1 file changed, 118 insertions(+)` (tipe `AnalitikHalaman`, `AnalitikSitus`, `TugasSeo`, select-nya, dan relasi `payload-locked-documents`); `npm run seed` selesai tanpa pertanyaan DATA LOSS (tiga tabel baru).
 
   Data E2E dibersihkan setiap run, termasuk koleksi baru, supaya E2E yang dijalankan dua kali berturut-turut tanpa membuang database tetap sama:
 
@@ -1879,11 +1885,11 @@ Sinkron meminta total harian 35 hari sampai kemarin (waktu Pasifik, data final).
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 58 passed (58)`, `Tests 401 passed (401)`; integrasi `Test Files 33 passed (33)`, `Tests 107 passed (107)`; E2E `91 passed`.
@@ -2076,8 +2082,8 @@ Data E2E sekarang berisi klik contoh, jadi beranda dan halaman 404 E2E menampilk
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL 4 tes: `tests/unit/beranda.test.ts` ("Paling dibaca pekan ini" bila klik 7 hari cukup ...) dengan `AssertionError: expected { jenis: 'terbaru', id: 'p', …(3) } to match object { jenis: 'terbaru', …(2) }`, ("klik 7 hari belum cukup ...") dengan `TypeError: (0 , __vite_ssr_import_1__.daftarPopuler) is not a function`, serta `tests/unit/cari.test.ts` ("halaman 404 punya form cari") dan `tests/unit/konten-galat.test.ts` ("jalan kembali ke beranda dan artikel populer ...") dengan `TypeError: Cannot read properties of undefined (reading 'length')`; integrasi FAIL satu tes di `tests/int/beranda.int.spec.ts` dengan `TypeError: (0 , __vite_ssr_import_2__.ambilPopuler) is not a function`.
@@ -2411,7 +2417,7 @@ Data E2E sekarang berisi klik contoh, jadi beranda dan halaman 404 E2E menampilk
   Keterangan field ikut tertulis di tipe Payload:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
   ```
 
@@ -2587,11 +2593,11 @@ Data E2E sekarang berisi klik contoh, jadi beranda dan halaman 404 E2E menampilk
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 58 passed (58)`, `Tests 403 passed (403)`; integrasi `Test Files 33 passed (33)`, `Tests 108 passed (108)`; E2E `91 passed` (termasuk anggaran JavaScript beranda dan 404 di `motion.spec.ts`, tidak berubah karena semua perubahan di server component).
@@ -2962,8 +2968,8 @@ Tautan luar butuh jaringan, jadi dicek sedikit demi sedikit: setiap jalan cron (
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/pantau-tautan.test.ts` dengan `Error: Cannot find package '@/modules/pantau/tautan'`; integrasi FAIL di `tests/int/pantau-tautan.int.spec.ts` dengan `Error: Cannot find package '@/modules/pantau/pindai'`.
@@ -3543,7 +3549,7 @@ Tautan luar butuh jaringan, jadi dicek sedikit demi sedikit: setiap jalan cron (
   +import { JENIS_TUGAS, LABEL_STATUS_TUGAS, LABEL_TUGAS } from '@/modules/pantau/tipe'
    
    /**
-    * `pnpm indexer`: menjalankan sekali pekerjaan cron (jadwal terbit, antrean Mesin Indexing, dan tugas
+    * `npm run indexer`: menjalankan sekali pekerjaan cron (jadwal terbit, antrean Mesin Indexing, dan tugas
   @@ -10,7 +10,11 @@ import { LABEL_STATUS_TUGAS, LABEL_TUGAS, type JenisTugas } from '@/modules/pant
     */
    const payload = await getPayload({ config })
@@ -3562,23 +3568,23 @@ Tautan luar butuh jaringan, jadi dicek sedikit demi sedikit: setiap jalan cron (
 - [ ] **Langkah 5: Tipe Payload dan database dev**
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
-  pnpm seed
+  npm run seed
   ```
 
-  Hasil yang diharapkan: `1 file changed, 90 insertions(+)`; `pnpm seed` selesai tanpa pertanyaan DATA LOSS (dua tabel baru).
+  Hasil yang diharapkan: `1 file changed, 90 insertions(+)`; `npm run seed` selesai tanpa pertanyaan DATA LOSS (dua tabel baru).
 
 - [ ] **Langkah 6: Jalankan semua tes**
 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 59 passed (59)`, `Tests 407 passed (407)`; integrasi `Test Files 34 passed (34)`, `Tests 111 passed (111)`; E2E `91 passed`.
@@ -3677,7 +3683,7 @@ Rate limit endpoint beacon 404 tidak murah tanpa penyimpanan bersama di serverle
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/redirect.test.ts` dengan `Error: Cannot find package '@/lib/admin'`.
@@ -3820,9 +3826,9 @@ Rate limit endpoint beacon 404 tidak murah tanpa penyimpanan bersama di serverle
   ```
 
   ```bash
-  pnpm generate:importmap
+  npm run generate:importmap
   git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
   ```
 
@@ -3833,11 +3839,11 @@ Rate limit endpoint beacon 404 tidak murah tanpa penyimpanan bersama di serverle
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 59 passed (59)`, `Tests 408 passed (408)`; integrasi `Test Files 34 passed (34)`, `Tests 111 passed (111)`; E2E `92 passed`.
@@ -4027,8 +4033,8 @@ View admin (Task 8) cukup memanggil `ambilDashboard` sekali dan merender hasilny
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/pantau-format.test.ts` dan integrasi FAIL di `tests/int/pantau-dashboard.int.spec.ts`, keduanya dengan `Error: Cannot find package '@/modules/pantau/dashboard'`.
@@ -4246,11 +4252,11 @@ View admin (Task 8) cukup memanggil `ambilDashboard` sekali dan merender hasilny
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 60 passed (60)`, `Tests 412 passed (412)`; integrasi `Test Files 35 passed (35)`, `Tests 113 passed (113)`; E2E `92 passed`.
@@ -4440,7 +4446,7 @@ Data E2E ditambah total harian 28 hari dan baris `tugas-seo` analitik berstatus 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/pantau-dashboard.test.ts` dengan `Error: Cannot find package '@/modules/pantau/admin/BagianDashboard'`.
@@ -5310,7 +5316,7 @@ Data E2E ditambah total harian 28 hari dan baris `tugas-seo` analitik berstatus 
   ```
 
   ```bash
-  pnpm generate:importmap
+  npm run generate:importmap
   git diff --stat "src/app/(payload)/admin/importMap.js"
   ```
 
@@ -5379,11 +5385,11 @@ Data E2E ditambah total harian 28 hari dan baris `tugas-seo` analitik berstatus 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 61 passed (61)`, `Tests 417 passed (417)`; integrasi `Test Files 35 passed (35)`, `Tests 113 passed (113)`; E2E `97 passed` (termasuk axe pada `.pantau` dan tanpa geser horizontal di 375, 768, dan 1440 px).
@@ -5538,7 +5544,7 @@ Update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu 
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL 4 tes di `tests/int/redirect-subkategori.int.spec.ts`: dua tes pertama dengan `AssertionError: expected [] to deeply equal [ Array(1) ]`, "pilar ganti slug ..." dengan `AssertionError: expected [ …(2) ] to deeply equal [ …(4) ]` (hanya redirect pilar dan redirect manual), dan "operasi massal ..." dengan `AssertionError: expected [] to deeply equal [ …(2) ]`.
@@ -5769,11 +5775,11 @@ Update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 61 passed (61)`, `Tests 417 passed (417)`; integrasi `Test Files 36 passed (36)`, `Tests 117 passed (117)` (termasuk `tests/int/slug-redirect.int.spec.ts` yang memakai `terapkanRedirect` lewat `redirectSaatPathBerubah`); E2E `98 passed`.
@@ -5804,11 +5810,11 @@ Update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu 
   --- a/CLAUDE.md
   +++ b/CLAUDE.md
   @@ -22,7 +22,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Import map admin: `pnpm generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
-   - Data awal: `pnpm seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
-   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `pnpm media:siapkan`
-  -- Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit dan antrean Mesin Indexing): `pnpm indexer`
-  +- Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit, antrean Mesin Indexing, dan tugas Pantau SEO yang jatuh tempo): `pnpm indexer`
+   - Import map admin: `npm run generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
+   - Data awal: `npm run seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
+   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `npm run media:siapkan`
+  -- Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit dan antrean Mesin Indexing): `npm run indexer`
+  +- Pekerjaan cron sekali jalan tanpa Vercel (jadwal terbit, antrean Mesin Indexing, dan tugas Pantau SEO yang jatuh tempo): `npm run indexer`
    
    ## Konvensi
    - Nama domain memakai bahasa Indonesia, sama dengan spesifikasi: slug koleksi (`artikel`, `pilar`), nama field (`judul`, `intinya`), nama fungsi modul (`kabari`, `hitung`, `pathFor` adalah pengecualian yang sudah ada).
@@ -5913,16 +5919,16 @@ Update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu 
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
-  pnpm test:e2e
-  pnpm seed
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
+  npm run test:e2e
+  npm run seed
+  npm run build
   git status --short
   ```
 
@@ -5930,16 +5936,16 @@ Update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu 
 
 - [ ] **Langkah 3: Uji visual di tiga ukuran layar**
 
-  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh, klik contoh, total harian, dan hasil pindai dari `pnpm test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`, sama dengan `playwright.config.ts`):
+  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh, klik contoh, total harian, dan hasil pindai dari `npm run test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`, sama dengan `playwright.config.ts`):
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`), buka menu (Open Menu), klik "Dashboard SEO", lalu periksa di 375, 768, dan 1440 px (DevTools), tema terang dan gelap (menu akun, Theme): kartu angka sejajar (empat kolom di 1440 px, dua di 375 px), grafik kolom dengan label sumbu terbaca dan kolom tidak lebih dari 24 px, "Lihat angka per hari" membuka tabel, tabel halaman teratas dan 404 teratas bergulir di dalam kotaknya di 375 px, URL panjang terbungkus, tautan sumber di "Tautan rusak" dan "Halaman yatim" membuka dokumen yang benar, "Buat redirect" membuka form dengan path terisi, dan tanpa geser horizontal halaman. Lalu periksa beranda dan `/halaman-yang-tidak-ada`: blok "Paling dibaca pekan ini" berisi empat dan tiga artikel dengan urutan klik. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `pnpm build` lagi dengan env biasa.
+  Masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`), buka menu (Open Menu), klik "Dashboard SEO", lalu periksa di 375, 768, dan 1440 px (DevTools), tema terang dan gelap (menu akun, Theme): kartu angka sejajar (empat kolom di 1440 px, dua di 375 px), grafik kolom dengan label sumbu terbaca dan kolom tidak lebih dari 24 px, "Lihat angka per hari" membuka tabel, tabel halaman teratas dan 404 teratas bergulir di dalam kotaknya di 375 px, URL panjang terbungkus, tautan sumber di "Tautan rusak" dan "Halaman yatim" membuka dokumen yang benar, "Buat redirect" membuka form dengan path terisi, dan tanpa geser horizontal halaman. Lalu periksa beranda dan `/halaman-yang-tidak-ada`: blok "Paling dibaca pekan ini" berisi empat dan tiga artikel dengan urutan klik. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -5952,7 +5958,7 @@ Update massal Payload menjalankan hook setiap dokumen secara paralel dalam satu 
 
 ## Selesai bila
 
-- `pnpm test` lulus (417 tes unit di 61 file dan 117 tes integrasi di 36 file), `pnpm test:e2e` lulus (98 tes E2E) dua kali berturut-turut tanpa membuang database E2E, `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Google.
+- `npm test` lulus (417 tes unit di 61 file dan 117 tes integrasi di 36 file), `npm run test:e2e` lulus (98 tes E2E) dua kali berturut-turut tanpa membuang database E2E, `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Google.
 - Cron `GET /api/jobs/run` menjalankan sinkron Search Analytics sekali sehari (klaim atomik; cron dobel tidak menjalankan dua kali): total harian dan ringkasan 28 dan 7 hari per halaman sampai tanggal data final terakhir, dalam satu transaksi; dilewati atau gagal tidak menyentuh data lama, gagal dicoba lagi sejam kemudian, kuota habis besok; log indexing lebih dari 90 hari dan total harian lebih dari 480 hari dihapus.
 - Beranda dan halaman 404 menampilkan "Paling dibaca pekan ini" dari klik Google 7 hari bila datanya cukup untuk semua tempat, selain itu "Tulisan terbaru"; tetap ISR (tag `analitik`) dan JavaScript halaman publik tidak bertambah.
 - Pindai harian melaporkan tautan internal rusak, tautan ke alamat lama, dan halaman yatim dengan dokumen sumbernya; tautan ke situs lain dicek seminggu sekali, paling banyak 10 per jalan cron.
@@ -6009,7 +6015,7 @@ Tidak ada env baru: Search Analytics memakai akun layanan, `INDEXER_ADAPTER`, da
 | Alat penulis probe mengubah teks escape `\u00a0` menjadi spasi tak putus asli di satu komentar dan dua tes. | Diganti teks escape sebelum commit (CLAUDE.md: tulis `\u00a0`); pemindaian karakter (em dash, en dash, spasi tak putus) atas rencana dan diff probe bersih. |
 | Verifikasi penuh per commit di salinan terpisah (database tes dibuat ulang per commit): type check, lint, unit, integrasi, dan E2E; Task 10 menjalankan E2E dua kali berturut-turut tanpa membuang database E2E. | Semua hijau (E2E task 6 lulus saat diulang setelah satu kegagalan pola 404 warisan Rencana 4A, lihat Global Constraints). Jumlah tes per task di tabel "Jumlah tes yang diharapkan"; E2E kedua Task 10: `98 passed`. |
 | JavaScript halaman publik diukur dengan cara `motion.spec.ts` (resource script, `encodedBodySize`) di build `7b4c1e8` dan build Task 10. | Sama di kedua build: 138,6 KiB untuk `/`, `/halaman-yang-tidak-ada`, artikel `/cara-hitung-gaji-bersih`, dan rubrik `/uang-karier` (tiga kali ukur per halaman). "Paling dibaca pekan ini" dirender di server, jadi JavaScript publik tidak bertambah. |
-| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`7b4c1e8`), task demi task. | 10 dari 10 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe (`git rev-parse <commit>^{tree}`), termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `pnpm generate:types` dan `pnpm generate:importmap`. |
+| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`7b4c1e8`), task demi task. | 10 dari 10 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe (`git rev-parse <commit>^{tree}`), termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `npm run generate:types` dan `npm run generate:importmap`. |
 | Review independen screenshot akhir (setelah rencana ditulis): di dashboard 1440 px, `.pantau-kisi` membagi lebar menjadi tiga kolom (`minmax(min(100%, 30rem), 1fr)` dengan ukuran huruf dasar admin Payload yang lebih kecil dari 16 px), sehingga baris Status indeks + Log indexing dan baris Halaman yatim + 404 teratas menyisakan sepertiga kolom kosong. | Commit perbaikan terpisah setelah Task 10 (pola yang sama dengan perbaikan Rencana 4A dan 4B): lebar kolom minimal dinaikkan sampai 1440 px memberi dua kolom yang terisi penuh, dan tes E2E dashboard memeriksa tepi kanan kartu Log indexing sejajar dengan kartu Performa di 1440 px. Jumlah tes tidak berubah. |
 | Review independen screenshot beranda: mozaik baris kedua dan strip video tampak kosong di screenshot halaman penuh. | Bukan galat: `PemicuMasuk` (Rencana 4A) menahan kartu di bawah layar dalam keadaan `data-masuk="tunggu"` sampai terlihat, dan screenshot halaman penuh tidak menggulir. Tidak ada perubahan. |
 | Dashboard pada data probe melaporkan tautan footer `/kebijakan-privasi`, `/kontak`, `/pasang-iklan`, `/pedoman-media-siber` rusak. | Benar: halaman statis dari seed masih draf. Dicatat untuk pemilik: terbitkan halaman itu (Kebijakan Privasi wajib untuk iklan) sebelum peluncuran. |

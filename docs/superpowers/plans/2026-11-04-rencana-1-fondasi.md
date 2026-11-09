@@ -1,27 +1,33 @@
 # Rencana 1: Fondasi & Model Konten point.lat
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Membangun aplikasi Next.js + Payload CMS 3 dengan seluruh model konten point.lat (koleksi, global, validasi, slug, redirect otomatis, data awal) yang bisa dijalankan, diedit di `/admin`, dan diuji.
 
-**Architecture:** Satu aplikasi Next.js App Router yang menjalankan Payload 3 (admin di `/admin`, API di `/api`). Database PostgreSQL (lokal lewat Docker, produksi Supabase). Logika bisnis berupa fungsi murni di `src/lib/` dan `src/hooks/` yang diuji unit; config Payload di `src/collections/`, `src/globals/`, `src/blocks/`, `src/fields/` hanya merangkai. Tes integrasi menyalakan Payload sungguhan terhadap database `pointlat_test`.
+**Architecture:** Satu aplikasi Next.js App Router yang menjalankan Payload 3 (admin di `/admin`, API di `/api`). Database PostgreSQL (lokal, produksi Supabase; Docker dihapus di v1.1.0). Logika bisnis berupa fungsi murni di `src/lib/` dan `src/hooks/` yang diuji unit; config Payload di `src/collections/`, `src/globals/`, `src/blocks/`, `src/fields/` hanya merangkai. Tes integrasi menyalakan Payload sungguhan terhadap database `pointlat_test`.
 
-**Tech Stack:** Next.js 16.3.3, Payload 3.92.1 (`@payloadcms/db-postgres`, `@payloadcms/richtext-lexical`), React 19.2, TypeScript 5.7, Vitest 4, PostgreSQL 17 (Docker), pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3, Payload 3.92.1 (`@payloadcms/db-postgres`, `@payloadcms/richtext-lexical`), React 19.2, TypeScript 5.7, Vitest 4, PostgreSQL 17 (lokal; Docker dihapus di v1.1.0), npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§2, §3, §6, §7 dicakup rencana ini).
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi Payload dikunci `3.92.1`, Next `16.3.3` (bawaan template).
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi Payload dikunci `3.92.1`, Next `16.3.3` (bawaan template).
 - Nama domain berbahasa Indonesia, sama dengan spesifikasi: slug koleksi `pengguna`, `media`, `pilar`, `subkategori`, `penulis`, `artikel`, `tools`, `parameter-tools`, `video`, `halaman`, `redirect`, `log-404`; global `header`, `footer`, `beranda`, `pengaturan-seo`, `newsletter`.
 - Tipe artikel: `panduan`, `explainer`, `daftar`, `glosarium`. Warna pilar: `hijau` #1F7A4D, `oranye` #C2410C, `kuning` #F2C230, `koral` #FF8A80. Tool ID: `gaji-bersih`, `thr`, `cicilan-kpr`, `dana-darurat`, `bmi-kalori`, `ipk`.
 - URL: artikel `/{slug}`, glosarium `/glosarium/{slug}`, pilar `/{slug}`, subkategori `/{pilar}/{slug}`, tools `/tools/{slug}`, video `/video/{slug}`, penulis `/penulis/{slug}`, halaman `/{slug}`. Selalu lewat `pathFor()`.
 - Kotak Intinya 2-4 poin, maks 220 karakter per poin. Gambar utama artikel minimal 1200px lebarnya. Alt wajib untuk gambar.
 - Copy UI dan pesan validasi: bahasa Indonesia, sapaan "kamu" untuk pembaca, tanpa em dash dan en dash, tanpa tanda seru.
 - **Perubahan skema harus aditif.** Payload mendorong skema ke database dev/tes secara otomatis dan **berhenti menunggu jawaban** bila mendeteksi rename atau penghapusan kolom/tabel (terlihat macet di "Pulling schema from database..."). Bila itu terjadi, reset database yang bersangkutan:
-  `docker compose exec postgres psql -U postgres -c "DROP DATABASE pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test"` (ganti `pointlat_test` dengan `pointlat` untuk database dev).
-- Setiap kali field koleksi/global berubah: `pnpm generate:types`, lalu `pnpm typecheck`. Setiap kali menambah fitur Lexical (BlocksFeature): `pnpm generate:importmap`.
-- Tes integrasi butuh Postgres jalan (`docker compose up -d`) dan memakai `.env.test` (database `pointlat_test`).
+  `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c "DROP DATABASE pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test"` (ganti `pointlat_test` dengan `pointlat` untuk database dev).
+- Setiap kali field koleksi/global berubah: `npm run generate:types`, lalu `npm run typecheck`. Setiap kali menambah fitur Lexical (BlocksFeature): `npm run generate:importmap`.
+- Tes integrasi butuh Postgres lokal jalan (Postgres sistem, tanpa Docker) dan memakai `.env.test` (database `pointlat_test`).
 
 ## Peta rencana point.lat
 
@@ -73,7 +79,7 @@ tests/unit/  tests/int/           tes
 - Test: `tests/int/smoke.int.spec.ts`
 
 **Interfaces:**
-- Produces: `getTestPayload(): Promise<Payload>` dan `unik(prefix: string): string` di `tests/int/helpers.ts`; koleksi auth `pengguna` (field `nama`); skrip `pnpm test:unit`, `pnpm test:int`, `pnpm typecheck`, `pnpm seed`.
+- Produces: `getTestPayload(): Promise<Payload>` dan `unik(prefix: string): string` di `tests/int/helpers.ts`; koleksi auth `pengguna` (field `nama`); skrip `npm run test:unit`, `npm run test:int`, `npm run typecheck`, `npm run seed`.
 
 Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `users` belakangan membuat Payload bertanya interaktif soal rename tabel dan prosesnya macet.
 
@@ -86,7 +92,7 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   rm -rf /tmp/point-lat-scaffold && mkdir /tmp/point-lat-scaffold && cd /tmp/point-lat-scaffold
   CI=1 npx -y create-payload-app@3.92.1 -n point-lat -t blank --db postgres \
     --db-connection-string "postgres://postgres:postgres@127.0.0.1:5432/pointlat" \
-    --no-deps --no-agent --use-pnpm
+    --no-deps --no-agent --use-npm
   cd point-lat && rm -rf .git .env && cp -a . "$REPO/" && cd "$REPO"
   ls
   ```
@@ -116,7 +122,7 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   const p = JSON.parse(fs.readFileSync("package.json", "utf8"))
   p.name = "point-lat"
   p.description = "point.lat: media edukasi praktis"
-  p.scripts.test = "pnpm run test:unit && pnpm run test:int"
+  p.scripts.test = "npm run test:unit && npm run test:int"
   p.scripts["test:unit"] = "vitest run --config ./vitest.unit.config.mts"
   p.scripts["test:int"] = "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts"
   p.scripts.typecheck = "tsc --noEmit"
@@ -438,18 +444,18 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   - PostgreSQL (lokal lewat Docker, produksi di Supabase lewat pooler) dengan `@payloadcms/db-postgres`
   - Editor Lexical (`@payloadcms/richtext-lexical`)
   - Vitest (unit + integrasi), Playwright (e2e, mulai Rencana 4)
-  - Node `^22.23.4 || >=24.22.1`, pnpm 10
+  - Node `^22.23.4 || >=24.22.1`, npm 11
 
   ## Perintah
-  - Database lokal: `docker compose up -d` (membuat database `pointlat` dan `pointlat_test`)
-  - Dev: `pnpm dev` (admin di http://localhost:3000/admin)
-  - Tes unit: `pnpm test:unit`
-  - Tes integrasi (butuh Postgres): `pnpm test:int`
-  - Semua tes: `pnpm test`
-  - Type check: `pnpm typecheck`
-  - Tipe Payload: `pnpm generate:types` (jalankan setiap kali field berubah)
-  - Import map admin: `pnpm generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
-  - Data awal: `pnpm seed`
+  - Database lokal: Postgres sistem (tanpa Docker; sejak v1.1.0 komputer pemilik memakai proyek Supabase pratinjau)
+  - Dev: `npm run dev` (admin di http://localhost:3000/admin)
+  - Tes unit: `npm run test:unit`
+  - Tes integrasi (butuh Postgres): `npm run test:int`
+  - Semua tes: `npm test`
+  - Type check: `npm run typecheck`
+  - Tipe Payload: `npm run generate:types` (jalankan setiap kali field berubah)
+  - Import map admin: `npm run generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
+  - Data awal: `npm run seed`
 
   ## Konvensi
   - Nama domain memakai bahasa Indonesia, sama dengan spesifikasi: slug koleksi (`artikel`, `pilar`), nama field (`judul`, `intinya`), nama fungsi modul (`kabari`, `hitung`, `pathFor` adalah pengecualian yang sudah ada).
@@ -463,8 +469,8 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   ## Batasan
   - Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal.
   - Tanya dulu sebelum menambah dependensi baru di luar rencana.
-  - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-  - Jalankan `pnpm test` sebelum commit.
+  - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+  - Jalankan `npm test` sebelum commit.
   ```
 
 
@@ -473,11 +479,11 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm install
-  docker compose up -d
+  npm install
+  pg_ctlcluster 16 main start   # sejak v1.1.0 tanpa Docker
   cp .env.example .env
   sed -i "s/^PAYLOAD_SECRET=.*/PAYLOAD_SECRET=$(openssl rand -hex 24)/" .env
-  docker compose exec postgres psql -U postgres -lqt | cut -d"|" -f1 | grep pointlat
+  PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -lqt | cut -d"|" -f1 | grep pointlat
   ```
 
   Hasil yang diharapkan: dua baris: `pointlat` dan `pointlat_test`.
@@ -488,9 +494,9 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm test:int
-  pnpm generate:types && pnpm typecheck
-  pnpm lint
+  npm run test:int
+  npm run generate:types && npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: `Test Files 1 passed (1)`, `Tests 1 passed (1)`; `tsc --noEmit` tanpa error; lint tanpa output error.
@@ -611,7 +617,7 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL dengan `Cannot find package '@/lib/slug'` dan `'@/lib/paths'`.
@@ -743,8 +749,8 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
+  npm run test:unit
+  npm run typecheck
   ```
 
   Hasil yang diharapkan: `Test Files 2 passed (2)`, `Tests 13 passed (13)`; type check bersih.
@@ -851,7 +857,7 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/access.test.ts` karena `@/access` belum ada.
@@ -960,9 +966,9 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Tests 19 passed (19)`; integrasi `Test Files 2 passed (2)`, `Tests 2 passed (2)`.
@@ -1142,7 +1148,7 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/fields.test.ts` (`buatSlug` dan `@/lib/validasi` belum ada).
@@ -1469,9 +1475,9 @@ Catatan: koleksi auth langsung bernama `pengguna` di task ini. Mengganti nama `u
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Tests 27 passed (27)`; integrasi `Test Files 3 passed (3)`, `Tests 5 passed (5)`.
@@ -1591,7 +1597,7 @@ Penyimpanan sementara di disk lokal (`media/`, sudah di `.gitignore`). Rencana 2
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media.test.ts` (`@/lib/media` belum ada).
@@ -1661,9 +1667,9 @@ Penyimpanan sementara di disk lokal (`media/`, sudah di `.gitignore`). Rencana 2
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Tests 32 passed (32)`; integrasi `Test Files 4 passed (4)`, `Tests 7 passed (7)`.
@@ -1778,7 +1784,7 @@ Penyimpanan sementara di disk lokal (`media/`, sudah di `.gitignore`). Rencana 2
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/tanggal.test.ts` (`validasiRentangTanggal` belum diekspor).
@@ -2054,9 +2060,9 @@ Penyimpanan sementara di disk lokal (`media/`, sudah di `.gitignore`). Rencana 2
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Tests 35 passed (35)`; integrasi `Test Files 5 passed (5)`, `Tests 9 passed (9)`.
@@ -2272,7 +2278,7 @@ Validasi Payload tidak berjalan saat menyimpan draf, jadi aturan wajib (Intinya 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/artikel.test.ts` dan `tests/unit/lexical.test.ts` (modul belum ada).
@@ -2632,9 +2638,9 @@ Validasi Payload tidak berjalan saat menyimpan draf, jadi aturan wajib (Intinya 
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm generate:importmap && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run generate:importmap && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: import map ditulis ke `src/app/(payload)/admin/importMap.js`; type check bersih; unit `Tests 40 passed (40)`; integrasi `Test Files 6 passed (6)`, `Tests 13 passed (13)`.
@@ -2825,7 +2831,7 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/redirect.test.ts` (`@/lib/redirect` belum ada).
@@ -3676,9 +3682,9 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm generate:importmap && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run generate:importmap && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Tests 47 passed (47)`; integrasi `Test Files 7 passed (7)`, `Tests 17 passed (17)`.
@@ -3784,7 +3790,7 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/global.test.ts` (`@/lib/seo-dasar` belum ada).
@@ -4196,9 +4202,9 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm generate:types && pnpm generate:importmap && pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && npm run generate:importmap && npm run typecheck
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Test Files 10 passed (10)`, `Tests 49 passed (49)`; integrasi `Test Files 8 passed (8)`, `Tests 20 passed (20)`.
@@ -4220,7 +4226,7 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
 
 **Interfaces:**
 - Consumes: semua koleksi & global; `paragrafLexical` (Task 7); `WarnaPilar` (Task 2).
-- Produces: `PILAR_AWAL` (4 pilar: `uang-karier`, `tekno`, `belajar`, `sehat`); `HALAMAN_AWAL` (6 halaman statis, dibuat sebagai draf); `seed(payload: Payload, opsi?: { emailAdmin?: string; passwordAdmin?: string }): Promise<{ admin: 'dibuat' | 'sudah-ada' | 'dilewati'; pilar: number; halaman: number }>`; perintah `pnpm seed` (membaca `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` dari `.env`).
+- Produces: `PILAR_AWAL` (4 pilar: `uang-karier`, `tekno`, `belajar`, `sehat`); `HALAMAN_AWAL` (6 halaman statis, dibuat sebagai draf); `seed(payload: Payload, opsi?: { emailAdmin?: string; passwordAdmin?: string }): Promise<{ admin: 'dibuat' | 'sudah-ada' | 'dilewati'; pilar: number; halaman: number }>`; perintah `npm run seed` (membaca `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` dari `.env`).
 
 - [ ] **Langkah 1: Tulis tes yang gagal**
 
@@ -4274,7 +4280,7 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.int.config.mts tests/int/seed.int.spec.ts
+  npx vitest run --config ./vitest.int.config.mts tests/int/seed.int.spec.ts
   ```
 
   Hasil yang diharapkan: FAIL karena `@/seed/seed` belum ada.
@@ -4434,10 +4440,10 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm test:unit
-  pnpm test:int
-  pnpm lint
+  npm run typecheck
+  npm run test:unit
+  npm run test:int
+  npm run lint
   ```
 
   Hasil yang diharapkan: type check bersih; unit `Tests 49 passed (49)`; integrasi `Test Files 9 passed (9)`, `Tests 21 passed (21)`; lint tanpa error.
@@ -4448,8 +4454,8 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm seed
-  pnpm seed
+  npm run seed
+  npm run seed
   ```
 
   Hasil yang diharapkan: baris pertama `Seed selesai. Admin: dibuat. Pilar: 4. Halaman draf: 6.`, baris kedua `Admin: sudah-ada`.
@@ -4460,8 +4466,8 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
   Jalankan:
 
   ```bash
-  pnpm build
-  (pnpm start > /tmp/point-lat-start.log 2>&1 &) && sleep 20
+  npm run build
+  (npm run start > /tmp/point-lat-start.log 2>&1 &) && sleep 20
   curl -s -o /dev/null -w "beranda %{http_code}\n" http://localhost:3000/
   curl -s -o /dev/null -w "admin %{http_code}\n" http://localhost:3000/admin/login
   curl -s "http://localhost:3000/api/pilar?sort=urutan" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).docs.map(p=>p.slug).join(',')))"
@@ -4486,7 +4492,7 @@ Subkategori tidak mendapat redirect otomatis di MVP (path-nya bergantung pada sl
 
 ## Selesai bila
 
-- `pnpm test` lulus (49 unit, 21 integrasi), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil.
+- `npm test` lulus (49 unit, 21 integrasi), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil.
 - Admin bisa masuk di `/admin`, melihat grup Konten (Pilar, Subkategori, Penulis, Artikel, Video, Halaman, Media), Tools (Tools, Parameter tools), SEO (Redirect, Log 404, Pengaturan SEO), Tampilan (Header, Footer, Beranda, Newsletter), Pengaturan (Pengguna).
 - Artikel tidak bisa terbit tanpa 2-4 poin Intinya dan gambar utama ≥1200px; mengganti slug artikel terbit membuat redirect 301 otomatis.
 

@@ -18,6 +18,9 @@
   --pilar-tekno: #c2410c;
   --pilar-belajar: #f2c230;
   --pilar-sehat: #ff8a80;
+  /* Biru titik logo (dari file logo pemilik). Hanya untuk logo dan grafik merek, bukan warna teks: kontrasnya
+     di atas putih 4,5:1, pas di batas WCAG AA, dan di atas sand 4,0:1. */
+  --merek-biru: #2f6bff;
   /* Versi lembut (16% warna pilar di atas putih) untuk latar kotak Intinya. Teks di atasnya ink. */
   --pilar-uang-lembut: #dbeae3;
   --pilar-tekno-lembut: #f5e1d8;
@@ -51,7 +54,6 @@
   --lebar-h1: 80%;
   --lebar-h2: 82%;
   --lebar-h3: 90%;
-  --lebar-logo: 75%;
   --tinggi-display: 0.86;
   --tinggi-h1: 0.98;
   --tinggi-judul: 1.05;

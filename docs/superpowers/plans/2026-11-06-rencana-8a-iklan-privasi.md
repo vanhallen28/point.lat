@@ -1,12 +1,18 @@
 # Rencana 8A: Iklan, persetujuan cookie, dan admin berbahasa Indonesia point.lat
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Melengkapi spesifikasi §11 (iklan dan privasi) dan keputusan pemilik soal bahasa admin: slot iklan AdSense yang diatur editor dari global `iklan` tanpa kode, ruang iklan yang dipesan sehingga tidak ada pergeseran tata letak, banner persetujuan cookie (UU PDP No. 27/2022) dengan "Hanya yang perlu" dan "Izinkan semua" yang setara, Google Consent Mode v2 yang menolak semua sinyal sebelum skrip iklan apa pun, `/ads.txt` dari CMS, dan admin Payload berbahasa Indonesia; tanpa dependensi baru, tanpa jaringan di tes, dan halaman publik tetap ISR.
 
 **Architecture:** Modul baru `src/modules/iklan` dengan antarmuka kecil. Server: `muatIklan()` (global `iklan`, cache bertag `iklan`) dan `pilihSlot(pengaturan, posisi, id?)`, satu-satunya aturan apakah slot tampil; halaman meneruskan pengaturan ke komponennya dan `SlotIklan` (server component) memesan kotak berukuran tetap. Browser: skrip awal sebaris di `<head>` (`skripAwal()`) menjalankan `gtag('consent', 'default', ...)` dengan semua sinyal ditolak lalu menandai `<html data-persetujuan="belum|perlu|semua">` dari cookie pilihan, sebelum paint pertama; CSS memakai atribut itu untuk menampilkan banner (`PanelPersetujuan`) atau slot, jadi markup sama untuk semua pengunjung dan halaman tetap statis. `PemuatIklan` (sekali di layout) memuat `adsbygoogle.js` hanya setelah "Izinkan semua" dan saat slot hampir terlihat. Kode penyedia hanya di `adsense.ts`; tes memotong domain Google di browser. `/ads.txt` dirangkai dari global. Admin: `i18n` dengan bahasa Indonesia saja (`payload/i18n/id`) ditambah terjemahan editor Lexical yang belum ada.
 
-**Tech Stack:** Next.js 16.3.3 (App Router, ISR, route handler `force-dynamic` dengan `unstable_cache` bertag), Payload 3.92.1 (global dengan array dan `admin.condition`, field `ui`, `useFormFields`, `i18n.supportedLanguages`/`fallbackLanguage`/`translations`, `admin.avatar`, `admin.dateFormat`, `custom.scss`), Google AdSense (kode unit display berukuran tetap, `adsbygoogle.push`, `data-adtest`), Google Consent Mode v2 (`dataLayer`, `gtag('consent', ...)`), IAB ads.txt 1.1, `IntersectionObserver`, `PerformanceObserver` (`layout-shift`), `document.cookie`, `node:vm` (tes skrip awal), Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, ISR, route handler `force-dynamic` dengan `unstable_cache` bertag), Payload 3.92.1 (global dengan array dan `admin.condition`, field `ui`, `useFormFields`, `i18n.supportedLanguages`/`fallbackLanguage`/`translations`, `admin.avatar`, `admin.dateFormat`, `custom.scss`), Google AdSense (kode unit display berukuran tetap, `adsbygoogle.push`, `data-adtest`), Google Consent Mode v2 (`dataLayer`, `gtag('consent', ...)`), IAB ads.txt 1.1, `IntersectionObserver`, `PerformanceObserver` (`layout-shift`), `document.cookie`, `node:vm` (tes skrip awal), Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§3 aturan copy; §5 modul `iklan`; §6 global `iklan` dan `beranda` (blok slot iklan); §7 `/ads.txt`; §11 iklan dan privasi; §12 performa (CLS di bawah 0,1, JS milik point. di luar kerangka di bawah 25 KB tanpa skrip iklan); §14 aksesibilitas; §16 testing ("banner persetujuan menahan iklan"); §18 butir 8 akun AdSense).
 
@@ -20,30 +26,30 @@
 
 | Paket | Keputusan rencana ini |
 |---|---|
-| `@payloadcms/translations` | **Tidak dijadikan dependensi langsung.** Paket ini terpasang sebagai dependensi `payload` (3.92.1, versi sama), dan `payload` sendiri mengekspor setiap bahasa lewat `payload/i18n/*` (`export { id } from '@payloadcms/translations/languages/id'`). Jadi `import { id } from 'payload/i18n/id'` bekerja dengan pnpm ketat tanpa menambah paket. Bila kelak dibutuhkan langsung (misalnya utilitas terjemahan), versinya harus persis sama dengan Payload (3.92.1); berkas bahasa Indonesianya sekitar 33 KB. |
+| `@payloadcms/translations` | **Tidak dijadikan dependensi langsung.** Paket ini terpasang sebagai dependensi `payload` (3.92.1, versi sama), dan `payload` sendiri mengekspor setiap bahasa lewat `payload/i18n/*` (`export { id } from '@payloadcms/translations/languages/id'`). Jadi `import { id } from 'payload/i18n/id'` bekerja dengan npm ketat tanpa menambah paket. Bila kelak dibutuhkan langsung (misalnya utilitas terjemahan), versinya harus persis sama dengan Payload (3.92.1); berkas bahasa Indonesianya sekitar 33 KB. |
 | CMP pihak ketiga (CookieYes, Cookiebot, dan sejenisnya) | **Tidak dipasang.** Banner sendiri dan pemuat iklan hanya menambah sekitar 1,9 KiB gzip ke chunk JS tata letak (probe: 4,3 KiB di `45c07f7` menjadi 6,2 KiB), cukup untuk pengunjung Indonesia, dan tidak memuat skrip pihak ketiga sebelum pengunjung memilih. Untuk pengunjung EEA, Inggris, dan Swiss, iklan personalisasi mensyaratkan CMP bersertifikat Google yang terintegrasi IAB TCF; CMP Google sendiri (pesan European regulations di AdSense, Privacy & messaging) termasuk yang bersertifikat dan tidak butuh paket (lihat Setup dari pemilik). |
 | Pustaka cookie (`js-cookie`) dan komponen AdSense untuk Next (`next-google-adsense` dan sejenisnya) | **Tidak dipasang.** Satu cookie dengan format tetap cukup dibaca regex (`bacaPersetujuan`), dan kode unit AdSense hanya tiga atribut dan satu `push` (`adsense.ts`, `PemuatIklan`). |
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
 - Nama domain berbahasa Indonesia (`iklan`, `pilihSlot`, `SlotIklan`, `PemuatIklan`, `PanelPersetujuan`, `persetujuan`, `idPenerbit`, `idSlot`). Nama dari pihak luar tetap seperti aslinya (`adsbygoogle`, `data-ad-client`, `data-ad-slot`, `data-adtest`, `ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage`, `ads.txt`, `DIRECT`, `RESELLER`).
 - Copy situs dan admin buatan rencana ini: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash (juga di komentar), tanpa tanda seru. Teks bawaan Payload berbahasa Indonesia tidak ditimpa kecuali yang memakai em dash (Task 1).
 - **Tes tidak pernah memanggil jaringan.** Skrip AdSense dimuat hanya setelah "Izinkan semua"; tes E2E yang sampai ke sana memakai `cegatIklan(page)` (Task 7), yang menjawab `adsbygoogle.js` dengan skrip tiruan dan menolak domain iklan Google lain. Gambar Cloudinary tetap lewat `cegatCloudinary`. Admin memakai avatar bawaan tanpa Gravatar (Task 1).
 - **ID penerbit di tes, contoh, dan rencana ini hanya `ca-pub-0000000000000000`** (jelas palsu); unit `1111111111` sampai `5555555555` dan domain `contoh-iklan.test` juga tiruan. ID penerbit asli diisi pemilik di global Iklan, tidak pernah di kode, tes, atau env.
 - **Halaman publik tetap ISR.** Server tidak membaca cookie persetujuan; pilihan dibaca skrip awal di browser dan ditulis ke atribut `<html>`. Jangan memindahkan pembacaan cookie ke server component atau `generateMetadata` (halaman menjadi dinamis).
 - Path publik lewat `pathFor` (`/kebijakan-privasi` untuk tautan banner). Warna dari token semantik `src/styles/tokens.css`; animasi hanya `transform` dan mati di reduced motion.
-- **Perubahan skema harus aditif.** Rencana ini menambah global `iklan` (tabel `iklan` dan `iklan_slot`) dan mengubah deskripsi blok Slot iklan (tanpa kolom baru). Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`). Probe: menjalankan E2E di commit yang lebih lama dari skema database E2E membuat server E2E menunggu pertanyaan itu sampai `webServer` habis waktu (600 detik); buang database `_e2e` dulu.
+- **Perubahan skema harus aditif.** Rencana ini menambah global `iklan` (tabel `iklan` dan `iklan_slot`) dan mengubah deskripsi blok Slot iklan (tanpa kolom baru). Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`). Probe: menjalankan E2E di commit yang lebih lama dari skema database E2E membuat server E2E menunggu pertanyaan itu sampai `webServer` habis waktu (600 detik); buang database `_e2e` dulu.
 - **Operasi massal.** Global tidak punya hapus atau update massal, dan rencana ini tidak menambah koleksi atau hook yang menulis tabel berkunci unik, jadi tidak ada uji operasi massal baru; uji operasi massal lama tetap lulus.
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
-- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100. Mulai Task 6 global Iklan menyala di database E2E, jadi semua spec berjalan dengan banner persetujuan; `siapkan.ts` menyetel ulang global itu setiap run, karena blok `finally` tidak berjalan bila tes habis waktu. E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
+- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100. Mulai Task 6 global Iklan menyala di database E2E, jadi semua spec berjalan dengan banner persetujuan; `siapkan.ts` menyetel ulang global itu setiap run, karena blok `finally` tidak berjalan bila tes habis waktu. E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang setelah task selesai.
-- `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 9 dan Task 10 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja). Build yang tertinggal dari commit lain bisa meninggalkan `.next/types` yang menunjuk rute yang tidak ada (`TS2307 ... ads.txt/route.js`); hapus `.next` lalu ulangi `pnpm typecheck`.
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
+- `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 9 dan Task 10 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja). Build yang tertinggal dari commit lain bisa meninggalkan `.next/types` yang menunjuk rute yang tidak ada (`TS2307 ... ads.txt/route.js`); hapus `.next` lalu ulangi `npm run typecheck`.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
 - **Tulis `req.context` setelah `await`** (Rencana 6A); rencana ini tidak menulis `req.context`.
 - Tes integrasi berbagi database dan berjalan berurutan dengan urutan file yang tidak pasti. Pengguna pertama di database selalu admin (`tetapkanPeranAwal`), jadi tes yang butuh editor membuat admin dulu. Tes yang mengubah global `iklan` mengembalikannya di `afterAll`. Tes mencari dokumennya sendiri lewat ID atau `unik()`.
 - E2E berjalan berurutan di satu database dan spec lain membaca daftar artikel admin halaman pertama (10 baris). Rencana ini tidak membuat artikel di E2E. Tes yang menyimpan global Iklan lewat REST mengembalikannya di `finally`.
-- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` atau atribut `lang` kosong karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` atau atribut `lang` kosong karena isi 404 tidak dirender di browser. Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 - Next 16.3.3 kadang mengirim header `Location` dua kali pada redirect pertama sebuah path ISR (`/a, /a`); tes redirect memakai `toContain`, bukan `toBe`.
 - **Admin Payload 3.92.** CSS admin menghapus outline (cincin fokus ditulis sendiri di komponen admin buatan rencana); view kustom tidak memeriksa akses; menu admin dirender terbuka lalu ditutup saat hidrasi (tunggu `nav--nav-hydrated`); ukuran huruf dasar admin lebih kecil dari 16 px; deskripsi field bawaan gagal kontras (penjelasan global Iklan ditulis di komponen sendiri; Task 10 memperbaiki semuanya bila disetujui); isi grup di sidebar baru dirender saat terlihat (`RenderIfInViewport`); tooltip `Button` Payload yang tersembunyi tetap memakan tempat; id `field-{nama}` pada checkbox ada di input, bukan di pembungkus. Nama field `id` di dalam array dipakai Payload sebagai kunci baris, jadi baris slot memakai `idSlot`. Tema admin dipilih cookie `payload-theme` (`light` atau `dark`).
 - Karakter yang dibutuhkan kode (spasi tak putus, em dash, en dash) ditulis sebagai escape `\u00a0`, `\u2014`, `\u2013`; rencana ini tanpa karakter aslinya. Salin blok kode rencana ini apa adanya.
@@ -250,7 +256,7 @@ Probe juga menemukan pemilih label yang bentrok: `getByLabel('Ke')` di `pantau.s
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/admin-bahasa.int.spec.ts`, keempat tes gagal; yang pertama dengan `AssertionError: expected [ 'en' ] to deeply equal [ 'id' ]`, yang kedua dengan `TypeError: Cannot read properties of undefined (reading 'lexical')`.
@@ -441,11 +447,11 @@ Probe juga menemukan pemilih label yang bentrok: `getByLabel('Ke')` di `pantau.s
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 476 tes (69 file); integrasi 142 tes (42 file); E2E 113 tes.
@@ -653,7 +659,7 @@ Iklan tengah artikel disisipkan sebagai node Lexical `slotIklan` setelah paragra
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/iklan-aturan.test.ts` dengan `Error: Cannot find package '@/modules/iklan/aturan'`.
@@ -940,11 +946,11 @@ Iklan tengah artikel disisipkan sebagai node Lexical `slotIklan` setelah paragra
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 486 tes (70 file); integrasi 142 tes (42 file); E2E 113 tes.
@@ -1079,7 +1085,7 @@ Sinyal Google Consent Mode v2: sebelum memilih dan untuk "Hanya yang perlu" keem
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/iklan-persetujuan.test.ts` dengan `Error: Cannot find package '@/modules/iklan/adsense'`.
@@ -1235,11 +1241,11 @@ Sinyal Google Consent Mode v2: sebelum memilih dan untuk "Hanya yang perlu" keem
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 492 tes (71 file); integrasi 142 tes (42 file); E2E 113 tes.
@@ -1473,8 +1479,8 @@ Menyimpan global membuang tag `iklan`; layout, halaman berslot iklan, beranda, d
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/tag.test.ts` dengan `AssertionError: expected undefined to be 'iklan' // Object.is equality` dan di `tests/int/iklan.int.spec.ts` dengan `Error: Cannot find package '@/modules/iklan'`.
@@ -1816,9 +1822,9 @@ Menyimpan global membuang tag `iklan`; layout, halaman berslot iklan, beranda, d
   Buat ulang tipe dan import map, lalu dorong kolom baru ke database dev:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
-  pnpm seed
+  npm run generate:types
+  npm run generate:importmap
+  npm run seed
   ```
 
 - [ ] **Langkah 6: Jalankan semua tes**
@@ -1826,11 +1832,11 @@ Menyimpan global membuang tag `iklan`; layout, halaman berslot iklan, beranda, d
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 492 tes (71 file); integrasi 145 tes (43 file); E2E 114 tes. Baca log integrasi utuh: tidak ada pertanyaan DATA LOSS (skema hanya bertambah tabel `iklan` dan `iklan_slot`).
@@ -1914,7 +1920,7 @@ E2E menyimpan global lewat REST lalu memastikan `/ads.txt` berubah (cache bertag
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/iklan-rute.test.ts` dengan `Error: Cannot find package '@/modules/iklan/rute'`.
@@ -1956,11 +1962,11 @@ E2E menyimpan global lewat REST lalu memastikan `/ads.txt` berubah (cache bertag
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 493 tes (72 file); integrasi 145 tes (43 file); E2E 115 tes.
@@ -2200,7 +2206,7 @@ Tata letak dan akses:
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/iklan-komponen.test.ts` dengan `Error: Cannot find package '@/components/iklan/PanelPersetujuan'`.
@@ -2606,11 +2612,11 @@ Tata letak dan akses:
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 496 tes (73 file); integrasi 145 tes (43 file); E2E 121 tes. Spec lain tetap lulus dengan banner di atas header (skip link tetap fokus pertama, jarak antarbagian beranda tidak berubah, axe semua halaman tetap bersih).
@@ -3025,7 +3031,7 @@ E2E memakai `cegatIklan(page)`: permintaan ke domain iklan Google lain ditolak d
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/iklan-komponen.test.ts` dengan `Error: Cannot find package '@/components/iklan/SlotIklan'`.
@@ -3348,11 +3354,11 @@ E2E memakai `cegatIklan(page)`: permintaan ke domain iklan Google lain ditolak d
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 498 tes (73 file); integrasi 145 tes (43 file); E2E 127 tes.
@@ -3532,7 +3538,7 @@ Halaman rubrik dan tools meneruskan `iklan={await muatIklan()}`, sama dengan art
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/beranda.test.ts` ("slot iklan hanya bila ID slotnya aktif ...") dengan `AssertionError: expected [ 'hero', 'terbaru' ] to deeply equal [ 'hero', 'terbaru', 'iklan', …(1) ]`.
@@ -3832,7 +3838,7 @@ Halaman rubrik dan tools meneruskan `iklan={await muatIklan()}`, sama dengan art
   Buat ulang tipe (deskripsi blok berubah):
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   ```
 
 - [ ] **Langkah 5: Jalankan semua tes**
@@ -3840,11 +3846,11 @@ Halaman rubrik dan tools meneruskan `iklan={await muatIklan()}`, sama dengan art
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 499 tes (73 file); integrasi 145 tes (43 file); E2E 133 tes.
@@ -3966,17 +3972,17 @@ Halaman rubrik dan tools meneruskan `iklan={await muatIklan()}`, sama dengan art
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:int
-  pnpm test:e2e
-  pnpm test:e2e
-  pnpm seed
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:int
+  npm run test:e2e
+  npm run test:e2e
+  npm run seed
+  npm run build
   git status --short
   ```
 
@@ -3988,12 +3994,12 @@ Halaman rubrik dan tools meneruskan `iklan={await muatIklan()}`, sama dengan art
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Periksa di 375, 768, dan 1440 px (DevTools): beranda, artikel `cara-hitung-gaji-bersih`, rubrik `uang-karier`, dan `tools/gaji-bersih`, masing-masing (a) sebelum memilih (banner di atas header, dua tombol sama lebar dan sejajar, tidak menutupi isi), (b) setelah "Hanya yang perlu" (banner hilang, tidak ada ruang iklan, tidak ada permintaan ke domain Google di tab Network), dan (c) setelah "Izinkan semua". Di browser biasa unit iklan tidak terisi karena ID penerbit tiruan: pastikan kotak berlabel "Iklan" tetap berukuran sama dan isi di bawahnya tidak bergeser. Ulangi dengan reduced motion (DevTools, Rendering). Lalu masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`) dan periksa admin berbahasa Indonesia di tema terang dan gelap (halaman Akun, Tema Admin): daftar artikel, form artikel, sidebar Asisten AI, global Iklan (petunjuk dan pratinjau ads.txt), dan Dashboard SEO. Pastikan tidak ada kunci mentah (`lexical:...`), tidak ada geser horizontal di halaman publik, cincin fokus terlihat saat menekan Tab di banner, dan tombol Pengaturan cookie di footer membuka banner lagi. Hentikan server dengan `fuser -k 3200/tcp`, lalu `pnpm build` lagi dengan env biasa.
+  Periksa di 375, 768, dan 1440 px (DevTools): beranda, artikel `cara-hitung-gaji-bersih`, rubrik `uang-karier`, dan `tools/gaji-bersih`, masing-masing (a) sebelum memilih (banner di atas header, dua tombol sama lebar dan sejajar, tidak menutupi isi), (b) setelah "Hanya yang perlu" (banner hilang, tidak ada ruang iklan, tidak ada permintaan ke domain Google di tab Network), dan (c) setelah "Izinkan semua". Di browser biasa unit iklan tidak terisi karena ID penerbit tiruan: pastikan kotak berlabel "Iklan" tetap berukuran sama dan isi di bawahnya tidak bergeser. Ulangi dengan reduced motion (DevTools, Rendering). Lalu masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`) dan periksa admin berbahasa Indonesia di tema terang dan gelap (halaman Akun, Tema Admin): daftar artikel, form artikel, sidebar Asisten AI, global Iklan (petunjuk dan pratinjau ads.txt), dan Dashboard SEO. Pastikan tidak ada kunci mentah (`lexical:...`), tidak ada geser horizontal di halaman publik, cincin fokus terlihat saat menekan Tab di banner, dan tombol Pengaturan cookie di footer membuka banner lagi. Hentikan server dengan `fuser -k 3200/tcp`, lalu `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -4069,7 +4075,7 @@ Task ini butuh persetujuan pemilik karena mengubah tampilan semua form admin, bu
   Jalankan:
 
   ```bash
-  pnpm test:e2e tests/e2e/admin.spec.ts
+  npm run test:e2e -- tests/e2e/admin.spec.ts
   ```
 
   Hasil yang diharapkan: tes tema terang FAIL di `periksaAxe` dengan `+   "color-contrast: .field-description-deck, .field-description-intinya, .field-description-gambarUtama, .field-description-sumber, .field-description-sumber__0__penerbit, .field-description-sumber__1__penerbit, .field-description-slug, .field-description-perubahanBesar",`; tes tema gelap lulus.
@@ -4111,12 +4117,12 @@ Task ini butuh persetujuan pemilik karena mengubah tampilan semua form admin, bu
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 499 tes (73 file); integrasi 145 tes (43 file); E2E 135 tes dua kali berturut-turut tanpa membuang database E2E.
@@ -4132,7 +4138,7 @@ Task ini butuh persetujuan pemilik karena mengubah tampilan semua form admin, bu
 
 ## Selesai bila
 
-- `pnpm test` lulus (unit 499 tes (73 file), integrasi 145 tes (43 file), juga di database tes yang sudah berisi data putaran sebelumnya), `pnpm test:e2e` lulus (135 tes, atau 133 tes bila Task 10 dilepas) dua kali berturut-turut tanpa membuang database E2E, `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil dengan rute baru `ƒ /ads.txt` sementara `○ /`, `● /[...jalur]`, dan `● /tools/[slug]` tetap statis, semuanya tanpa jaringan dan tanpa ID penerbit asli.
+- `npm test` lulus (unit 499 tes (73 file), integrasi 145 tes (43 file), juga di database tes yang sudah berisi data putaran sebelumnya), `npm run test:e2e` lulus (135 tes, atau 133 tes bila Task 10 dilepas) dua kali berturut-turut tanpa membuang database E2E, `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil dengan rute baru `ƒ /ads.txt` sementara `○ /`, `● /[...jalur]`, dan `● /tools/[slug]` tetap statis, semuanya tanpa jaringan dan tanpa ID penerbit asli.
 - Admin Payload berbahasa Indonesia apa pun bahasa browser: menu, daftar, tombol terbit ("Publikasikan perubahan"), toolbar dan menu editor Lexical tanpa kunci mentah, tanggal "6 November 2026, 08.21", tanpa permintaan ke Gravatar.
 - Editor mengatur iklan tanpa kode di global Iklan (grup Tampilan): saklar, ID penerbit, mode uji, slot dengan posisi dan ukuran tetap, dan baris `ads.txt` tambahan, semuanya divalidasi dengan pesan berbahasa Indonesia; perubahan langsung terlihat di halaman publik dan `/ads.txt` (tag `iklan`).
 - `/ads.txt` memuat baris AdSense dari ID penerbit dan baris tambahan editor sebagai `text/plain`, dan 404 bila tidak ada baris.
@@ -4203,7 +4209,7 @@ Task ini butuh persetujuan pemilik karena mengubah tampilan semua form admin, bu
 | Uji visual dengan data E2E (build produksi, port 3200): beranda, artikel, rubrik, dan tools di 375, 768, dan 1440 px dalam tiga keadaan (sebelum memilih, Hanya yang perlu, Izinkan semua dengan skrip tiruan); reduced motion; admin di tema terang dan gelap (daftar artikel, form artikel, sidebar Asisten AI, global Iklan, Dashboard SEO). | Halaman publik: 36 keadaan (4 halaman, 3 lebar, 3 keadaan) lolos axe, CLS 0, tanpa geser horizontal; sebelum memilih dan dengan Hanya yang perlu tidak ada permintaan ke luar dan slot tersembunyi; dengan Izinkan semua skrip iklan dimuat sekali dan semua slot terisi. Reduced motion: transisi tombol banner 0,00001 detik, CLS 0, axe bersih. Admin: 20 keadaan berbahasa Indonesia tanpa kunci mentah dan tanpa permintaan ke luar, axe pada komponen rencana ini (petunjuk dan pratinjau global Iklan, sidebar Asisten AI) bersih, dan tidak ada `color-contrast` pada deskripsi field setelah Task 10. Sisa pelanggaran axe bawaan Payload dan kartu unggahan Lexical yang melebar di 375 px dicatat di "Cakupan yang ditunda". |
 | Verifikasi penuh per commit di salinan terpisah (database tes dibuat ulang per commit): type check, lint, unit, integrasi, dan E2E (build produksi). | Semua hijau; jumlah tes per task di tabel "Jumlah tes yang diharapkan". |
 | Putaran tambahan di commit terakhir: E2E kedua di database E2E yang sama tanpa dibuang, lalu integrasi dan unit di database tes yang sudah berisi data. | Semua hijau di commit Task 10: E2E kedua 135 tes tanpa membuang database E2E; integrasi kedua 145 tes (43 file) di database tes yang sudah berisi 67 artikel dari putaran pertama; unit kedua 499 tes (73 file). |
-| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`45c07f7`), task demi task. | 10 dari 10 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe, termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `pnpm generate:types` dan `pnpm generate:importmap`. |
+| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`45c07f7`), task demi task. | 10 dari 10 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe, termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `npm run generate:types` dan `npm run generate:importmap`. |
 | Review pengawas setelah rencana selesai: dua fakta yang menentukan keputusan pemilik dicek ulang ke sumber (6 November 2026). | Bantuan AdSense 7670312: iklan non-personalisasi tetap memakai cookie untuk pembatasan frekuensi dan laporan gabungan. Kebijakan penempatan AdSense 1346295 (juga `hl=id`, yang tetap berbahasa Inggris): "Publishers can only label Google ads with either 'Advertisements' or 'Sponsored links'". Keduanya dibawa ke pemilik sebagai pertanyaan. |
 | Keputusan pemilik (6 November 2026): jalankan dengan Task 10; "Hanya yang perlu" tanpa iklan; label "Advertisements"; penjaga supaya iklan tidak bisa dinyalakan sebelum Kebijakan Privasi terbit. | Task 1 sampai 10 dijalankan subagen apa adanya; setiap commit identik dengan commit probe (diff kosong, termasuk spesifikasi). Label dan penjaga dikerjakan pengawas sebagai satu commit lanjutan setelah Task 10 (tes ditulis dulu dan gagal dengan pesan yang benar): `SlotIklan` berlabel "Advertisements" dengan `lang="en"`; `PengaturanIklan.kebijakanTerbit` dari `kebijakanPrivasiTerbit` (dokumen utama halaman `kebijakan-privasi`), dipakai `iklanSiap`; validasi `validasiTampilkanIklan` di saklar global Iklan; `muatIklan` dan `muatBeranda` juga bertag `halaman`; petunjuk admin menyebut penjaga itu; `siapkan.ts` menerbitkan Kebijakan Privasi sebelum menyalakan iklan. Tes: unit (iklanSiap dan validasi), integrasi (saklar ditolak saat draf, iklan berhenti saat ditarik dari terbit), E2E `privasi.spec.ts` (banner, skrip awal, slot, dan tombol Pengaturan cookie hilang setelah batal terbit, kembali setelah terbit lagi). |
 | E2E pertama commit lanjutan: `indexing.spec.ts` gagal menunggu log "indexnow terbit berhasil", lalu `rubrik.spec.ts` gagal karena artikel tes indexing tidak sempat dibatalkan terbit. Penyebab: tes penjaga di `iklan.spec.ts` membatalkan dan menerbitkan halaman, sehingga `after()` mengirim IndexNow, dan jendela kirim IndexNow 5 menit menunda kiriman yang ditunggu `indexing.spec.ts`. | Tes penjaga dipindah ke `privasi.spec.ts`, yang berjalan setelah `indexing.spec.ts`; aturannya dicatat di `CLAUDE.md`. |

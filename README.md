@@ -1,67 +1,32 @@
-# Payload Blank Template
+# point.lat
 
-This template comes configured with the bare minimum to get started on anything you need.
+Media edukasi praktis berbahasa Indonesia, dengan tagline "Intinya dulu.". Proyek ini satu aplikasi Next.js 16 (App Router) dan Payload CMS 3: situs publik dan CMS jalan bersama, di-hosting di Vercel paket gratis (Hobby), dan database-nya Supabase Postgres. Tidak ada Docker. Semua perintah memakai npm.
 
-## Quick start
+- Spesifikasi: `docs/superpowers/specs/2026-11-03-point-lat-design.md`
+- Rencana implementasi: `docs/superpowers/plans/`
+- Runbook rilis dan uji langsung: `docs/operasional/rilis.md`
+- Runbook cadangan dan pemulihan database: `docs/operasional/pemulihan-database.md`
+- Riwayat versi: `CHANGELOG.md`
+- Aturan kerja untuk agen dan pengembang: `CLAUDE.md`
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+## Menjalankan di komputer sendiri
 
-## Quick Start - local setup
+Yang dibutuhkan: Node 26 (`nvm install` di folder ini memakai `.nvmrc`; npm ikut terpasang) dan proyek Supabase khusus pratinjau. Jangan pakai proyek produksi untuk pengembangan.
 
-To spin up this template locally, follow these steps:
+```bash
+cp .env.example .env    # isi DATABASE_URL dan DATABASE_CA dari proyek Supabase pratinjau, PAYLOAD_SECRET, SEED_ADMIN_*
+npm ci                  # pasang dependensi sesuai package-lock.json
+npm run migrate         # buat atau perbarui tabel di Supabase lewat migrasi Payload
+npm run seed            # data awal, sekali saja (dokumen yang sudah ada tidak ditimpa)
+npm run dev             # situs di http://localhost:3000, CMS di http://localhost:3000/admin
+```
 
-### Clone
+Konten asli diedit di CMS produksi (`https://point.lat/admin`), bukan di komputer.
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+## Pembaruan
 
-### Development
+Setiap pembaruan dikirim sebagai `point-lat-vX.Y.Z.zip` beserta perintah terminal untuk memasangnya. Isinya repo lengkap tanpa `.env`. Setelah dipasang dan di-push ke GitHub (`git push origin master`), Vercel membangun dan merilis otomatis: build Vercel menjalankan migrasi database sebelum `next build`.
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+## Tes
 
-3. `npm install && npm run dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
-
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
-
-#### Docker (Optional)
-
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
-
-To do so, follow these steps:
-
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
-
-## How it works
-
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
-
-### Collections
-
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
-
-- #### Users (Authentication)
-
-  Users are auth-enabled collections that have access to the admin panel.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Media
-
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
-
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+Tes otomatis jalan di GitHub Actions setiap push (`.github/workflows/ci.yml`) dengan PostgreSQL bawaan runner, tanpa Docker dan tanpa rahasia. Perintahnya ada di `CLAUDE.md`, bagian Perintah.

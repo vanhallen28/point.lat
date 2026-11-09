@@ -1,12 +1,18 @@
 # Rencana 4A: Frontend publik inti point.lat (design system, tata letak, artikel, glosarium, redirect, 404)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Membangun fondasi frontend publik point.lat sesuai Arah 3 "Kartu Intinya": token desain dan font Archivo variable yang di-host sendiri, tata letak (header dengan pill rubrik, footer, skip link), halaman artikel untuk keempat tipe dan glosarium, redirect 301 dari CMS di runtime, halaman 404 yang mencatat ke `log-404`, motion (View Transitions, kartu masuk, reduced motion), serta E2E Playwright + axe di build produksi, semuanya tanpa jaringan dan tanpa kredensial Cloudinary.
 
 **Architecture:** Halaman publik di `src/app/(frontend)/` adalah server component yang dirender ISR (`generateStaticParams` mengembalikan `[]`): dirender saat pertama diminta, disimpan, lalu dibuang oleh `revalidateTag` dari hook Payload. Semua data halaman lewat modul baru `src/modules/konten` (`muat*()` = query Payload di `unstable_cache` bertag `TAG`, `ambil*(payload)` versi tanpa cache untuk tes, fungsi murni `susun*` yang menerjemahkan dokumen Payload ke tipe tampilan). SEO tetap lewat `src/modules/seo` (`metadata`, `jsonLd`, `remahRoti`, `ambilSitus`). Komponen UI di `src/components/` memakai CSS Module dan token CSS tiga lapis di `src/styles/tokens.css`; JavaScript klien hanya untuk beacon log 404 dan pemicu animasi kartu. Rute catch-all `[...jalur]` menangani artikel sekarang dan pilar, subkategori, serta halaman statis di Rencana 4B; path tanpa dokumen diakhiri `tanganiTidakAda()` (redirect dari koleksi `redirect` atau 404).
 
-**Tech Stack:** Next.js 16.3.3 (App Router, ISR, `next/font/local`, `next/image` dengan loader Cloudinary Rencana 2, React `ViewTransition` dari React canary bawaan Next), Payload 3.92.1 (`@payloadcms/richtext-lexical/react` untuk render isi), CSS Module + custom properties, Vitest 4 (unit + integrasi, `react-dom/server` untuk tes render), Playwright 1.63 + `@axe-core/playwright` 4.14, PostgreSQL 16/17, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, ISR, `next/font/local`, `next/image` dengan loader Cloudinary Rencana 2, React `ViewTransition` dari React canary bawaan Next), Payload 3.92.1 (`@payloadcms/richtext-lexical/react` untuk render isi), CSS Module + custom properties, Vitest 4 (unit + integrasi, `react-dom/server` untuk tes render), Playwright 1.63 + `@axe-core/playwright` 4.14, PostgreSQL 16/17, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§3 rambu kredibilitas dan disclaimer, §4 Visual "Kartu Intinya", §5 Arsitektur dan "Rendering", §6 `pilar`, `redirect`, `log404`, §7 URL `/{slug}` dan `/glosarium`, §12 Performa, §13 Motion, §14 Aksesibilitas, §15 404, §16 E2E dan axe, §20 skill tahap UI).
 
@@ -27,7 +33,7 @@ Yang sengaja **tidak** ditambah: `lucide-react` (ikon Lucide disalin sebagai pat
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. Dependensi baru hanya dua paket di atas, dipasang dengan `--save-exact`.
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. Dependensi baru hanya dua paket di atas, dipasang dengan `--save-exact`.
 - Nama domain berbahasa Indonesia seperti rencana sebelumnya (`muatArtikel`, `susunHeader`, `tanganiTidakAda`, `KotakIntinya`, `RemahRoti`, token `--teks`, `--permukaan`, `--ruang-4`). Nama teknis framework dan ikon Lucide tetap bahasa Inggris.
 - Copy UI dan pesan: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru. CTA menyebut hasilnya ("Hitung Gaji Bersih", "Kembali ke beranda").
 - Path publik selalu lewat `pathFor()` (`src/lib/paths.ts`) atau `PATH_INDEKS` (Task 7); URL media lewat `src/modules/media` (`propsGambar`, `bangunUrl`); SEO lewat `src/modules/seo` (`metadata`, `jsonLd`, `remahRoti`, `metadataTidakDitemukan` dari Task 8). Tidak ada `<title>`, canonical, robots, atau JSON-LD manual di halaman.
@@ -35,13 +41,13 @@ Yang sengaja **tidak** ditambah: `lucide-react` (ikon Lucide disalin sebagai pat
 - Tipografi: Archivo variable satu file, `font-display: swap`, di-preload. Display `clamp(72px, 14vw, 196px)` 900 wdth 68; H1 `clamp(34px, 4.4vw, 58px)` 900 wdth 80; body 18px (minimal 16px di HP), leading 1,6, lebar baris 68ch; label 13px 800 uppercase.
 - Radius 14px (kontrol) dan 24px (kartu); target sentuh minimal 44px untuk tautan navigasi; spasi kelipatan 4px; kontainer 1200px, gutter `clamp(16px, 4vw, 40px)`; breakpoint 375 / 768 / 1024 / 1440.
 - Motion: kurva `cubic-bezier(0.2, 0, 0, 1)`, durasi 150 / 250 / 400 ms, hanya `transform` dan `opacity`, tanpa animasi yang berjalan terus; `prefers-reduced-motion: reduce` mematikan semua animasi dan View Transitions.
-- **Perubahan skema harus aditif.** Rencana ini hanya menambah kolom `disclaimer` (textarea) di `pilar` (Task 4). Setelah itu jalankan `pnpm generate:types`. Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2: `docker compose exec postgres psql -U postgres -c "DROP DATABASE pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test"` (tanpa Docker: `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c ...`).
-- **`pnpm build` sekarang membaca database dev** (`pointlat` dari `.env`): layout memuat header dan footer, dan `/`, `/_not-found`, `/glosarium` dirender saat build. Postgres harus jalan, dan setelah Task 4 jalankan `pnpm seed` sekali sebelum build supaya kolom `pilar.disclaimer` terdorong ke database dev (mode produksi tidak mendorong skema).
+- **Perubahan skema harus aditif.** Rencana ini hanya menambah kolom `disclaimer` (textarea) di `pilar` (Task 4). Setelah itu jalankan `npm run generate:types`. Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2: `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c "DROP DATABASE pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test"` (tanpa Docker: `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c ...`).
+- **`npm run build` sekarang membaca database dev** (`pointlat` dari `.env`): layout memuat header dan footer, dan `/`, `/_not-found`, `/glosarium` dirender saat build. Postgres harus jalan, dan setelah Task 4 jalankan `npm run seed` sekali sebelum build supaya kolom `pilar.disclaimer` terdorong ke database dev (mode produksi tidak mendorong skema).
 - Tes tidak memanggil jaringan. Unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E (mulai Task 3) memakai database `pointlat_test_e2e` (nama database tes ditambah `_e2e`, dibuat otomatis oleh Payload), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, dan semua permintaan gambar ke `res.cloudinary.com` dicegat browser tes.
-- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual untuk uji asap memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`. Jangan memakai `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`.
 - `next dev` di Next 16.3 menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md` bila mendeteksi agen AI. Kembalikan dengan `git checkout CLAUDE.md` sebelum commit (Task 10 sengaja mengubah `CLAUDE.md`; buang blok itu saja).
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning baru).
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning baru).
 
 ## Keputusan teknis (hasil riset dan probe, dipakai di semua task)
 
@@ -63,8 +69,8 @@ Yang sengaja **tidak** ditambah: `lucide-react` (ikon Lucide disalin sebagai pat
 | Tanggal dan waktu baca | "Diperbarui" = `diperbaruiBesar ?? terbitPada` (sama dengan `dateModified` JSON-LD dan `lastmod` sitemap), format `id-ID` zona `Asia/Jakarta`. Waktu baca = kata isi / 200, dibulatkan ke atas, minimal 1. Daftar isi tampil bila ada minimal 3 H2. | Spesifikasi §4, §8 |
 | Motion | View Transitions lewat React `<ViewTransition name share="morph" default="none">` (ada di React canary bawaan Next; tipe dari `react/canary`) untuk judul kartu menjadi H1 artikel, 400 ms kurva khas; kartu di bawah layar masuk sekali (naik 12px + opacity, 200 ms, jeda 40 ms, maks 2 jeda = 280 ms) lewat `IntersectionObserver` di `PemicuMasuk`; hover dan tekan memakai `transform` 150 ms. Reduced motion: CSS mematikan transisi dan animasi pseudo-element View Transitions, `PemicuMasuk` tidak menyembunyikan apa pun. GSAP tidak dipakai di 4A. | Spesifikasi §13; `view-transitions.md` Next 16 |
 | Anggaran JS | Diukur di probe (byte gzip yang diunduh, tanpa polyfill `noModule`): halaman kosong 139,5 KB (react-dom 70 KB, router Next 42 KB), artikel 145,4 KB. Batas 70 KB di spesifikasi §12 tidak tercapai oleh kerangka Next 16 + React 19 saja. E2E menjaga artikel di bawah 160 KiB supaya JS milik point. tetap kecil; angka final diputuskan pemilik (lihat Risiko). | Probe `next start` |
-| E2E | Playwright di build produksi: `webServer` menjalankan `tests/e2e/siapkan.ts` (hapus dan isi ulang konten contoh di database `_e2e`), menghapus `.next/cache/fetch-cache`, `pnpm build`, lalu `pnpm start` di port 3100. Server memakai kredensial Cloudinary palsu `e2e` sehingga pengaman produksi Rencana 2 (`klienMedia()` melempar galat di produksi tanpa `CLOUDINARY_*`) tetap utuh; server hanya membangun URL, tidak pernah memanggil Cloudinary. Skrip pengisi memakai `pakaiKlien(klienPalsu('e2e'))`. Browser tes mencegat `res.cloudinary.com` dan menjawab SVG. | Spesifikasi §16; `src/modules/media/index.ts` |
-| Halaman tanpa kredensial | `ambilSitus()` dan URL media butuh `cloudName`, dan `next start` tanpa `CLOUDINARY_*` sengaja menolak jalan (Rencana 2). Keputusan: perlindungan itu tidak diubah. Lokal memakai `pnpm dev` (klien palsu otomatis) atau, untuk build produksi lokal dan E2E, kredensial palsu yang jelas (`e2e`); produksi wajib kredensial asli. | Rencana 2 Task 3, Rencana 3 Risiko |
+| E2E | Playwright di build produksi: `webServer` menjalankan `tests/e2e/siapkan.ts` (hapus dan isi ulang konten contoh di database `_e2e`), menghapus `.next/cache/fetch-cache`, `npm run build`, lalu `npm run start` di port 3100. Server memakai kredensial Cloudinary palsu `e2e` sehingga pengaman produksi Rencana 2 (`klienMedia()` melempar galat di produksi tanpa `CLOUDINARY_*`) tetap utuh; server hanya membangun URL, tidak pernah memanggil Cloudinary. Skrip pengisi memakai `pakaiKlien(klienPalsu('e2e'))`. Browser tes mencegat `res.cloudinary.com` dan menjawab SVG. | Spesifikasi §16; `src/modules/media/index.ts` |
+| Halaman tanpa kredensial | `ambilSitus()` dan URL media butuh `cloudName`, dan `next start` tanpa `CLOUDINARY_*` sengaja menolak jalan (Rencana 2). Keputusan: perlindungan itu tidak diubah. Lokal memakai `npm run dev` (klien palsu otomatis) atau, untuk build produksi lokal dan E2E, kredensial palsu yang jelas (`e2e`); produksi wajib kredensial asli. | Rencana 2 Task 3, Rencana 3 Risiko |
 
 ## Struktur file setelah rencana ini
 
@@ -131,7 +137,7 @@ tests/unit/*.test.ts, tests/int/*.int.spec.ts (baru dan diperluas)
 
 **Files:**
 - Create: `src/styles/tokens.css`, `src/styles/dasar.css`, `src/app/(frontend)/font.ts`, `src/app/(frontend)/page.module.css`
-- Modify: `src/app/(frontend)/layout.tsx`, `src/app/(frontend)/page.tsx`, `package.json`, `pnpm-lock.yaml`
+- Modify: `src/app/(frontend)/layout.tsx`, `src/app/(frontend)/page.tsx`, `package.json`, `package-lock.json`
 - Delete: `src/app/(frontend)/styles.css`
 - Test: `tests/unit/token.test.ts`
 
@@ -154,7 +160,7 @@ Font dibaca dari paket fontsource oleh `next/font/local` saat build: Next menyal
   Jalankan:
 
   ```bash
-  pnpm add -D --save-exact @fontsource-variable/archivo@5.3.0
+  npm install -D --save-exact @fontsource-variable/archivo@5.3.0
   ls node_modules/@fontsource-variable/archivo/files/archivo-latin-standard-normal.woff2
   ```
 
@@ -268,7 +274,7 @@ Font dibaca dari paket fontsource oleh `next/font/local` saat build: Next menyal
   Jalankan:
 
   ```bash
-  pnpm vitest run --config ./vitest.unit.config.mts tests/unit/token.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/token.test.ts
   ```
 
   Hasil yang diharapkan: FAIL dengan `ENOENT: no such file or directory, open '.../src/styles/tokens.css'`.
@@ -655,10 +661,10 @@ Font dibaca dari paket fontsource oleh `next/font/local` saat build: Next menyal
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
-  pnpm build
+  npm run test:unit
+  npm run typecheck
+  npm run lint
+  npm run build
   ```
 
   Hasil yang diharapkan: unit `Test Files 28 passed (28)`, `Tests 211 passed (211)`; type check dan lint bersih; build berhasil dan `ls .next/static/media | grep archivo` menampilkan satu file `archivo_latin_standard_normal-*.woff2`.
@@ -666,7 +672,7 @@ Font dibaca dari paket fontsource oleh `next/font/local` saat build: Next menyal
 - [ ] **Langkah 7: Commit**
 
   ```bash
-  git add package.json pnpm-lock.yaml src/styles "src/app/(frontend)/font.ts" "src/app/(frontend)/layout.tsx" "src/app/(frontend)/page.tsx" "src/app/(frontend)/page.module.css" tests/unit/token.test.ts
+  git add package.json package-lock.json src/styles "src/app/(frontend)/font.ts" "src/app/(frontend)/layout.tsx" "src/app/(frontend)/page.tsx" "src/app/(frontend)/page.module.css" tests/unit/token.test.ts
   git commit -m "feat(ui): token desain, font Archivo variable, dan gaya dasar"
   ```
 
@@ -931,7 +937,7 @@ Data header dan footer dibaca layout di setiap halaman, jadi keduanya di-cache d
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `konten-tampilan.test.ts` (`Cannot find package '@/modules/konten/tampilan'`), `komponen-tata-letak.test.ts` (`Cannot find package '@/components/dasar/Ikon'`), dan `tag.test.ts` (`expected [ undefined, undefined ] to deeply equal [ 'header', 'footer' ]`).
@@ -1663,11 +1669,11 @@ Data header dan footer dibaca layout di setiap halaman, jadi keduanya di-cache d
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: `payload-types.ts` tidak berubah (hanya hook); type check dan lint bersih; unit `Test Files 30 passed (30)`, `Tests 221 passed (221)`; integrasi `Test Files 14 passed (14)`, `Tests 51 passed (51)`.
@@ -1677,9 +1683,9 @@ Data header dan footer dibaca layout di setiap halaman, jadi keduanya di-cache d
   Mulai task ini layout membaca database saat build. Jalankan (database dev `pointlat`, seed mengisi menu header dan tautan footer):
 
   ```bash
-  pnpm seed
-  pnpm build
-  (PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  npm run seed
+  npm run build
+  (PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   curl -s http://localhost:3200/ | grep -oE '<html[^>]*>|class="lewati" href="#isi"|<nav aria-label="[^"]*"|<link rel="icon"[^>]*>|<link rel="preload"[^>]*font[^>]*>' 
   fuser -k 3200/tcp
@@ -1698,36 +1704,36 @@ Data header dan footer dibaca layout di setiap halaman, jadi keduanya di-cache d
 
 **Files:**
 - Create: `tests/e2e/data.ts`, `tests/e2e/siapkan.ts`, `tests/e2e/bantu.ts`
-- Modify: `playwright.config.ts` (ganti seluruh isi), `package.json` (skrip `test:e2e`), `pnpm-lock.yaml`
+- Modify: `playwright.config.ts` (ganti seluruh isi), `package.json` (skrip `test:e2e`), `package-lock.json`
 - Test: `tests/e2e/tata-letak.spec.ts`
 
 **Interfaces:**
 - Consumes: `seed()` (Rencana 1), `pakaiKlien`, `klienPalsu` (Rencana 2), layout Task 2.
 - Produces:
-  - `pnpm test:e2e` (Playwright, `reporter: 'list'`, satu project Chromium).
+  - `npm run test:e2e` (Playwright, `reporter: 'list'`, satu project Chromium).
   - `tests/e2e/data.ts`: `ADMIN_E2E = { email, password }`, `UKURAN_LAYAR` (375x812, 768x1024, 1440x900). Task 6 menambah slug dan pembuat JSON Lexical.
   - `tests/e2e/bantu.ts`: `cegatCloudinary(page)`, `periksaAxe(page)` (tag `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`, pelanggaran harus kosong), `periksaTanpaGeserHorizontal(page)`.
   - `tests/e2e/siapkan.ts`: mengisi database E2E sebelum server dibangun (Task 6 sampai 8 menambah konten contoh).
 
-E2E memakai build produksi supaya ISR, kode status, cache, dan ukuran JavaScript sama dengan yang dilihat pembaca. `webServer` di `playwright.config.ts` menjalankan berurutan: `tests/e2e/siapkan.ts` lewat `payload run` (mode dev, jadi skema terdorong ke database E2E), menghapus `.next/cache/fetch-cache` (cache data `unstable_cache` dari run sebelumnya), `pnpm build`, lalu `pnpm start` di port 3100. Database E2E = `DATABASE_URL` dari `.env.test` dengan nama database ditambah `_e2e` (`pointlat_test_e2e`); Payload membuatnya otomatis bila belum ada, jadi `docker/init-test-db.sql` tidak perlu diubah.
+E2E memakai build produksi supaya ISR, kode status, cache, dan ukuran JavaScript sama dengan yang dilihat pembaca. `webServer` di `playwright.config.ts` menjalankan berurutan: `tests/e2e/siapkan.ts` lewat `payload run` (mode dev, jadi skema terdorong ke database E2E), menghapus `.next/cache/fetch-cache` (cache data `unstable_cache` dari run sebelumnya), `npm run build`, lalu `npm run start` di port 3100. Database E2E = `DATABASE_URL` dari `.env.test` dengan nama database ditambah `_e2e` (`pointlat_test_e2e`); Payload membuatnya otomatis bila belum ada, jadi `docker/init-test-db.sql` tidak perlu diubah.
 
 Server E2E memakai kredensial Cloudinary palsu (`e2e`). Pengaman produksi Rencana 2 tetap utuh: tanpa kredensial, `next start` menolak jalan; dengan kredensial palsu, server hanya membangun URL `https://res.cloudinary.com/e2e/...` dan tidak pernah memanggil Cloudinary (tidak ada unggah atau hapus di E2E). Skrip pengisi memaksa klien palsu bernama sama (`pakaiKlien(klienPalsu('e2e'))`), dan browser tes mencegat semua permintaan ke `res.cloudinary.com` lalu menjawab SVG berukuran sama. Tes tidak memanggil jaringan.
 
-Chromium yang dipakai adalah yang sudah terpasang untuk `@playwright/test` 1.63.0. Bila belum ada di mesin, jalankan sekali `pnpm exec playwright install chromium`.
+Chromium yang dipakai adalah yang sudah terpasang untuk `@playwright/test` 1.63.0. Bila belum ada di mesin, jalankan sekali `npx playwright install chromium`.
 
 - [ ] **Langkah 1: Pasang axe untuk Playwright (setelah disetujui pemilik)**
 
   Jalankan:
 
   ```bash
-  pnpm add -D --save-exact @axe-core/playwright@4.14.0
+  npm install -D --save-exact @axe-core/playwright@4.14.0
   ```
 
   Hasil yang diharapkan: `package.json` mendapat `"@axe-core/playwright": "4.14.0"`; lockfile memakai `playwright-core@1.63.0` dan `axe-core@4.14.0` yang sudah ada.
 
 - [ ] **Langkah 2: Konfigurasi dan bantuan E2E**
 
-  Ganti seluruh isi `playwright.config.ts` (bawaan template memakai `pnpm dev` dan reporter HTML):
+  Ganti seluruh isi `playwright.config.ts` (bawaan template memakai `npm run dev` dan reporter HTML):
 
   `playwright.config.ts`
 
@@ -1763,7 +1769,7 @@ Chromium yang dipakai adalah yang sudah terpasang untuk `@playwright/test` 1.63.
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
     webServer: {
-      command: 'pnpm payload run tests/e2e/siapkan.ts && rm -rf .next/cache/fetch-cache && pnpm build && pnpm start',
+      command: 'npm run payload -- run tests/e2e/siapkan.ts && rm -rf .next/cache/fetch-cache && npm run build && npm run start',
       url: `${BASE_URL}/robots.txt`,
       reuseExistingServer: false,
       timeout: 600_000,
@@ -1921,7 +1927,7 @@ Chromium yang dipakai adalah yang sudah terpasang untuk `@playwright/test` 1.63.
   Jalankan (Postgres harus jalan; build butuh 1 sampai 2 menit):
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `6 passed`: header dari CMS, skip link, satu file font di-preload, dan tata letak 375, 768, 1440 px tanpa geser horizontal dengan axe tanpa pelanggaran. Bila gagal karena port 3100 dipakai, hentikan prosesnya dengan `fuser -k 3100/tcp`.
@@ -1931,9 +1937,9 @@ Chromium yang dipakai adalah yang sudah terpasang untuk `@playwright/test` 1.63.
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
+  npm run typecheck
+  npm run lint
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: bersih; unit tetap `Tests 221 passed (221)`.
@@ -1941,7 +1947,7 @@ Chromium yang dipakai adalah yang sudah terpasang untuk `@playwright/test` 1.63.
 - [ ] **Langkah 6: Commit**
 
   ```bash
-  git add package.json pnpm-lock.yaml playwright.config.ts tests/e2e
+  git add package.json package-lock.json playwright.config.ts tests/e2e
   git commit -m "test(e2e): Playwright dengan build produksi, database E2E, dan axe"
   ```
 
@@ -2199,7 +2205,7 @@ Disclaimer otomatis (spesifikasi §3) disimpan di pilar supaya teksnya bisa diub
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/konten-artikel.test.ts` dengan `Cannot find package '@/modules/konten/artikel'`.
@@ -2280,7 +2286,7 @@ Disclaimer otomatis (spesifikasi §3) disimpan di pilar supaya teksnya bisa diub
   Jalankan:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff src/payload-types.ts
   ```
 
@@ -2834,24 +2840,24 @@ Disclaimer otomatis (spesifikasi §3) disimpan di pilar supaya teksnya bisa diub
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 31 passed (31)`, `Tests 228 passed (228)`; integrasi `Test Files 15 passed (15)`, `Tests 54 passed (54)`. Tes integrasi ini membuat tool `ipk` lalu menghapusnya; bila run sebelumnya gagal di tengah, sisa tool itu dihapus di awal tes.
 
 - [ ] **Langkah 7: Dorong skema ke database dev**
 
-  Mode produksi (`pnpm build`, `pnpm start`) tidak mendorong skema. Jalankan seed sekali supaya kolom `pilar.disclaimer` ada di database dev dan teks disclaimer terisi:
+  Mode produksi (`npm run build`, `npm run start`) tidak mendorong skema. Jalankan seed sekali supaya kolom `pilar.disclaimer` ada di database dev dan teks disclaimer terisi:
 
   ```bash
-  pnpm seed
+  npm run seed
   PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d pointlat -Atc "select slug, disclaimer is not null from pilar order by urutan"
   ```
 
-  Hasil yang diharapkan: `Seed selesai.`, lalu `uang-karier|t`, `tekno|f`, `belajar|f`, `sehat|t` (dengan Docker: `docker compose exec postgres psql -U postgres -d pointlat -Atc "..."`).
+  Hasil yang diharapkan: `Seed selesai.`, lalu `uang-karier|t`, `tekno|f`, `belajar|f`, `sehat|t`.
 
 - [ ] **Langkah 8: Commit**
 
@@ -2997,7 +3003,7 @@ Tes merender komponen dengan `renderToStaticMarkup` dan mengganti `next/image` d
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/isi-artikel.test.ts` dengan `Cannot find package '@/components/isi/IsiArtikel'`.
@@ -3528,9 +3534,9 @@ Tes merender komponen dengan `renderToStaticMarkup` dan mengganti `next/image` d
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 32 passed (32)`, `Tests 235 passed (235)`; type check dan lint bersih.
@@ -3677,7 +3683,7 @@ Konten contoh E2E dibuat ulang setiap run: panduan Uang & Karier (tiga H2, callo
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/halaman-artikel.test.ts` dengan `Cannot find package '@/components/artikel/HalamanArtikel'`.
@@ -4554,9 +4560,9 @@ Konten contoh E2E dibuat ulang setiap run: panduan Uang & Karier (tiga H2, callo
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 33 passed (33)`, `Tests 239 passed (239)`; type check dan lint bersih.
@@ -4845,7 +4851,7 @@ Konten contoh E2E dibuat ulang setiap run: panduan Uang & Karier (tiga H2, callo
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `15 passed` (6 tata letak + 9 artikel): urutan bagian, lompatan daftar isi, judul `Cara hitung gaji bersih setelah PPh 21 dan BPJS · point.`, canonical `https://point.lat/cara-hitung-gaji-bersih`, robots `index, follow, max-image-preview:large`, JSON-LD `Organization`, `WebSite`, `Article`, `BreadcrumbList`, gambar `res.cloudinary.com/e2e/image/upload/c_fill,g_auto,ar_16:9/...` 1440x810, disclaimer Sehat, 404 untuk draf dan path asing, dan axe bersih di 375, 768, 1440 px.
@@ -5010,7 +5016,7 @@ Rencana 3 menunda `/glosarium` di sitemap sampai halamannya ada. Sekarang `ambil
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/glosarium.test.ts` dengan `Cannot find package '@/components/glosarium/IndeksGlosarium'`.
@@ -5450,10 +5456,10 @@ Rencana 3 menunda `/glosarium` di sitemap sampai halamannya ada. Sekarang `ambil
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 34 passed (34)`, `Tests 242 passed (242)`; integrasi `Test Files 16 passed (16)`, `Tests 56 passed (56)`.
@@ -5557,7 +5563,7 @@ Rencana 3 menunda `/glosarium` di sitemap sampai halamannya ada. Sekarang `ambil
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `20 passed`. Indeks menampilkan huruf B, P, T dengan definisi; `/glosarium/ptkp` berremah roti Beranda, Glosarium dan punya dua artikel terkait (panduan pilihan editor dulu, lalu explainer sepilar); `/ptkp` dan `/glosarium/cara-hitung-gaji-bersih` menjawab 404.
@@ -5754,7 +5760,7 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/konten-galat.test.ts` dengan `Cannot find package '@/components/galat/TidakDitemukan'`.
@@ -6409,11 +6415,11 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: `payload-types.ts` tidak berubah (endpoint dan hook tidak menambah kolom); bersih; unit `Test Files 35 passed (35)`, `Tests 248 passed (248)`; integrasi `Test Files 17 passed (17)`, `Tests 60 passed (60)`.
@@ -6600,7 +6606,7 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `26 passed`: `/dana-darurat-lama` menjawab 308 ke `/cara-menyiapkan-dana-darurat`; `/promo-lama` ke `/glosarium` dan `/glosarium/ptkp-lama` ke `/glosarium/ptkp` menjawab 308; `/tulisan-dihapus` (410) menjawab 404; halaman 404 berjudul `Halaman tidak ditemukan · point.` dengan `noindex`, tombol ke beranda, tiga tulisan terbaru; dua kunjungan ke path yang sama tercatat `jumlah: 2` di `log-404`; axe bersih di tiga ukuran layar.
@@ -6733,7 +6739,7 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/token.test.ts` (`expected undefined to be '200ms'`). E2E motion juga gagal sampai langkah berikut selesai (`data-masuk` belum ada), jadi tidak perlu dijalankan sekarang.
@@ -6964,11 +6970,11 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 35 passed (35)`, `Tests 248 passed (248)`; integrasi `Tests 60 passed (60)`; E2E `30 passed`, termasuk kartu terkait di 1440px yang mulai `tunggu` (opacity 0) lalu `terlihat` (opacity 1) setelah digulir, reduced motion di 375px (kartu langsung tampil, transisi 0), nama `judul-artikel-{id}` terpasang saat `document.startViewTransition` dipanggil dari kartu di halaman 404, dan JS artikel di bawah 160 KiB.
@@ -7003,17 +7009,17 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   -- Vitest (unit + integrasi), Playwright (e2e, mulai Rencana 4)
   +- Vitest (unit + integrasi), Playwright + axe (e2e)
   +- Frontend: CSS Module + token CSS (`src/styles/tokens.css`), font Archivo variable lewat `next/font/local`
-   - Node `^22.23.4 || >=24.22.1`, pnpm 10
+   - Node `^22.23.4 || >=24.22.1`, npm 11
    
    ## Perintah
   @@ -15,6 +16,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Tes unit: `pnpm test:unit`
-   - Tes integrasi (butuh Postgres): `pnpm test:int`
-   - Semua tes: `pnpm test`
-  +- Tes E2E (butuh Postgres, membangun build produksi dulu): `pnpm test:e2e`. Database E2E = nama database tes ditambah `_e2e`, dibuat dan diisi ulang otomatis oleh `tests/e2e/siapkan.ts`.
-   - Type check: `pnpm typecheck`
-   - Tipe Payload: `pnpm generate:types` (jalankan setiap kali field berubah)
-   - Import map admin: `pnpm generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
+   - Tes unit: `npm run test:unit`
+   - Tes integrasi (butuh Postgres): `npm run test:int`
+   - Semua tes: `npm test`
+  +- Tes E2E (butuh Postgres, membangun build produksi dulu): `npm run test:e2e`. Database E2E = nama database tes ditambah `_e2e`, dibuat dan diisi ulang otomatis oleh `tests/e2e/siapkan.ts`.
+   - Type check: `npm run typecheck`
+   - Tipe Payload: `npm run generate:types` (jalankan setiap kali field berubah)
+   - Import map admin: `npm run generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
   @@ -28,14 +30,19 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
    - Satu file satu tanggung jawab. Koleksi di `src/collections/`, global di `src/globals/`, blok di `src/blocks/`, field bersama di `src/fields/`, hook di `src/hooks/`, akses di `src/access/`.
    - Path publik selalu dibangun lewat `pathFor()` di `src/lib/paths.ts`, jangan merangkai string URL manual.
@@ -7032,10 +7038,10 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
    ## Batasan
    - Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`.
    - Tanya dulu sebelum menambah dependensi baru di luar rencana.
-   - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-  -- Jalankan `pnpm test` sebelum commit.
-  +- Jalankan `pnpm test` sebelum commit, dan `pnpm test:e2e` bila halaman publik berubah.
-  +- `pnpm build` membaca database dev untuk halaman statis (layout, `/glosarium`, 404). Setelah skema berubah, jalankan `pnpm seed` dulu supaya kolom baru terdorong ke database dev.
+   - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+  -- Jalankan `npm test` sebelum commit.
+  +- Jalankan `npm test` sebelum commit, dan `npm run test:e2e` bila halaman publik berubah.
+  +- `npm run build` membaca database dev untuk halaman statis (layout, `/glosarium`, 404). Setelah skema berubah, jalankan `npm run seed` dulu supaya kolom baru terdorong ke database dev.
   ```
 
 - [ ] **Langkah 2: Pemeriksaan lengkap**
@@ -7043,30 +7049,30 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: `payload-types.ts` dan import map tidak berubah; type check dan lint bersih; unit `Test Files 35 passed (35)`, `Tests 248 passed (248)`; integrasi `Test Files 17 passed (17)`, `Tests 60 passed (60)`; E2E `30 passed`; build mencantumkan `○ /`, `○ /glosarium`, `● /[...jalur]`, `● /glosarium/[slug]`, `○ /icon-....svg`, dan `ƒ` untuk lima rute teknis Rencana 3.
 
 - [ ] **Langkah 3: Uji visual di tiga ukuran layar**
 
-  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh dari `pnpm test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`):
+  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh dari `npm run test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`):
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Buka di browser dan periksa `/`, `/cara-hitung-gaji-bersih`, `/glosarium`, `/glosarium/ter`, dan `/tidak-ada` di 375, 768, dan 1440 px (DevTools) dan dengan "Emulate CSS prefers-reduced-motion: reduce". Gambar Cloudinary tidak tampil karena cloud `e2e` palsu; sisanya harus sesuai mockup Kartu Intinya: garis header 2px ink, pill rubrik dengan titik warna, judul tebal menyempit (wdth 80), kotak Intinya hijau lembut, kartu terkait berlatar warna pilar, tidak ada geser horizontal. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `pnpm build` lagi dengan env biasa.
+  Buka di browser dan periksa `/`, `/cara-hitung-gaji-bersih`, `/glosarium`, `/glosarium/ter`, dan `/tidak-ada` di 375, 768, dan 1440 px (DevTools) dan dengan "Emulate CSS prefers-reduced-motion: reduce". Gambar Cloudinary tidak tampil karena cloud `e2e` palsu; sisanya harus sesuai mockup Kartu Intinya: garis header 2px ink, pill rubrik dengan titik warna, judul tebal menyempit (wdth 80), kotak Intinya hijau lembut, kartu terkait berlatar warna pilar, tidak ada geser horizontal. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -7079,7 +7085,7 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
 
 ## Selesai bila
 
-- `pnpm test` lulus (248 unit di 35 file, 60 integrasi di 17 file), `pnpm test:e2e` lulus (30 tes, axe tanpa pelanggaran WCAG 2.2 AA di 375, 768, dan 1440 px untuk tata letak, artikel, glosarium, dan 404), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Cloudinary asli.
+- `npm test` lulus (248 unit di 35 file, 60 integrasi di 17 file), `npm run test:e2e` lulus (30 tes, axe tanpa pelanggaran WCAG 2.2 AA di 375, 768, dan 1440 px untuk tata letak, artikel, glosarium, dan 404), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Cloudinary asli.
 - `/cara-hitung-gaji-bersih` (atau artikel terbit apa pun) tampil dengan urutan spesifikasi §4 dan metadata, canonical, robots, serta JSON-LD dari modul SEO; `/glosarium` dan `/glosarium/{slug}` tampil; slug lama menjawab redirect permanen ke slug baru; path yang tidak ada menjawab 404 dengan halaman 404 point. dan tercatat di `log-404`.
 - Tampilan sesuai mockup "Kartu Intinya" di tiga ukuran layar, tanpa geser horizontal; reduced motion mematikan semua animasi.
 - Skema hanya bertambah satu kolom (`pilar.disclaimer`); `payload-types.ts` hanya berubah di Task 4.
@@ -7112,11 +7118,11 @@ Satu catatan dari Next 16.3.3: pada render ISR pertama sebuah redirect, header `
 | Next 16.3.3 mengirim header `Location` dua kali (nilai sama) pada render ISR pertama sebuah redirect. | Browser dan crawler umum menerima header ganda yang identik; respons berikutnya dari cache hanya sekali. Periksa ulang saat upgrade Next (tes E2E `galat.spec.ts` memakai nilai unik) dan laporkan ke Next bila masih ada. |
 | Isi halaman 404 baru tampil setelah JavaScript jalan: Next 16.3.3 mengirim `notFound()` sebagai cangkang galat (status 404, judul, `noindex`) dan merender `not-found.tsx` di browser. Sebelum hidrasi `<html>` belum punya `lang`. | Crawler mendapat status dan judul yang benar dari HTML awal; pembaca dengan JavaScript melihat halaman 404 lengkap. Periksa ulang setiap upgrade Next (tes `galat.spec.ts` sudah menunggu hidrasi); bila diperbaiki Next, tidak ada kode yang perlu diubah. |
 | Log 404 hanya dari browser yang menjalankan JavaScript; endpoint `POST /api/log-404/catat` terbuka. | Pemindai tanpa JS justru tidak mencemari log; 404 dari Googlebot ada di Search Console. Kiriman dirapikan dan dibatasi panjangnya. Bila disalahgunakan, tambahkan rate limit (Vercel Firewall) di Rencana 8. |
-| `pnpm build` membutuhkan database (dev lokal, CI, dan build Vercel). | Dicatat di CLAUDE.md. Build Vercel punya akses Supabase. Produksi tidak mendorong skema: Rencana 8 wajib menyiapkan migrasi Payload (termasuk `pilar.disclaimer`) sebelum deploy. |
+| `npm run build` membutuhkan database (dev lokal, CI, dan build Vercel). | Dicatat di CLAUDE.md. Build Vercel punya akses Supabase. Produksi tidak mendorong skema: Rencana 8 wajib menyiapkan migrasi Payload (termasuk `pilar.disclaimer`) sebelum deploy. |
 | Tag koleksi di halaman artikel: setiap terbit atau ubah artikel, pilar, penulis, media membuang cache semua halaman artikel. | Halaman dirender ulang saat diminta (murah, data per halaman satu query). Bila artikel mencapai ribuan dan beban terasa, ganti ke tag per dokumen di `cache.ts`. |
 | Video tanpa takarir (WCAG 2.2 1.2.2) | Transkrip lengkap selalu tersedia. **Pertanyaan:** perlu field takarir (`.vtt` di Cloudinary) di koleksi `video` untuk Rencana 4B? Itu perubahan skema aditif. |
 | `ViewTransition` berasal dari React canary bawaan Next; API-nya bisa berubah. | Dipakai di satu komponen (`JudulBersama`) dengan cadangan render biasa; tanpa dukungan browser, navigasi tetap normal tanpa animasi. |
-| E2E membangun ulang `.next` dengan database E2E dan kredensial palsu `e2e`. | Jalankan `pnpm build` lagi sebelum `pnpm start` biasa. Kredensial palsu hanya ada di `playwright.config.ts`; jangan diisi di Vercel. |
+| E2E membangun ulang `.next` dengan database E2E dan kredensial palsu `e2e`. | Jalankan `npm run build` lagi sebelum `npm run start` biasa. Kredensial palsu hanya ada di `playwright.config.ts`; jangan diisi di Vercel. |
 | Font 90 KB karena memuat sumbu `wght` 100-900 dan `wdth` 62-125. | Satu file, di-preload, `swap`, cadangan berukuran sama. Bisa diperkecil dengan instancing `wght` 400-900 (fonttools) bila Lighthouse Rencana 8 memintanya. |
 | Rute catch-all memeriksa tabel redirect untuk setiap path asing. | Slug yang formatnya mustahil tidak menyentuh tabel artikel; hasil per path di-cache dan disimpan ISR, jadi path yang sama hanya diperiksa sekali per revalidasi. |
 

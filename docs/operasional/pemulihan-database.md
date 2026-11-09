@@ -1,23 +1,23 @@
 # Runbook: Cadangan dan pemulihan database point.lat
 
 **Pemilik:** pemilik point.lat | **Frekuensi:** cadangan otomatis setiap minggu; uji pulih setiap 3 bulan dan setelah Postgres Supabase dinaikkan versinya; pemulihan saat dibutuhkan.
-**Diperbarui:** 6 November 2026 (Rencana 8C) | **Uji pulih terakhir:** 6 November 2026, probe Rencana 8C (lihat Riwayat).
+**Diperbarui:** 9 November 2026 (v1.1.0: tanpa Docker) | **Uji pulih terakhir:** 6 November 2026, probe Rencana 8C (lihat Riwayat).
 
 ## Tujuan
 
-Database produksi (Supabase Pro, Singapura) punya dua lapis cadangan:
+Database produksi (Supabase, Singapura) punya dua lapis cadangan. Di paket Free hanya lapis kedua yang ada, jadi cadangan mingguan wajib berjalan:
 
 | Lapis | Isi | Disimpan | Dipakai bila |
 |---|---|---|---|
-| Backup harian bawaan Supabase Pro | Seluruh proyek (fisik) | 7 hari, di Supabase | Data salah atau terhapus dalam 7 hari terakhir dan proyek Supabase masih ada |
-| Cadangan mingguan GitHub Actions (`.github/workflows/backup.yml`) | Skema `public` (semua tabel Payload), `pg_dump` format custom, terenkripsi GPG | 90 hari, artifact privat repo `vanhallen28/point.lat` | Proyek Supabase hilang atau terhapus (backup harian ikut terhapus bersama proyek), atau data yang dibutuhkan lebih lama dari 7 hari |
+| Backup harian bawaan Supabase (hanya paket Pro) | Seluruh proyek (fisik) | 7 hari, di Supabase | Data salah atau terhapus dalam 7 hari terakhir dan proyek Supabase masih ada |
+| Cadangan mingguan GitHub Actions (`.github/workflows/backup.yml`) | Skema `public` (semua tabel Payload), `pg_dump` format custom, terenkripsi GPG | 90 hari, artifact repo `vanhallen28/point.lat` (terenkripsi, jadi tetap aman bila repo publik) | Proyek Supabase hilang atau terhapus (backup harian ikut terhapus bersama proyek), atau data yang dibutuhkan lebih lama dari 7 hari |
 
 Cadangan mingguan dienkripsi ke kunci publik GPG pemilik sebelum disimpan. Kunci rahasia untuk membukanya tidak pernah ada di GitHub, jadi artifact yang bocor tidak bisa dibaca. Media (gambar dan video) ada di Cloudinary, bukan di database; cadangan ini hanya menyimpan URL dan metadatanya.
 
 ## Prasyarat
 
 - [ ] Akses Owner di organisasi Supabase dan admin di repo GitHub `vanhallen28/point.lat`.
-- [ ] Komputer dengan `gpg` (GnuPG 2.2 atau lebih baru), `psql` dan `pg_restore` versi sama dengan Postgres Supabase (lihat Settings, Infrastructure), Node dan npm, serta salinan repo.
+- [ ] Komputer dengan `gpg` (GnuPG 2.2 atau lebih baru), Node dan npm, serta salinan repo. Tanpa Docker: untuk pemeriksaan A3 dan bagian B dan C pasang **Postgres.app** (postgresapp.com, aplikasi Mac biasa yang mendukung Mac Intel) dengan versi utama sama dengan Postgres Supabase (Settings, Infrastructure). Postgres.app menyediakan `psql` dan `pg_restore`, dan servernya hanya dinyalakan selama uji pulih. Lalu di setiap Terminal: `export PG_BIN=/Applications/Postgres.app/Contents/Versions/17/bin` dan `export PATH="$PG_BIN:$PATH"` (ganti 17 bila versinya lain).
 - [ ] Kunci rahasia GPG cadangan di pengelola password pemilik (dibuat di bagian A).
 
 ## A. Penyiapan sekali
@@ -105,12 +105,14 @@ gpg --import kunci-rahasia-cadangan.asc
 
 ### B3. Pulihkan ke database lokal kosong
 
+Buka Postgres.app, pilih **Initialize** (hanya pertama kali) atau **Start**. Server ini hanya untuk uji pulih di komputer, menerima koneksi lokal tanpa password, dan dimatikan lagi di B5.
+
 ```bash
-psql postgres://postgres:postgres@127.0.0.1:5432/postgres -c "create database pointlat_pulih"
-scripts/pulihkan-database.sh pointlat-<waktu>.dump.gpg postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih
+psql postgres://127.0.0.1:5432/postgres -c "create database pointlat_pulih"
+scripts/pulihkan-database.sh pointlat-<waktu>.dump.gpg postgres://127.0.0.1:5432/pointlat_pulih
 ```
 
-Bila `pg_restore` lokal lebih lama dari versi Postgres Supabase, isi `PG_BIN` dengan folder klien versi itu (misalnya `PG_BIN=/usr/lib/postgresql/17/bin`). GPG meminta passphrase kunci.
+`PG_BIN` dari Prasyarat menunjuk klien Postgres.app; versinya harus sama atau lebih baru dari Postgres Supabase. GPG meminta passphrase kunci.
 
 **Hasil yang diharapkan:** checksum cocok, lalu `Dipulihkan: <n> tabel. Migrasi tercatat: <daftar migrasi>.` dengan daftar migrasi sama dengan isi `src/migrations/index.ts` saat cadangan dibuat.
 **Bila gagal:** `Database tujuan sudah berisi ...` berarti database tidak kosong; buat database baru.
@@ -118,9 +120,9 @@ Bila `pg_restore` lokal lebih lama dari versi Postgres Supabase, isi `PG_BIN` de
 ### B4. Jalankan situs dari database hasil pulih
 
 ```bash
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih npm run migrate
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih npm run build
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/pointlat_pulih INDEXER_ADAPTER=palsu AI_ADAPTER=palsu \
+DATABASE_URL=postgres://127.0.0.1:5432/pointlat_pulih npm run migrate
+DATABASE_URL=postgres://127.0.0.1:5432/pointlat_pulih npm run build
+DATABASE_URL=postgres://127.0.0.1:5432/pointlat_pulih INDEXER_ADAPTER=palsu AI_ADAPTER=palsu \
   CLOUDINARY_CLOUD_NAME=<cloud-name-produksi> CLOUDINARY_API_KEY=uji-pulih CLOUDINARY_API_SECRET=uji-pulih PORT=3200 npm run start
 ```
 
@@ -131,11 +133,11 @@ Cloud name asli membuat gambar tampil dari CDN Cloudinary; API key dan secret ti
 ### B5. Bersihkan
 
 ```bash
-psql postgres://postgres:postgres@127.0.0.1:5432/postgres -c "drop database pointlat_pulih"
+psql postgres://127.0.0.1:5432/postgres -c "drop database pointlat_pulih"
 gpg --delete-secret-keys "Cadangan point.lat"
 ```
 
-Hapus file cadangan yang diunduh. Catat hasilnya di Riwayat.
+Di Postgres.app pilih **Stop**. Hapus file cadangan yang diunduh. Catat hasilnya di Riwayat.
 
 ## C. Pemulihan produksi
 
@@ -197,4 +199,5 @@ Pemulihan C1 dan C2 bisa diulang dari cadangan lain yang lebih lama. Sebelum C1,
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
-| 6 November 2026 | Probe Rencana 8C (Postgres 16 lokal, kunci GPG uji) | Sumber: database hasil migrasi berisi data contoh E2E (108 tabel, 1.244 baris, 60 artikel). Langkah workflow dijalankan lokal: cadangan 101.783 byte, terenkripsi ke subkunci pemilik, tanpa teks tabel terbaca. Kunci lain ditolak (`No secret key`); `pg_dump` yang lebih lama dari server ditolak. Pulih ke database kosong: 108 tabel, jumlah baris setiap tabel dan skema sama dengan sumber; `pnpm migrate` tanpa langkah; build dan server dari database hasil pulih menjawab 200 untuk enam path dan lulus 23 tes E2E (header, artikel, rubrik, tools). |
+| 9 November 2026 | Sesi Claude (v1.1.0) | Runbook disesuaikan: tanpa Docker; klien dan server uji pulih dari Postgres.app (dinyalakan hanya selama uji); di Supabase Free cadangan mingguan satu-satunya cadangan. Uji pulih belum dijalankan ulang. |
+| 6 November 2026 | Probe Rencana 8C (Postgres 16 lokal, kunci GPG uji) | Sumber: database hasil migrasi berisi data contoh E2E (108 tabel, 1.244 baris, 60 artikel). Langkah workflow dijalankan lokal: cadangan 101.783 byte, terenkripsi ke subkunci pemilik, tanpa teks tabel terbaca. Kunci lain ditolak (`No secret key`); `pg_dump` yang lebih lama dari server ditolak. Pulih ke database kosong: 108 tabel, jumlah baris setiap tabel dan skema sama dengan sumber; `npm run migrate` tanpa langkah; build dan server dari database hasil pulih menjawab 200 untuk enam path dan lulus 23 tes E2E (header, artikel, rubrik, tools). |

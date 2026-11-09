@@ -1,12 +1,18 @@
 # Rencana 8B: Paginasi berbasis path, Cek sekarang dan Pindai ulang sekarang, penjaga beacon log 404, dan pemeriksaan ulang render 404 point.lat
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Membuka jalan ke tulisan lama di rubrik dan profil penulis lewat halaman berikutnya berbasis path (`/{pilar}/halaman/{n}`, `/{pilar}/{subkategori}/halaman/{n}`, `/penulis/{slug}/halaman/{n}`) yang tetap ISR dan bisa dirayapi, memberi admin tombol "Cek sekarang" (status indeks per URL) dan "Pindai ulang sekarang" (pindai tautan) yang lewat antrean dan `after()` dengan batas yang tidak bisa diakali klik berulang, membatasi beacon log 404 tanpa menyimpan IP, dan mencatat hasil pemeriksaan ulang isi 404 Next yang kadang tidak dirender; tanpa dependensi baru dan tanpa jaringan di tes.
 
 **Architecture:** Aturan paginasi satu modul murni `src/modules/konten/paginasi.ts` (`bacaNomor`, `pisahHalaman`, `susunPaginasi`, `UKURAN_HALAMAN` 24) dan satu pembangun path (`pathHalaman` di `src/lib/paths.ts`); data (`ambilRubrik`, `ambilPenulis`) memuat satu halaman lewat `page` dan `limit` Payload dengan urutan `-terbitPada`, `-id`, dan `susunPaginasi` yang sama menolak nomor di luar jangkauan (404). Rubrik tetap lewat catch-all `[...jalur]` (`muatJalur` membaca akhiran `/halaman/{n}`, `/halaman/1` menjadi `{ jenis: 'alihkan' }` lalu `permanentRedirect`), profil penulis lewat rute bersarang `penulis/[slug]/halaman/[nomor]`; keduanya ISR dengan tag cache halaman 1. SEO halaman berikutnya (judul, canonical, remah roti, JSON-LD) dari `MasukanSeo` dengan `halaman`, jadi `metadata()` dan `jsonLd()` tetap satu pintu. Aksi admin: endpoint Payload di koleksinya (`POST /api/status-indeks/{id}/cek`, `POST /api/tugas-seo/pindai`) dengan penjaga bersama `tolakSelainAdmin`, aturan batas sebagai fungsi murni di `aturan.ts` modulnya, klaim lewat satu pernyataan SQL atomik, pekerjaan berat lewat `after()`, dan tombol klien dengan `aria-disabled` dan `role="status"`. Beacon 404: batas ukuran dan asal di endpoint, batas path baru 24 jam dan hitungan atomik di `catat404` (Postgres); batas laju per IP di Vercel Firewall milik pemilik.
 
-**Tech Stack:** Next.js 16.3.3 (App Router, ISR dengan `generateStaticParams` `[]`, `unstable_cache` bertag, `permanentRedirect`, `notFound`, `after()`), Payload 3.92.1 (endpoint kustom di koleksi, field `ui` dengan komponen sel, `admin.components.RowLabel` dan `useRowLabel`, `payload.db.drizzle.execute` dengan `sql` dari `@payloadcms/db-postgres`), PostgreSQL 16, Search Console URL Inspection API (lewat antrean Mesin Indexing yang sudah ada), Vercel Firewall WAF rate limiting (diatur pemilik, bukan kode), Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, ISR dengan `generateStaticParams` `[]`, `unstable_cache` bertag, `permanentRedirect`, `notFound`, `after()`), Payload 3.92.1 (endpoint kustom di koleksi, field `ui` dengan komponen sel, `admin.components.RowLabel` dan `useRowLabel`, `payload.db.drizzle.execute` dengan `sql` dari `@payloadcms/db-postgres`), PostgreSQL 16, Search Console URL Inspection API (lewat antrean Mesin Indexing yang sudah ada), Vercel Firewall WAF rate limiting (diatur pemilik, bukan kode), Vitest 4, Playwright 1.63 + `@axe-core/playwright` 4.14, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§3 aturan copy; §7 struktur URL dan halaman; §8 Mesin Indexing langkah 5 Cek status, log 404, dan Dashboard SEO; §12 performa (anggaran JS); §14 aksesibilitas; §16 testing).
 
@@ -20,29 +26,29 @@
 
 | Paket | Keputusan rencana ini |
 |---|---|
-| `next` 16.3.8 dan `eslint-config-next` 16.3.8 (sekarang 16.3.3) | **Tidak dinaikkan di rencana ini; diusulkan untuk Rencana 8C.** Probe (hanya di worktree terpisah): perubahan `package.json` 2 baris, `pnpm-lock.yaml` 66 baris tambah dan 66 baris hapus; E2E penuh 136 tes lulus; reproduksi 404 terisolasi 0 gagal dari 200 kunjungan. Tetapi 16.3.3 juga 0 gagal di reproduksi yang sama, dan `git log v16.3.3..v16.3.8` tidak memuat perbaikan `notFound`, `__next_error__`, atau stylesheet, jadi naik versi tidak terbukti memperbaiki isi 404 yang kadang kosong. Alasan menaikkannya di 8C adalah perbaikan keamanan di 16.3.4 sampai 16.3.8 (lihat Keputusan teknis), yang lebih tepat diuji bersama persiapan rilis. Rentang peer Payload 3.92.1 (`next >=16.3.3 <17`) menerima 16.3.8. |
+| `next` 16.3.8 dan `eslint-config-next` 16.3.8 (sekarang 16.3.3) | **Tidak dinaikkan di rencana ini; diusulkan untuk Rencana 8C.** Probe (hanya di worktree terpisah): perubahan `package.json` 2 baris, `package-lock.json` 66 baris tambah dan 66 baris hapus; E2E penuh 136 tes lulus; reproduksi 404 terisolasi 0 gagal dari 200 kunjungan. Tetapi 16.3.3 juga 0 gagal di reproduksi yang sama, dan `git log v16.3.3..v16.3.8` tidak memuat perbaikan `notFound`, `__next_error__`, atau stylesheet, jadi naik versi tidak terbukti memperbaiki isi 404 yang kadang kosong. Alasan menaikkannya di 8C adalah perbaikan keamanan di 16.3.4 sampai 16.3.8 (lihat Keputusan teknis), yang lebih tepat diuji bersama persiapan rilis. Rentang peer Payload 3.92.1 (`next >=16.3.3 <17`) menerima 16.3.8. |
 | `@vercel/firewall` 1.2.6 (SDK rate limit Vercel) | **Tidak dipasang.** `checkRateLimit` dari SDK itu tetap membutuhkan aturan rate limit yang dibuat di dashboard Firewall (kondisi `@vercel/firewall`), jadi tidak menghilangkan langkah pemilik. Aturan dashboard dengan kondisi path `/api/log-404/catat` cukup dan bekerja sebelum permintaan sampai ke fungsi (tanpa biaya eksekusi). Penjaga yang tidak bergantung IP ditulis di aplikasi tanpa paket. |
 | Pustaka paginasi atau komponen paginasi siap pakai | **Tidak dipasang.** Aturannya tiga fungsi murni (sekitar 60 baris) dan komponennya server component kecil yang memakai `Tautan`, `Ikon`, dan token desain point. |
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru.**
 - Nama domain berbahasa Indonesia (`paginasi`, `pisahHalaman`, `susunPaginasi`, `pathHalaman`, `mintaCekStatus`, `mintaPindai`, `tolakSelainAdmin`, `catat404`, `labelBarisSlot`). Nama dari pihak luar tetap seperti aslinya (`Sec-Fetch-Site`, `same-origin`, `aria-current`, `rel="next"`, `after`).
 - Copy situs dan admin buatan rencana ini: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash (juga di komentar), tanpa tanda seru. Waktu di pesan admin memakai `teksWaktu` ("6 Nov 2026, 15.10 WIB").
 - **Tes tidak pernah memanggil jaringan.** "Cek sekarang" dan "Pindai ulang sekarang" berjalan dengan adapter palsu (`INDEXER_ADAPTER=palsu`; URL Inspection palsu menjawab "URL is unknown to Google"); gambar lewat `cegatCloudinary`, iklan lewat `cegatIklan`.
 - **Halaman publik tetap ISR.** Nomor halaman dibaca dari segmen path, bukan `searchParams` (membaca `searchParams` membuat halaman dinamis; `/cari` tetap satu-satunya halaman dinamis). Rute baru memakai `generateStaticParams` yang mengembalikan `[]`.
 - Path publik lewat `pathFor` dan `pathHalaman` (jangan merangkai `/halaman/` manual). Warna dari token semantik `src/styles/tokens.css`; animasi hanya `transform` dan mati di reduced motion.
-- **Perubahan skema harus aditif.** Rencana ini menambah satu kolom boleh kosong `diminta_pada` di `status_indeks` (Task 6). Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`). Menjalankan E2E di commit yang lebih lama dari skema database E2E membuat server E2E menunggu pertanyaan itu sampai `webServer` habis waktu (600 detik); buang database `_e2e` dulu.
+- **Perubahan skema harus aditif.** Rencana ini menambah satu kolom boleh kosong `diminta_pada` di `status_indeks` (Task 6). Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`). Menjalankan E2E di commit yang lebih lama dari skema database E2E membuat server E2E menunggu pertanyaan itu sampai `webServer` habis waktu (600 detik); buang database `_e2e` dulu.
 - **Operasi massal.** Rencana ini tidak menambah koleksi atau hook. Tulisan baru ke tabel berkunci unik lewat endpoint dengan satu pernyataan SQL atomik (`majukanCek`: `INSERT ... ON CONFLICT (kunci) DO UPDATE` di `antrean_indexing`; `catat404`: `UPDATE` lalu `INSERT ... ON CONFLICT (path) DO UPDATE` di `log_404`), dan klaim lewat `UPDATE ... WHERE ... RETURNING` (`klaimCekManual`, `majukanTugas`). Tes integrasi menjalankan permintaan bersamaan (dua klaim cek, dua pelari pindai, enam beacon ke path yang sama); uji operasi massal lama (`indexer-bersamaan.int.spec.ts`) tetap lulus.
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
-- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, dengan global Iklan menyala (banner persetujuan di semua spec). E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati).
+- Tes unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, dengan global Iklan menyala (banner persetujuan di semua spec). E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti; setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang setelah task selesai.
-- `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 10 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja). Build yang tertinggal dari commit lain bisa meninggalkan `.next/types` yang menunjuk rute yang tidak ada (`TS2307`); hapus `.next` lalu ulangi `pnpm typecheck`.
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
+- `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md`. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 10 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja). Build yang tertinggal dari commit lain bisa meninggalkan `.next/types` yang menunjuk rute yang tidak ada (`TS2307`); hapus `.next` lalu ulangi `npm run typecheck`.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau. Keluaran tes integrasi ditulis ke file log dan dibaca utuh (jangan disaring `tail`), supaya pertanyaan DATA LOSS tidak tersembunyi.
 - **Tulis `req.context` setelah `await`** (Rencana 6A); rencana ini tidak menulis `req.context`.
 - Tes integrasi berbagi database dan berjalan berurutan dengan urutan file yang tidak pasti. Pengguna pertama di database selalu admin (`tetapkanPeranAwal`). Tes mencari dokumennya sendiri lewat ID, path, atau `unik()`; tes yang memakai `tugas-seo` mengosongkannya di `beforeEach`; tes batas 24 jam `catat404` menghitung batasnya dari baris yang sudah ada.
 - E2E berjalan berurutan di satu database. Spec lain membaca daftar artikel admin halaman pertama (10 baris, urut `-createdAt`), tulisan terbaru, news sitemap 48 jam, "Paling dicari pekan ini", dan rubrik Uang & Karier: 50 tulisan paginasi (Task 4) dibuat sebelum tulisan lain, bertanggal terbit 2025, di subkategori khusus. `pantau-aksi.spec.ts` menjalankan antrean Mesin Indexing, jadi namanya berjalan setelah `indexing.spec.ts`; spec rencana ini tidak menerbitkan atau membatalkan terbit dokumen.
-- **Isi 404 Next 16.3.3 yang kadang tidak dirender (warisan Rencana 4A, diperiksa ulang di rencana ini).** Tes yang membuka path 404 (`galat.spec.ts`, `motion.spec.ts` "kartu ke artikel memakai View Transitions", `cari.spec.ts` "cari dari halaman 404", `paginasi.spec.ts` untuk nomor di luar jangkauan lewat browser) sesekali gagal dengan `locator resolved to <html id="__next_error__">`, atribut `lang` kosong, atau beacon `/api/log-404/catat` yang tidak terkirim. Bila salah satu tes itu gagal dengan gejala tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- **Isi 404 Next 16.3.3 yang kadang tidak dirender (warisan Rencana 4A, diperiksa ulang di rencana ini).** Tes yang membuka path 404 (`galat.spec.ts`, `motion.spec.ts` "kartu ke artikel memakai View Transitions", `cari.spec.ts` "cari dari halaman 404", `paginasi.spec.ts` untuk nomor di luar jangkauan lewat browser) sesekali gagal dengan `locator resolved to <html id="__next_error__">`, atribut `lang` kosong, atau beacon `/api/log-404/catat` yang tidak terkirim. Bila salah satu tes itu gagal dengan gejala tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 - Next 16.3.3 kadang mengirim header `Location` dua kali pada redirect pertama sebuah path ISR (`/a, /a`); tes redirect membaca tujuan per nilai (`tujuan()` di `paginasi.spec.ts`) atau memakai `toContain`, bukan `toBe`.
 - **Admin Payload 3.92.** CSS admin menghapus outline (cincin fokus tombol aksi ditulis sendiri); menu admin dirender terbuka lalu ditutup saat hidrasi (tunggu `nav--nav-hydrated`); ukuran huruf dasar admin lebih kecil dari 16 px (tombol aksi setinggi 44 px); tema admin dipilih cookie `payload-theme` (`light` atau `dark`). Komponen klien admin yang memakai `useRouter` diuji unit dengan `vi.mock('next/navigation')`. Lint `react-hooks/purity` menolak `Date.now()` di render komponen; waktu sekarang dihitung lewat argumen bawaan fungsi murni (`jedaCekManual(dimintaPada, sekarang = new Date())`).
 - Karakter yang dibutuhkan kode (spasi tak putus, em dash, en dash, elipsis) ditulis sebagai escape `\u00a0`, `\u2014`, `\u2013`, `\u2026`; rencana ini tanpa karakter asli em dash, en dash, dan spasi tak putus. Salin blok kode rencana ini apa adanya.
@@ -238,7 +244,7 @@ Slug `halaman` dicadangkan lewat `RESERVED_SLUGS`, satu aturan untuk semua kolek
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/paginasi.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/paginasi.test.ts
   ```
 
   Hasil yang diharapkan: FAIL `tests/unit/paginasi.test.ts` dengan `Error: Cannot find package '@/modules/konten/paginasi' imported from '.../tests/unit/paginasi.test.ts'` (Tests: no tests).
@@ -394,11 +400,11 @@ Slug `halaman` dicadangkan lewat `RESERVED_SLUGS`, satu aturan untuk semua kolek
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 507 tes (74 file); integrasi 146 tes (43 file); E2E 136 tes.
@@ -511,7 +517,7 @@ Pindai tautan harian tidak membaca halaman yang dirender, jadi halaman berikutny
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/seo-paginasi.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/seo-paginasi.test.ts
   ```
 
   Hasil yang diharapkan: FAIL, kelima tes gagal; yang pertama dengan `AssertionError: expected { absolute: 'Uang & Karier · point.' } to deeply equal { Object (absolute) }`, yang ketiga dengan `AssertionError: expected [ Array(3) ] to deeply equal [ Array(4) ]`, dan tes pindai tautan dengan `AssertionError: expected [ { jenis: 'rusak', …(3) }, …(5) ] to deeply equal [ { jenis: 'rusak', …(3) }, …(2) ]`.
@@ -729,11 +735,11 @@ Pindai tautan harian tidak membaca halaman yang dirender, jadi halaman berikutny
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 512 tes (75 file); integrasi 146 tes (43 file); E2E 136 tes (halaman 1 tidak berubah: judul, canonical, dan remah roti sama dengan sebelumnya).
@@ -861,8 +867,8 @@ Rute belum berubah di task ini (`muatRubrik` dan `muatPenulis` tetap memuat hala
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/rubrik.test.ts
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/paginasi.int.spec.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/rubrik.test.ts
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/paginasi.int.spec.ts
   ```
 
   Hasil yang diharapkan: unit FAIL di tes "halaman berikutnya: intro pilar hanya di halaman 1, ..." dengan `AssertionError: expected undefined to match object { nomor: 1, jumlah: 2, …(1) }` (5 tes lain lulus); integrasi FAIL, kedua tes gagal dengan `AssertionError: expected undefined to match object { nomor: 1, jumlah: 2, …(2) }` dan `AssertionError: expected undefined to match object { nomor: 1, jumlah: 1 }`.
@@ -1153,11 +1159,11 @@ Rute belum berubah di task ini (`muatRubrik` dan `muatPenulis` tetap memuat hala
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 513 tes (75 file); integrasi 148 tes (44 file); E2E 136 tes.
@@ -1446,7 +1452,7 @@ Data E2E: 50 tulisan di subkategori Persiapan ujian pilar Belajar (subkategori t
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/paginasi-komponen.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/paginasi-komponen.test.ts
   ```
 
   Hasil yang diharapkan: FAIL `tests/unit/paginasi-komponen.test.ts` dengan `Error: Cannot find package '@/components/dasar/Paginasi' imported from '.../tests/unit/paginasi-komponen.test.ts'` (Tests: no tests).
@@ -1793,11 +1799,11 @@ Data E2E: 50 tulisan di subkategori Persiapan ujian pilar Belajar (subkategori t
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 517 tes (76 file); integrasi 148 tes (44 file); E2E 142 tes (enam tes baru di `paginasi.spec.ts`; spec lain yang membaca daftar artikel admin, rubrik Uang & Karier, dan profil Redaksi point. halaman 1 tetap lulus).
@@ -1908,7 +1914,7 @@ Profil penulis bukan bagian rute catch-all, jadi halaman berikutnya di rute bers
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/penulis.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/penulis.test.ts
   ```
 
   Hasil yang diharapkan: FAIL di tes "halaman 2: foto dan nama saja (tanpa bio, keahlian, tautan, dan ProfilePage), ..." dengan `AssertionError: expected '<link rel="preload" as="image" href="…' not to contain 'Menulis soal pajak dan gaji.'` (3 tes lain lulus).
@@ -2063,14 +2069,14 @@ Profil penulis bukan bagian rute catch-all, jadi halaman berikutnya di rute bers
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
-  Hasil yang diharapkan: bersih; unit 518 tes (76 file); integrasi 148 tes (44 file); E2E 146 tes. Bila `pnpm typecheck` gagal dengan `TS2307` ke rute yang tidak ada di `.next/types`, hapus `.next` lalu ulangi.
+  Hasil yang diharapkan: bersih; unit 518 tes (76 file); integrasi 148 tes (44 file); E2E 146 tes. Bila `npm run typecheck` gagal dengan `TS2307` ke rute yang tidak ada di `.next/types`, hapus `.next` lalu ulangi.
 
 - [ ] **Langkah 5: Commit**
 
@@ -2357,8 +2363,8 @@ Satu kolom baru (`diminta_pada`, boleh kosong) dan tanpa hook baru: tulisannya l
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/indexer-aturan.test.ts
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/indexer-cek.int.spec.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/indexer-aturan.test.ts
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/indexer-cek.int.spec.ts
   ```
 
   Hasil yang diharapkan: unit FAIL di dua tes `batasCekManual` (18 tes lain lulus), yang pertama dengan `AssertionError: expected undefined to be 600000 // Object.is equality`, yang kedua dengan `TypeError: (0 , __vite_ssr_import_1__.batasCekManual) is not a function`; integrasi FAIL, keempat tes gagal, tiga dengan `TypeError: (0 , __vite_ssr_import_1__.mintaCekStatus) is not a function` dan tes endpoint dengan `TypeError: Cannot read properties of undefined (reading 'handler')`.
@@ -2829,9 +2835,9 @@ Satu kolom baru (`diminta_pada`, boleh kosong) dan tanpa hook baru: tulisannya l
   Lalu buat ulang tipe dan import map, dan dorong kolom baru ke database dev sebelum build:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
-  pnpm seed
+  npm run generate:types
+  npm run generate:importmap
+  npm run seed
   ```
 
   `src/payload-types.ts` bertambah `dimintaPada` di `StatusIndek` dan `StatusIndeksSelect`; import map bertambah `SelCekSekarang`.
@@ -2841,11 +2847,11 @@ Satu kolom baru (`diminta_pada`, boleh kosong) dan tanpa hook baru: tulisannya l
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 520 tes (76 file); integrasi 152 tes (45 file); E2E 149 tes. Tes integrasi menambah kolom `diminta_pada` ke database tes tanpa pertanyaan DATA LOSS (perubahan aditif); bila pertanyaan itu muncul, jangan jawab, buang database yang bersangkutan.
@@ -3172,8 +3178,8 @@ E2E memulai dari keadaan belum pernah dipindai (menghapus baris tugas lewat REST
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/pantau-aturan.test.ts tests/unit/pantau-dashboard.test.ts
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/pantau-pindai.int.spec.ts tests/int/pantau-dashboard.int.spec.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/pantau-aturan.test.ts tests/unit/pantau-dashboard.test.ts
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/pantau-pindai.int.spec.ts tests/int/pantau-dashboard.int.spec.ts
   ```
 
   Hasil yang diharapkan: unit FAIL di dua tes (16 lain lulus): `AssertionError: expected undefined to be 600000 // Object.is equality` (aturan) dan pesan yang diawali `AssertionError: expected '<section class="pantau-bagian pantau-…' to match /…/button><p role="status" class="pantau-aksi__pesan">` (tombol belum ada); integrasi FAIL: `tests/int/pantau-pindai.int.spec.ts` dengan `Error: Cannot find package '@/modules/pantau/endpoint' imported from '.../tests/int/pantau-pindai.int.spec.ts'`, dan kedua tes `pantau-dashboard.int.spec.ts` dengan `AssertionError: expected { …(7) } to deeply equal { …(8) }` dan `AssertionError: expected { analitik: { …(4) }, tautan: null } to deeply equal { analitik: { …(5) }, tautan: null }`.
@@ -3637,8 +3643,8 @@ E2E memulai dari keadaan belum pernah dipindai (menghapus baris tugas lewat REST
   Lalu jalankan:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
+  npm run generate:types
+  npm run generate:importmap
   ```
 
   Keduanya tidak mengubah apa pun (tanpa field baru; tombol diimpor langsung oleh komponen server dashboard).
@@ -3648,11 +3654,11 @@ E2E memulai dari keadaan belum pernah dipindai (menghapus baris tugas lewat REST
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 522 tes (76 file); integrasi 155 tes (46 file); E2E 150 tes.
@@ -3768,7 +3774,7 @@ Hitungan sebelumnya memakai cari lalu ubah lewat Local API, sehingga dua kunjung
   Jalankan:
 
   ```bash
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/log404.int.spec.ts
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/log404.int.spec.ts
   ```
 
   Hasil yang diharapkan: FAIL, ketiga tes gagal: `AssertionError: expected undefined to be true // Object.is equality` (nama tesnya "path baru dibatasi undefined per 24 jam ..." karena konstantanya belum ada), `AssertionError: expected [ undefined, undefined, …(4) ] to deeply equal [ true, true, true, true, true, true ]`, dan `AssertionError: expected 400 to be 204 // Object.is equality`.
@@ -3918,11 +3924,11 @@ Hitungan sebelumnya memakai cari lalu ubah lewat Local API, sehingga dua kunjung
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 522 tes (76 file); integrasi 158 tes (47 file; tes `catat404` lama di `redirect-404.int.spec.ts` tetap lulus); E2E 150 tes (beacon `galat.spec.ts` dari browser dan `POST` langsung di `pantau.spec.ts` tetap tercatat).
@@ -4006,7 +4012,7 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
   Jalankan:
 
   ```bash
-  pnpm exec vitest run --config ./vitest.unit.config.mts tests/unit/iklan-aturan.test.ts
+  npx vitest run --config ./vitest.unit.config.mts tests/unit/iklan-aturan.test.ts
   ```
 
   Hasil yang diharapkan: FAIL di tes "ID slot dan posisi singkat, ..." dengan `TypeError: (0 , __vite_ssr_import_1__.labelBarisSlot) is not a function` (1 gagal, 11 lulus).
@@ -4104,8 +4110,8 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
   Lalu jalankan:
 
   ```bash
-  pnpm generate:types
-  pnpm generate:importmap
+  npm run generate:types
+  npm run generate:importmap
   ```
 
   `src/payload-types.ts` tidak berubah; import map bertambah `LabelSlot`.
@@ -4115,11 +4121,11 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit 523 tes (76 file); integrasi 158 tes (47 file); E2E 150 tes (tes admin global Iklan di `iklan.spec.ts` membaca label baris baru).
@@ -4182,7 +4188,7 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
    - Copy UI: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru. Angka lewat `Intl.NumberFormat('id-ID')` (`teksAngka` modul hitung); rupiah dari `Intl` memakai spasi tak putus setelah "Rp", jadi di kode dan tes tulis `\u00a0`, jangan karakter aslinya. Begitu juga em dash dan en dash yang dibutuhkan kode dan tes (pembersih dan cek pola asisten AI): tulis `\u2014` dan `\u2013`.
    - Tes unit di `tests/unit/*.test.ts`, tes integrasi di `tests/int/*.int.spec.ts` dan memakai `getTestPayload()` + `unik()` dari `tests/int/helpers.ts`.
   -- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO). Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
-  +- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO, dan `PAGINASI_E2E`: 50 tulisan lama di subkategori Persiapan ujian pilar Belajar, bertanggal terbit 2025 dan dibuat sebelum tulisan lain, supaya daftar artikel admin halaman pertama, tulisan terbaru, dan rubrik Uang & Karier tidak berubah). Isi 404 Next 16.3.3 kadang tidak dirender (cangkang `<html id="__next_error__">`, sekitar 0,5% kunjungan 404 di E2E penuh; stylesheet yang dibatalkan saat React mengganti dokumen tidak diminta ulang): tes yang membuka path 404 dan gagal dengan cangkang itu atau beacon `/api/log-404/catat` yang tidak terkirim diulang sekali lewat `pnpm test:e2e`, tanpa menaikkan timeout. `pantau-aksi.spec.ts` (Cek sekarang dan Pindai ulang sekarang menjalankan antrean Mesin Indexing) berjalan setelah `indexing.spec.ts`. Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
+  +- Tes E2E di `tests/e2e/*.spec.ts` memakai `cegatCloudinary()` (gambar tanpa jaringan) dan `periksaAxe()` (WCAG 2.2 AA) dari `tests/e2e/bantu.ts`; data contohnya di `tests/e2e/siapkan.ts` (termasuk klik Google contoh `KLIK_CONTOH` dan total harian `HARI_CONTOH` untuk "Paling dicari" dan dashboard SEO, dan `PAGINASI_E2E`: 50 tulisan lama di subkategori Persiapan ujian pilar Belajar, bertanggal terbit 2025 dan dibuat sebelum tulisan lain, supaya daftar artikel admin halaman pertama, tulisan terbaru, dan rubrik Uang & Karier tidak berubah). Isi 404 Next 16.3.3 kadang tidak dirender (cangkang `<html id="__next_error__">`, sekitar 0,5% kunjungan 404 di E2E penuh; stylesheet yang dibatalkan saat React mengganti dokumen tidak diminta ulang): tes yang membuka path 404 dan gagal dengan cangkang itu atau beacon `/api/log-404/catat` yang tidak terkirim diulang sekali lewat `npm run test:e2e`, tanpa menaikkan timeout. `pantau-aksi.spec.ts` (Cek sekarang dan Pindai ulang sekarang menjalankan antrean Mesin Indexing) berjalan setelah `indexing.spec.ts`. Anggaran JavaScript (total di bawah 160 KiB per halaman, hanya skrip dari situs sendiri, spesifikasi §12) dijaga `motion.spec.ts` untuk setiap jenis halaman; jenis halaman baru ditambahkan ke daftarnya. JS kalkulator di atas JS artikel dijaga di bawah 25 KB, chunk JS tata letak milik point. (banner persetujuan, pemuat iklan, animasi masuk, menu aktif) di bawah 8 KiB, dan keduanya bersama di bawah 25 KB. Kalkulator diuji di `kalkulator.spec.ts` (enam tools dari `TOOLS_CONTOH` di tiga ukuran layar) dan `hitung.spec.ts` (contoh resmi DJP lewat form).
    
    ## Batasan
    - Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `CRON_SECRET`, `INDEXER_ADAPTER=asli`, `ANTHROPIC_API_KEY`, atau `AI_ADAPTER=asli`. Kredensial Google dan kunci API Claude hanya di env server Vercel, tidak pernah di CMS, log, atau tes.
@@ -4278,17 +4284,17 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:int
-  pnpm test:e2e
-  pnpm test:e2e
-  pnpm seed
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:int
+  npm run test:e2e
+  npm run test:e2e
+  npm run seed
+  npm run build
   git status --short
   ```
 
@@ -4300,12 +4306,12 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e INDEXER_ADAPTER=palsu AI_ADAPTER=palsu NEXT_PUBLIC_SITE_URL=http://localhost:3200 PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Periksa di 375, 768, dan 1440 px (DevTools) halaman 1, 2, dan 3 dari `/belajar`, `/belajar/persiapan-ujian`, dan `/penulis/redaksi`, masing-masing sebelum memilih (banner persetujuan tampil) dan setelah "Izinkan semua" (slot rubrik di bawah navigasi halaman): posisi "Halaman N dari M", "Sebelumnya" dan "Berikutnya" sejajar dalam satu baris di 375 px dan nomor di bawahnya, arah di kiri dan nomor di kanan mulai 768 px, halaman yang dibuka berwarna tombol, setiap tautan paling kecil 44 x 44 px, judul tab berakhiran ", halaman N", tidak ada geser horizontal, cincin fokus terlihat saat menekan Tab, dan profil penulis halaman 2 tanpa bio. Ulangi satu halaman dengan reduced motion (DevTools, Rendering). Lalu masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`) dan periksa di 375 dan 1440 px, tema terang dan gelap (halaman Akun, Tema Admin): daftar Status indeks (kolom "Cek sekarang": siap, sedang dicek, selesai dengan label status, lalu klik lagi untuk pesan batas berwaktu WIB), Dashboard SEO (tombol "Pindai ulang sekarang" di bagian tautan: siap, memindai, selesai dengan ringkasan, lalu dibatasi), dan global Iklan (label baris slot). Pastikan pesan dibacakan (`role="status"`), fokus tetap di tombol yang ditekan, dan tidak ada geser horizontal. Hentikan server dengan `fuser -k 3200/tcp`, lalu `pnpm build` lagi dengan env biasa.
+  Periksa di 375, 768, dan 1440 px (DevTools) halaman 1, 2, dan 3 dari `/belajar`, `/belajar/persiapan-ujian`, dan `/penulis/redaksi`, masing-masing sebelum memilih (banner persetujuan tampil) dan setelah "Izinkan semua" (slot rubrik di bawah navigasi halaman): posisi "Halaman N dari M", "Sebelumnya" dan "Berikutnya" sejajar dalam satu baris di 375 px dan nomor di bawahnya, arah di kiri dan nomor di kanan mulai 768 px, halaman yang dibuka berwarna tombol, setiap tautan paling kecil 44 x 44 px, judul tab berakhiran ", halaman N", tidak ada geser horizontal, cincin fokus terlihat saat menekan Tab, dan profil penulis halaman 2 tanpa bio. Ulangi satu halaman dengan reduced motion (DevTools, Rendering). Lalu masuk ke `http://localhost:3200/admin` dengan akun E2E (`ADMIN_E2E` di `tests/e2e/data.ts`) dan periksa di 375 dan 1440 px, tema terang dan gelap (halaman Akun, Tema Admin): daftar Status indeks (kolom "Cek sekarang": siap, sedang dicek, selesai dengan label status, lalu klik lagi untuk pesan batas berwaktu WIB), Dashboard SEO (tombol "Pindai ulang sekarang" di bagian tautan: siap, memindai, selesai dengan ringkasan, lalu dibatasi), dan global Iklan (label baris slot). Pastikan pesan dibacakan (`role="status"`), fokus tetap di tombol yang ditekan, dan tidak ada geser horizontal. Hentikan server dengan `fuser -k 3200/tcp`, lalu `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 5: Commit**
 
@@ -4320,7 +4326,7 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
 
 ## Selesai bila
 
-- `pnpm test` lulus (unit 523 tes (76 file), integrasi 158 tes (47 file), juga di database tes yang sudah berisi data putaran sebelumnya), `pnpm test:e2e` lulus (150 tes) dua kali berturut-turut tanpa membuang database E2E, `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil dengan rute baru `● /penulis/[slug]/halaman/[nomor]` sementara `○ /`, `● /[...jalur]`, dan `● /penulis/[slug]` tetap, semuanya tanpa jaringan.
+- `npm test` lulus (unit 523 tes (76 file), integrasi 158 tes (47 file), juga di database tes yang sudah berisi data putaran sebelumnya), `npm run test:e2e` lulus (150 tes) dua kali berturut-turut tanpa membuang database E2E, `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil dengan rute baru `● /penulis/[slug]/halaman/[nomor]` sementara `○ /`, `● /[...jalur]`, dan `● /penulis/[slug]` tetap, semuanya tanpa jaringan.
 - Rubrik pilar dan subkategori serta profil penulis dengan lebih dari 24 tulisan punya halaman berikutnya di `/halaman/{n}`: setiap tulisan tampil tepat sekali di seluruh halaman, `/halaman/1` dialihkan 308 ke alamat daftar, nomor tidak sah atau di luar jangkauan 404, slug `halaman` ditolak di semua koleksi.
 - Setiap halaman berikutnya punya judul ", halaman N", canonical ke dirinya sendiri, remah roti "Halaman N", dan tidak masuk sitemap; intro pilar, bio penulis, dan ProfilePage hanya di halaman 1; pindai tautan tidak melaporkan tautan ke halaman berikutnya sebagai rusak.
 - Navigasi halaman bisa dirayapi (`<a href>`), dipakai dengan keyboard, dibacakan pembaca layar ("Halaman 2 dari 3", `aria-current`), lolos axe di 375, 768, dan 1440 px dengan banner persetujuan dan slot iklan menyala, tanpa geser horizontal, setiap tautan paling kecil 44 x 44 px, dan slot iklan rubrik di bawahnya.
@@ -4380,8 +4386,8 @@ Butir tunda Rencana 8A ("Label baris slot di admin"). Baris array Slot iklan sek
 | Uji visual dengan data E2E (build produksi, port 3200): rubrik pilar, subkategori, dan profil penulis halaman 1, 2, dan 3 di 375, 768, dan 1440 px, sebelum memilih persetujuan dan setelah Izinkan semua (skrip iklan tiruan); reduced motion; admin "Cek sekarang" dan "Pindai ulang sekarang" dalam keadaan siap, berjalan, selesai, dan dibatasi di 375 dan 1440 px, tema terang dan gelap; label baris slot. | Halaman publik: 54 keadaan, semua 200, axe halaman penuh dan axe navigasi bersih, CLS 0, tanpa geser horizontal, tanpa permintaan ke luar, semua tautan navigasi paling kecil 44 x 44 px, banner tampil sebelum memilih, slot rubrik terisi setelah Izinkan semua di halaman rubrik (profil penulis tidak punya slot). Reduced motion: transisi 0,00001 detik, cincin fokus solid. Admin: 32 keadaan, axe pada bagian buatan rencana ini bersih, tombol 44 px dengan `aria-disabled` saat berjalan dan dibatasi, tanpa teks Inggris, tanpa geser horizontal, tanpa permintaan ke luar. Label baris "artikel-akhir · Artikel, setelah isi"; axe bawaan Payload pada pegangan geser baris dicatat di Cakupan yang ditunda. |
 | Uji operasi massal untuk tulisan baru ke tabel berkunci unik (rencana ini tanpa koleksi dan hook baru), di database dev probe lewat Local API. | Dua status indeks yang sudah diklaim "Cek sekarang" (`diminta_pada` terisi, baris `cek-status` antre) dihapus massal tanpa galat. Dua baris log 404 dari `catat404` diubah massal (`jumlah` 5), lalu kunjungan bersamaan menambah hitungan menjadi 6, keduanya dihapus massal tanpa galat, dan path yang sama dicatat ulang dari 1. |
 | Verifikasi penuh per commit di salinan terpisah (database tes dibuat ulang per commit): type check, lint, unit, integrasi, dan E2E (build produksi). | Semua hijau di setiap commit: type check dan lint bersih (tanpa error dan warning), unit, integrasi, dan E2E sesuai tabel "Jumlah tes yang diharapkan". Satu-satunya kegagalan adalah E2E pertama Task 4 (isi 404, baris di atas); putaran ulang 142 tes lulus. |
-| Putaran tambahan di commit terakhir: E2E kedua di database E2E yang sama tanpa dibuang, lalu integrasi dan unit di database tes yang sudah berisi data. | Semua hijau di commit Task 10: E2E kedua 150 tes tanpa membuang database E2E; integrasi kedua 158 tes (47 file) di database tes yang sudah berisi 95 artikel dari putaran pertama; unit kedua 523 tes (76 file). Build probe dengan database dev setelah `pnpm seed`: rute baru `● /penulis/[slug]/halaman/[nomor]`, sementara `○ /`, `● /[...jalur]`, dan `● /penulis/[slug]` tetap; `git status` bersih. |
-| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`becb67d`), task demi task. | 10 dari 10 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe, termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `pnpm generate:types` dan `pnpm generate:importmap`. |
+| Putaran tambahan di commit terakhir: E2E kedua di database E2E yang sama tanpa dibuang, lalu integrasi dan unit di database tes yang sudah berisi data. | Semua hijau di commit Task 10: E2E kedua 150 tes tanpa membuang database E2E; integrasi kedua 158 tes (47 file) di database tes yang sudah berisi 95 artikel dari putaran pertama; unit kedua 523 tes (76 file). Build probe dengan database dev setelah `npm run seed`: rute baru `● /penulis/[slug]/halaman/[nomor]`, sementara `○ /`, `● /[...jalur]`, dan `● /penulis/[slug]` tetap; `git status` bersih. |
+| Blok kode rencana ini diterapkan ulang ke salinan bersih `master` (`becb67d`), task demi task. | 10 dari 10 task identik: pohon setiap commit hasil penerapan sama dengan pohon commit probe, termasuk `payload-types.ts` dan import map yang dibuat ulang lewat `npm run generate:types` dan `npm run generate:importmap`. |
 | Keputusan pemilik setelah rencana selesai (6 November 2026): jalankan sekarang; halaman 2 dan seterusnya tetap `index, follow`; batas beacon 200 path baru per 24 jam dan aturan Firewall 10 per menit per IP; Next 16.3.8 di Rencana 8C. | Rencana diikuti apa adanya. Review pengawas mencocokkan dokumentasi Vercel WAF Rate Limiting (tersedia di semua paket; Hobby 1 aturan dari 3 aturan kustom, Pro 40; jendela 10 detik sampai 10 menit; kunci IP atau JA4; hitungan per region) dan memeriksa `npm view next@16.3.8`. |
 | Eksekusi (subagen per kelompok task 1 sampai 3, 4 dan 5, 6 dan 7, 8 sampai 10). | Setiap commit identik dengan commit probe (diff kosong di luar file rencana); jumlah tes sama dengan tabel di setiap task; tidak ada kegagalan sekali jalan, jadi aturan ulangi sekali tidak terpakai. Pemeriksaan akhir: E2E 150 dua kali berturut-turut, integrasi 158 dua kali di database yang sama, uji visual 54 keadaan publik dan tombol admin di dua tema. Temuan: lima pelanggaran axe bawaan Payload tambahan di array Slot iklan (dicatat di Cakupan yang ditunda); kolom Detail Status indeks menampilkan teks mentah Google ("URL is unknown to Google") sejak Rencana 6A. |
 

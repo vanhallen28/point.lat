@@ -1,12 +1,18 @@
 # Rencana 5: Tools point.lat (modul `hitung` dan enam kalkulator)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Membangun modul `hitung` dan enam kalkulator MVP (Gaji Bersih, THR, Cicilan & KPR, Dana Darurat, BMI & Kalori, IPK) dengan angka aturan bertanggal dari CMS, halaman `/tools/{slug}` yang menghitung di browser dengan hasil contoh dari server, seed enam tools draf beserta parameternya dari sumber resmi, dan penanda halaman aktif di header, semuanya diuji dengan contoh resmi, tanpa jaringan, dan tanpa dependensi baru.
 
 **Architecture:** `src/modules/hitung` adalah modul dalam dengan antarmuka kecil: `hitung(toolId, masukan, tanggal, parameter, teks?)` untuk menghitung, `siapkanKalkulator(...)` untuk halaman, `periksaParameter(doc)` untuk validasi CMS, dan `sumberParameter(toolId)` untuk pemuat data. Rumus, isian form, pembacaan teks masukan, pemilihan parameter sesuai tanggal, cadangan "parameter terakhir yang valid", dan format angka Indonesia semuanya di dalam modul. Modul ini fungsi murni tanpa database, jadi kode yang sama jalan di server (hasil contoh, log) dan di browser (kalkulator). Koleksi `parameter-tools` diperluas secara aditif (tabel bertanggal) dan divalidasi oleh modul `hitung`. Halaman `/tools/{slug}` adalah server component ISR seperti halaman lain (data lewat `muatTool`, tag `parameter-tools`), dengan satu komponen klien `Kalkulator` yang membaca form dan memanggil `hitung` di browser.
 
-**Tech Stack:** Next.js 16.3.3 (App Router, ISR, `unstable_cache`, client component), Payload 3.92.1 (Local API, field `array`, validasi field, hook revalidasi), React 19, CSS Module + custom properties (container query, `@media (prefers-reduced-motion)`), `Intl.NumberFormat('id-ID')`, Vitest 4 (unit + integrasi, `react-dom/server` untuk tes render), Playwright 1.63 + `@axe-core/playwright` 4.14, PostgreSQL 16/17, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, ISR, `unstable_cache`, client component), Payload 3.92.1 (Local API, field `array`, validasi field, hook revalidasi), React 19, CSS Module + custom properties (container query, `@media (prefers-reduced-motion)`), `Intl.NumberFormat('id-ID')`, Vitest 4 (unit + integrasi, `react-dom/server` untuk tes render), Playwright 1.63 + `@axe-core/playwright` 4.14, PostgreSQL 16/17, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§3 aturan copy dan tipe konten Tools; §4 pola halaman tools; §5 modul `hitung`; §6 koleksi `tools` dan `parameterTools`; §7 URL `/tools/{slug}`; §12 Performa; §13 Motion (angka hasil kalkulator); §14 Aksesibilitas (label terlihat, pesan error di bawah field dengan `aria-live`, target 44 px); §15 Input kalkulator tidak valid dan parameter tools tidak ada untuk tanggal; §16 Testing (contoh perhitungan dari sumber resmi, kalkulator gaji menghasilkan angka contoh resmi); §17 Cakupan (tools 6)).
 
@@ -24,7 +30,7 @@ Tidak ada pustaka format angka, validasi form, atau matematika keuangan: `Intl.N
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru** (lihat bagian sebelumnya).
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru** (lihat bagian sebelumnya).
 - Nama domain berbahasa Indonesia seperti rencana sebelumnya (`hitung`, `siapkanKalkulator`, `parameterTersimpan`, `HalamanTool`, `Kalkulator`, `TautanAktif`). Nama teknis framework tetap bahasa Inggris.
 - Copy UI, pesan galat, dan teks seed: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash (juga di teks seed dan komentar), tanpa tanda seru. CTA menyebut hasilnya ("Hitung gaji bersih", "Hitung IPK"). Pesan galat isian: penyebab + cara memperbaiki ("Gaji pokok dan tunjangan tetap per bulan belum diisi. Tulis angkanya, misalnya 8.000.000.").
 - Angka ditulis cara Indonesia lewat `Intl.NumberFormat('id-ID')` di `src/modules/hitung/format.ts` ("Rp 8.000.000", "1,5%", "22,0"). Spasi tak putus di kode ditulis sebagai escape `\u00a0`, jangan karakter harfiah (tidak terlihat saat review).
@@ -33,14 +39,14 @@ Tidak ada pustaka format angka, validasi form, atau matematika keuangan: `Intl.N
 - Warna, tipografi, radius, spasi, dan motion dari token Rencana 4A; komponen hanya memakai token semantik. Warna pilar selalu bersama nama pilarnya. Kuning dan koral tidak dipakai sebagai warna teks di latar terang. Dilarang: gradien biru-ungu, teks gradien, efek kaca, glow.
 - Motion: hanya `transform` dan `opacity`, kurva dan durasi dari token, tanpa animasi yang berjalan terus; `prefers-reduced-motion: reduce` mematikan semuanya.
 - Tata letak tidak boleh bergantung jumlah elemen. Label yang berisi isian di dalam flex atau grid diberi `min-width: 0` supaya isian tidak melebar keluar kolom. Setiap tata letak baru dijaga tes E2E yang mengukurnya (tanpa geser horizontal, tombol satu baris, angka hasil muat, jarak bagian).
-- **Perubahan skema harus aditif.** Rencana ini hanya membuat `parameter_tools.nilai` boleh kosong dan menambah tabel `parameter_tools_tabel` (Task 2). Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
-- `pnpm build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati). `/tools/{slug}` tidak dirender saat build (`generateStaticParams` kosong), tetapi layout dan halaman statis lain tetap dirender.
+- **Perubahan skema harus aditif.** Rencana ini hanya membuat `parameter_tools.nilai` boleh kosong dan menambah tabel `parameter_tools_tabel` (Task 2). Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
+- `npm run build` membaca database dev (`pointlat` dari `.env`). Postgres harus jalan (`pg_ctlcluster 16 main start` bila mati). `/tools/{slug}` tidak dirender saat build (`generateStaticParams` kosong), tetapi layout dan halaman statis lain tetap dirender.
 - Tes tidak memanggil jaringan. Unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai database `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, dan permintaan ke `res.cloudinary.com` dicegat browser tes. URL sumber aturan di seed hanya disimpan sebagai teks, tidak pernah dibuka tes.
-- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`. Jangan meninggalkan proses latar belakang setelah task selesai.
 - `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md` bila mendeteksi agen AI. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 11 sengaja mengubah `CLAUDE.md`; di task itu buang blok itu saja).
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau.
-- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` karena isi 404 tidak dirender di browser (lihat Risiko). Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning). Setiap task diakhiri unit, integrasi, dan E2E yang hijau.
+- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` karena isi 404 tidak dirender di browser (lihat Risiko). Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 
 ## Keputusan teknis (hasil riset dan probe, dipakai di semua task)
 
@@ -63,7 +69,7 @@ Tidak ada pustaka format angka, validasi form, atau matematika keuangan: `Intl.N
 | Isian dan validasi | Label terlihat; satuan rupiah dibacakan ("dalam rupiah"); `inputmode="numeric"` untuk rupiah dan angka bulat, `decimal` untuk desimal; `aria-describedby` ke bantuan dan galat; galat di bawah field dalam `<p aria-live="polite">` dan `aria-invalid`. Validasi saat tombol ditekan (fokus ke isian pertama yang salah, membuka bagian lanjutan bila perlu, menggulir ke tengah layar) dan saat isian ditinggalkan (isian kosong yang belum pernah salah tidak ditandai). Isian rupiah dirapikan menjadi "8.000.000" saat ditinggalkan. Pilihan sampai 4 opsi memakai radio, status PTKP memakai kisi radio dengan kode terlihat ("TK/0") dan label lengkap untuk pembaca layar, selebihnya `<select>`. Target sentuh 44 px. | Spesifikasi §14, §15; WCAG 2.2 (3.3.1, 3.3.3, 4.1.3, 2.5.8); probe: `<select>` status terpotong di 375 px |
 | Pengumuman hasil | Satu wilayah `role="status"` (kosong saat halaman dimuat) mengumumkan hasil utama atau jumlah isian yang salah. Hasil baru di HP digulir sampai terlihat (tanpa animasi gulir bila reduced motion). | WCAG 2.2 SC 4.1.3 Status Messages |
 | Angka hasil | Satu baris, ukuran huruf `min(5.5rem, 100cqi / (panjang x 0,44))` dengan container query, jadi Rp 10.000.000.000 tetap muat di 375 px tanpa terpotong. Hasil baru muncul dengan animasi CSS `muncul` (naik 0,3em + opacity, 250 ms) di dalam `prefers-reduced-motion: no-preference`; hasil contoh dari server tidak dianimasikan. Kotak hasil `position: sticky` di samping form di desktop, dan hasil baru tidak menggeser form. | Spesifikasi §4 (hasil besar), §13; probe: tes E2E angka panjang dan posisi form sebelum dan sesudah hitung |
-| Seed | `pnpm seed` membuat enam tools **draf** (penjelasan rumus dengan contoh hitung, FAQ, sumber aturan dengan tanggal akses 5 November 2026, SEO, label dan bantuan isian awal) dan 22 dokumen parameter dengan sumber dan catatan. Dokumen yang sudah ada (tools per `toolId`, parameter per `toolId` + `kunci` + `berlakuMulai`) tidak ditimpa. Pemilik menerbitkan tools setelah memeriksa isinya. | Spesifikasi §3 (aturan diverifikasi ke sumber resmi), §18 (pemilik mengisi konten) |
+| Seed | `npm run seed` membuat enam tools **draf** (penjelasan rumus dengan contoh hitung, FAQ, sumber aturan dengan tanggal akses 5 November 2026, SEO, label dan bantuan isian awal) dan 22 dokumen parameter dengan sumber dan catatan. Dokumen yang sudah ada (tools per `toolId`, parameter per `toolId` + `kunci` + `berlakuMulai`) tidak ditimpa. Pemilik menerbitkan tools setelah memeriksa isinya. | Spesifikasi §3 (aturan diverifikasi ke sumber resmi), §18 (pemilik mengisi konten) |
 | Header aktif | Pill rubrik dan tombol Tools memakai `aria-current` (`page` untuk path yang sama, `true` untuk path di bawahnya) lewat komponen klien kecil `TautanAktif` (`usePathname`). Penandanya ada di HTML hasil prerender, jadi tetap terlihat tanpa JavaScript. | Ditunda dari Rencana 4B; WCAG 2.2 SC 1.4.1 (penanda tidak hanya warna: latar dan teks tebal di pill, garis bawah di tombol Tools) |
 | Anggaran JS | Diukur di probe (byte terkompresi yang diunduh, build produksi): artikel 138,6 KiB (sama dengan beranda, rubrik, dan `/tools`), `/tools/gaji-bersih` dan `/tools/ipk` 151,9 KiB; chunk kalkulator + modul `hitung` 13.530 byte gzip. `motion.spec.ts` menjaga total di bawah 160 KiB untuk kedua halaman kalkulator dan selisih kalkulator terhadap artikel di bawah 25 KB. Klik "Hitung" di CPU 4x lebih lambat: Event Timing paling lama 96 ms pada klik pertama dan 16 sampai 32 ms pada klik berikutnya (4 putaran) (INP di bawah 200 ms). | Spesifikasi §12 |
 
@@ -471,7 +477,7 @@ Tes Gaji Bersih memakai contoh resmi DJP: Leaflet PPh 21 TER (Tuan R, K/0, gaji 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/hitung-gaji.test.ts` dan `tests/unit/hitung-inti.test.ts`, keduanya dengan `Error: Cannot find package '@/modules/hitung'`.
@@ -1575,11 +1581,11 @@ Tes Gaji Bersih memakai contoh resmi DJP: Leaflet PPh 21 TER (Tuan R, K/0, gaji 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 46 passed (46)`, `Tests 307 passed (307)`; integrasi `Test Files 25 passed (25)`, `Tests 73 passed (73)` (tidak berubah); E2E `74 passed` (tidak berubah).
@@ -1594,7 +1600,7 @@ Tes Gaji Bersih memakai contoh resmi DJP: Leaflet PPh 21 TER (Tuan R, K/0, gaji 
 ### Task 2: Parameter tabel bertanggal di CMS, validasi dari modul `hitung`, dan revalidasi halaman tools
 
 **Files:**
-- Modify: `src/collections/ParameterTools.ts`, `src/lib/tag.ts`, `src/payload-types.ts` (hasil `pnpm generate:types`), `tests/unit/tag.test.ts`, `tests/int/tools.int.spec.ts`
+- Modify: `src/collections/ParameterTools.ts`, `src/lib/tag.ts`, `src/payload-types.ts` (hasil `npm run generate:types`), `tests/unit/tag.test.ts`, `tests/int/tools.int.spec.ts`
 - Test: `tests/int/parameter-tools.int.spec.ts`
 
 **Interfaces:**
@@ -1743,8 +1749,8 @@ Menyimpan atau menghapus parameter membuang tag `parameter-tools`, jadi halaman 
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/tag.test.ts` dengan `AssertionError: expected undefined to be 'parameter-tools' // Object.is equality`; integrasi FAIL tiga tes di `tests/int/parameter-tools.int.spec.ts`: "menyimpan tabel berurutan ..." dengan `ValidationError: The following field is invalid: Nilai`, "menolak kunci yang tidak dikenal ..." dengan `Error: Operasi diharapkan gagal, tetapi berhasil.`, dan "mengubah satu field ..." dengan `AssertionError: expected [] to deeply equal [ 'parameter-tools' ]`.
@@ -1877,23 +1883,23 @@ Menyimpan atau menghapus parameter membuang tag `parameter-tools`, jadi halaman 
   Jalankan:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
-  pnpm seed
+  npm run seed
   ```
 
-  Hasil yang diharapkan: `src/payload-types.ts | 28 ++++++++++++++++++++++++++--` (`nilai` opsional dan field `tabel` di `ParameterTool` dan `ParameterToolsSelect`, plus deskripsi admin baru); `pnpm seed` selesai tanpa pertanyaan DATA LOSS (skema aditif terdorong ke database dev sebelum build).
+  Hasil yang diharapkan: `src/payload-types.ts | 28 ++++++++++++++++++++++++++--` (`nilai` opsional dan field `tabel` di `ParameterTool` dan `ParameterToolsSelect`, plus deskripsi admin baru); `npm run seed` selesai tanpa pertanyaan DATA LOSS (skema aditif terdorong ke database dev sebelum build).
 
 - [ ] **Langkah 5: Jalankan semua tes**
 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 46 passed (46)`, `Tests 307 passed (307)`; integrasi `Test Files 26 passed (26)`, `Tests 76 passed (76)`; E2E `74 passed`.
@@ -1994,7 +2000,7 @@ Tes memakai contoh infografis pemerintah indonesiabaik.id (masa kerja 3 tahun, u
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: 6 tes FAIL di `tests/unit/hitung-thr.test.ts`; empat tes contoh dengan `AssertionError: hitung gagal: {"ok":false,"galat":{},"pesan":"Kalkulator ini belum tersedia."}`, tes contoh form dengan `AssertionError: expected '' to be 'Hitung THR' // Object.is equality`, dan tes masa kerja dengan `AssertionError: expected { ok: false, galat: {}, …(1) } to deeply equal { ok: false, pesan: null, …(1) }`.
@@ -2144,11 +2150,11 @@ Tes memakai contoh infografis pemerintah indonesiabaik.id (masa kerja 3 tahun, u
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 47 passed (47)`, `Tests 313 passed (313)`; integrasi `Test Files 26 passed (26)`, `Tests 76 passed (76)`; E2E `74 passed`.
@@ -2280,7 +2286,7 @@ Tes cicilan memakai contoh Kompas (pokok Rp120.000.000, bunga 11%, 120 bulan: ci
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: 8 tes FAIL di `tests/unit/hitung-cicilan-darurat.test.ts`, di antaranya tes anuitas Kompas dengan `AssertionError: hitung gagal: {"ok":false,"galat":{},"pesan":"Kalkulator ini belum tersedia."}` dan tes contoh form dengan `AssertionError: expected '' to be 'Hitung cicilan' // Object.is equality`.
@@ -2561,11 +2567,11 @@ Tes cicilan memakai contoh Kompas (pokok Rp120.000.000, bunga 11%, 120 bulan: ci
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 48 passed (48)`, `Tests 321 passed (321)`; integrasi `Test Files 26 passed (26)`, `Tests 76 passed (76)`; E2E `74 passed`.
@@ -2711,7 +2717,7 @@ Tes BMI memakai contoh form (60 kg, 165 cm, 25 tahun, perempuan, ringan: IMT 22,
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: 9 tes FAIL di `tests/unit/hitung-bmi-ipk.test.ts`; tes contoh form BMI dengan `AssertionError: expected {} to deeply equal { berat: '60', tinggi: '165', …(3) }`, tes Mifflin dan batas kategori dengan `AssertionError: hitung gagal: {"ok":false,"galat":{},"pesan":"Kalkulator ini belum tersedia."}`.
@@ -3144,11 +3150,11 @@ Tes BMI memakai contoh form (60 kg, 165 cm, 25 tahun, perempuan, ringan: IMT 22,
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 49 passed (49)`, `Tests 330 passed (330)`; integrasi `Test Files 26 passed (26)`, `Tests 76 passed (76)`; E2E `74 passed`.
@@ -3171,10 +3177,10 @@ Tes BMI memakai contoh form (60 kg, 165 cm, 25 tahun, perempuan, ringan: IMT 22,
 - Consumes: `siapkanKalkulator` (isian untuk bantuan awal), `PARAMETER_AWAL` (Task 1 sampai 5), `PILAR_AWAL` dan `seed` (Rencana 1), field koleksi `tools` (Rencana 1: `penjelasan` Lexical, `faq`, `sumberAturan`, `bantuanInput`, `seo`).
 - Produces:
   - `src/seed/tools.ts`: `TOOLS_AWAL` (6 tools: nama, toolId, slug pilar, ringkasan, penjelasan, FAQ, sumber aturan, SEO), `seedTools(payload): Promise<{ tools: number; parameter: number }>` (jumlah dokumen baru).
-  - `HasilSeed` kini `{ admin; pilar; halaman; tools; parameter }`; `pnpm seed` mencetak jumlah tools dan parameter baru.
+  - `HasilSeed` kini `{ admin; pilar; halaman; tools; parameter }`; `npm run seed` mencetak jumlah tools dan parameter baru.
   - Database E2E: keenam tools dari seed (dengan parameternya); Gaji Bersih, THR, dan BMI & Kalori diterbitkan, sisanya draf (Task 8 menerbitkan semuanya).
 
-`pnpm seed` kini mengisi enam kalkulator sebagai **draf** dan 22 dokumen parameter. Pemilik memeriksa, melengkapi, lalu menerbitkan tools dari admin; tidak ada kalkulator yang terbit otomatis. Setiap tools berisi ringkasan, penjelasan rumus berupa artikel Lexical (H2 rumus, aturan yang dipakai, "Contoh hitung" dengan angka nyata, dan batasan kalkulator), 2 sampai 3 FAQ, sumber aturan (judul, URL, penerbit, diakses 5 November 2026), SEO (judul dan deskripsi), dan label serta bantuan isian awal yang diambil dari isian modul `hitung` (`bantuanInput`, per kunci isian termasuk kolom baris IPK), jadi editor bisa mengganti teks form tanpa kode. Pilar: Gaji Bersih, THR, Cicilan & KPR, dan Dana Darurat di Uang & Karier; BMI & Kalori di Sehat; IPK di Belajar.
+`npm run seed` kini mengisi enam kalkulator sebagai **draf** dan 22 dokumen parameter. Pemilik memeriksa, melengkapi, lalu menerbitkan tools dari admin; tidak ada kalkulator yang terbit otomatis. Setiap tools berisi ringkasan, penjelasan rumus berupa artikel Lexical (H2 rumus, aturan yang dipakai, "Contoh hitung" dengan angka nyata, dan batasan kalkulator), 2 sampai 3 FAQ, sumber aturan (judul, URL, penerbit, diakses 5 November 2026), SEO (judul dan deskripsi), dan label serta bantuan isian awal yang diambil dari isian modul `hitung` (`bantuanInput`, per kunci isian termasuk kolom baris IPK), jadi editor bisa mengganti teks form tanpa kode. Pilar: Gaji Bersih, THR, Cicilan & KPR, dan Dana Darurat di Uang & Karier; BMI & Kalori di Sehat; IPK di Belajar.
 
 Seed tidak menimpa apa pun: tools dicari per `toolId` (termasuk draf), parameter per `toolId` + `kunci` + `berlakuMulai`. Pilar dicari lewat `slug` (bukan `limit` tertentu): database tes yang dipakai bersama tes lain bisa berisi ratusan pilar, dan probe menemukan pilar seed terlewat saat dicari dengan `limit: 100`.
 
@@ -3262,7 +3268,7 @@ Semua teks seed mengikuti aturan copy (sapaan "kamu", tanpa em dash dan en dash,
   Jalankan:
 
   ```bash
-  pnpm test:int
+  npm run test:int
   ```
 
   Hasil yang diharapkan: FAIL di `tests/int/seed.int.spec.ts` dengan `Error: Cannot find package '@/seed/tools'`.
@@ -3864,14 +3870,14 @@ Semua teks seed mengikuti aturan copy (sapaan "kamu", tanpa em dash dan en dash,
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm seed
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run seed
   ```
 
-  Hasil yang diharapkan: bersih; unit `Test Files 49 passed (49)`, `Tests 330 passed (330)`; integrasi `Test Files 26 passed (26)`, `Tests 77 passed (77)`; `pnpm seed` pertama mencetak `Tools baru: 6. Parameter baru: 22.` (bila database dev sudah punya parameter dengan kunci dan tanggal yang sama dari percobaan sebelumnya, angkanya lebih kecil), dan seed kedua mencetak `Tools baru: 0. Parameter baru: 0.`
+  Hasil yang diharapkan: bersih; unit `Test Files 49 passed (49)`, `Tests 330 passed (330)`; integrasi `Test Files 26 passed (26)`, `Tests 77 passed (77)`; `npm run seed` pertama mencetak `Tools baru: 6. Parameter baru: 22.` (bila database dev sudah punya parameter dengan kunci dan tanggal yang sama dari percobaan sebelumnya, angkanya lebih kecil), dan seed kedua mencetak `Tools baru: 0. Parameter baru: 0.`
 
 - [ ] **Langkah 5: Tools E2E dari seed**
 
@@ -3917,7 +3923,7 @@ Semua teks seed mengikuti aturan copy (sapaan "kamu", tanpa em dash dan en dash,
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `74 passed` (tidak berubah: `/tools` dan beranda tetap menampilkan tiga tools terbit).
@@ -4133,8 +4139,8 @@ Label dan bantuan dari CMS juga dipakai pesan galat (tes: editor mengganti label
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/tools-halaman.test.ts` dengan `TypeError: (0 , __vite_ssr_import_1__.susunTool) is not a function`; integrasi FAIL di `tests/int/tools-halaman.int.spec.ts` dengan `TypeError: (0 , __vite_ssr_import_1__.ambilTool) is not a function`.
@@ -4503,11 +4509,11 @@ Label dan bantuan dari CMS juga dipakai pesan galat (tes: editor mengganti label
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 50 passed (50)`, `Tests 335 passed (335)`; integrasi `Test Files 27 passed (27)`, `Tests 78 passed (78)`; E2E `74 passed`.
@@ -4662,7 +4668,7 @@ Kotak hasil (`HasilKalkulator`) adalah `<section>` berlabel "Contoh hasil" (hasi
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/halaman-tool.test.ts` dengan `Error: Cannot find package '@/components/tools/HalamanTool'`.
@@ -6147,10 +6153,10 @@ Kotak hasil (`HasilKalkulator`) adalah `<section>` berlabel "Contoh hasil" (hasi
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 51 passed (51)`, `Tests 341 passed (341)`; integrasi `Test Files 27 passed (27)`, `Tests 78 passed (78)`.
@@ -6338,7 +6344,7 @@ Kotak hasil (`HasilKalkulator`) adalah `<section>` berlabel "Contoh hasil" (hasi
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `80 passed`. Di 375, 768, dan 1440 px keenam halaman kalkulator tanpa geser horizontal, tombol "Hitung ..." satu baris (tinggi paling banyak 56 px), angka hasil satu baris dan muat di kotaknya, jarak bagian 40 px, dan lolos axe.
@@ -6601,7 +6607,7 @@ Tes E2E `hitung.spec.ts` menjalankan contoh resmi DJP lewat form (spesifikasi §
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: 2 tes FAIL di `tests/unit/halaman-tool.test.ts`: "kalkulator di browser: wilayah status ..." dengan `AssertionError: expected '<article class="kontainer _halaman_6e…' to match /…/section><p class="sr" role="status"><\`, dan tes IPK karena tombol tambah belum punya id.
@@ -6912,11 +6918,11 @@ Tes E2E `hitung.spec.ts` menjalankan contoh resmi DJP lewat form (spesifikasi §
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 51 passed (51)`, `Tests 342 passed (342)`; integrasi `Test Files 27 passed (27)`, `Tests 78 passed (78)`; E2E `87 passed`. Anotasi tes anggaran mencatat JS kalkulator di atas artikel sekitar 13,3 KiB.
@@ -7050,7 +7056,7 @@ Tampilan aktif tidak hanya warna: pill rubrik aktif berlatar `--permukaan` (sand
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: 2 tes FAIL di `tests/unit/komponen-tata-letak.test.ts`: "Header > menandai rubrik dan Tools yang sedang dibuka dengan aria-current" dengan `AssertionError: expected null to deeply equal [ 'aria-current="true"' ]`, dan "tandaAktif > ..." dengan `TypeError: __vi_import_5__.tandaAktif is not a function`.
@@ -7183,11 +7189,11 @@ Tampilan aktif tidak hanya warna: pill rubrik aktif berlatar `--permukaan` (sand
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 51 passed (51)`, `Tests 344 passed (344)`; integrasi `Test Files 27 passed (27)`, `Tests 78 passed (78)`; E2E `88 passed` (termasuk anggaran JS semua jenis halaman dengan `TautanAktif` di header).
@@ -7216,12 +7222,12 @@ Tampilan aktif tidak hanya warna: pill rubrik aktif berlatar `--permukaan` (sand
   --- a/CLAUDE.md
   +++ b/CLAUDE.md
   @@ -20,7 +20,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Type check: `pnpm typecheck`
-   - Tipe Payload: `pnpm generate:types` (jalankan setiap kali field berubah)
-   - Import map admin: `pnpm generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
-  -- Data awal: `pnpm seed`
-  +- Data awal: `pnpm seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
-   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `pnpm media:siapkan`
+   - Type check: `npm run typecheck`
+   - Tipe Payload: `npm run generate:types` (jalankan setiap kali field berubah)
+   - Import map admin: `npm run generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
+  -- Data awal: `npm run seed`
+  +- Data awal: `npm run seed` (pilar, penulis, halaman draf, global, dan enam kalkulator draf beserta parameternya; dokumen yang sudah ada tidak ditimpa)
+   - Aset sistem Cloudinary (sekali per akun, butuh kredensial): `npm run media:siapkan`
    
    ## Konvensi
   @@ -30,18 +30,20 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
@@ -7281,15 +7287,15 @@ Tampilan aktif tidak hanya warna: pill rubrik aktif berlatar `--permukaan` (sand
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
-  pnpm seed
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
+  npm run seed
+  npm run build
   git status --short
   ```
 
@@ -7297,16 +7303,16 @@ Tampilan aktif tidak hanya warna: pill rubrik aktif berlatar `--permukaan` (sand
 
 - [ ] **Langkah 3: Uji visual di tiga ukuran layar**
 
-  Bangun dan jalankan build dengan database E2E, yang sudah berisi enam kalkulator terbit dari `pnpm test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`, sama dengan `playwright.config.ts`):
+  Bangun dan jalankan build dengan database E2E, yang sudah berisi enam kalkulator terbit dari `npm run test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`, sama dengan `playwright.config.ts`):
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Buka `/tools/gaji-bersih`, `/tools/thr`, `/tools/cicilan-kpr`, `/tools/dana-darurat`, `/tools/bmi-kalori`, dan `/tools/ipk` di 375, 768, dan 1440 px (DevTools) dan dengan "Emulate CSS prefers-reduced-motion: reduce". Untuk setiap halaman periksa empat keadaan: awal (contoh hasil dari server), hasil (ubah satu isian lalu tekan tombol "Hitung ..."), galat (kosongkan isian pertama lalu tekan tombol), dan fokus keyboard (Tab dari awal halaman sampai tombol "Hitung ...": cincin fokus terlihat di setiap isian, radio, centang, ringkasan bagian lanjutan, dan tombol). Harus terlihat: tanpa geser horizontal; tombol satu baris dan tidak melebar penuh kecuali tombol utama; kisi status PTKP 4 kolom tanpa teks terpotong; angka hasil satu baris (coba gaji Rp10.000.000.000 di 375 px); tidak ada ruang kosong besar di dalam kotak hasil atau di antara bagian; hasil baru muncul dengan gerak naik singkat, dan tanpa gerak saat reduced motion. Buka juga `/uang-karier` dan `/uang-karier/pajak` untuk melihat pill Uang & Karier aktif, dan `/tools/ipk` untuk tombol Tools aktif. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `pnpm build` lagi dengan env biasa.
+  Buka `/tools/gaji-bersih`, `/tools/thr`, `/tools/cicilan-kpr`, `/tools/dana-darurat`, `/tools/bmi-kalori`, dan `/tools/ipk` di 375, 768, dan 1440 px (DevTools) dan dengan "Emulate CSS prefers-reduced-motion: reduce". Untuk setiap halaman periksa empat keadaan: awal (contoh hasil dari server), hasil (ubah satu isian lalu tekan tombol "Hitung ..."), galat (kosongkan isian pertama lalu tekan tombol), dan fokus keyboard (Tab dari awal halaman sampai tombol "Hitung ...": cincin fokus terlihat di setiap isian, radio, centang, ringkasan bagian lanjutan, dan tombol). Harus terlihat: tanpa geser horizontal; tombol satu baris dan tidak melebar penuh kecuali tombol utama; kisi status PTKP 4 kolom tanpa teks terpotong; angka hasil satu baris (coba gaji Rp10.000.000.000 di 375 px); tidak ada ruang kosong besar di dalam kotak hasil atau di antara bagian; hasil baru muncul dengan gerak naik singkat, dan tanpa gerak saat reduced motion. Buka juga `/uang-karier` dan `/uang-karier/pajak` untuk melihat pill Uang & Karier aktif, dan `/tools/ipk` untuk tombol Tools aktif. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -7319,11 +7325,11 @@ Tampilan aktif tidak hanya warna: pill rubrik aktif berlatar `--permukaan` (sand
 
 ## Selesai bila
 
-- `pnpm test` lulus (344 tes unit di 51 file dan 78 tes integrasi di 27 file), `pnpm test:e2e` lulus (88 tes E2E, axe tanpa pelanggaran WCAG 2.2 AA untuk keenam halaman kalkulator di 375, 768, dan 1440 px), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Cloudinary asli.
+- `npm test` lulus (344 tes unit di 51 file dan 78 tes integrasi di 27 file), `npm run test:e2e` lulus (88 tes E2E, axe tanpa pelanggaran WCAG 2.2 AA untuk keenam halaman kalkulator di 375, 768, dan 1440 px), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Cloudinary asli.
 - Modul `hitung` menghasilkan angka contoh resmi: Leaflet PPh 21 TER DJP (Rp900.000 sebulan, Rp11.055.000 setahun, Rp1.155.000 Desember), penjelasan DJP gaji Rp10.000.000 (Rp200.000, Rp2.715.000, Rp515.000), THR DJP (1% lalu 5%), THR indonesiabaik.id, dan cicilan anuitas Kompas (Rp1.653.000). Contoh Leaflet DJP juga lulus lewat form di browser (`hitung.spec.ts`).
 - `/tools/{slug}` untuk tools terbit menampilkan kalkulator dengan hasil contoh di HTML awal, penjelasan rumus, angka aturan beserta tanggal berlaku dan sumbernya, sumber aturan, dan FAQ, dengan metadata dan JSON-LD WebApplication dari modul SEO; tools draf dan slug tidak dikenal menjawab 404.
 - Menyimpan atau menghapus dokumen `parameter-tools` membuang cache halaman kalkulator (tag `parameter-tools`); dokumen dengan kunci atau bentuk yang salah ditolak di admin dengan pesan di field-nya.
-- `pnpm seed` membuat enam tools draf dan 22 parameter bersumber, dan tidak menimpa apa pun bila dijalankan lagi.
+- `npm run seed` membuat enam tools draf dan 22 parameter bersumber, dan tidak menimpa apa pun bila dijalankan lagi.
 - Halaman kalkulator memuat JavaScript di bawah 160 KiB dan kalkulator menambah kurang dari 25 KB di atas artikel; tanpa dependensi baru.
 - Skema hanya berubah aditif (`parameter_tools.nilai` boleh kosong, tabel `parameter_tools_tabel`); `payload-types.ts` hanya berubah di Task 2.
 - Pill rubrik dan tombol Tools di header menandai halaman yang sedang dibuka dengan `aria-current`, juga tanpa JavaScript.

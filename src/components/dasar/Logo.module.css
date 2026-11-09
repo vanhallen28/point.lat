@@ -1,14 +1,17 @@
 .logo {
-  font-weight: 900;
-  font-stretch: var(--lebar-logo);
-  letter-spacing: -0.03em;
-  line-height: 1;
+  display: block;
+  width: auto;
+  color: var(--teks);
+}
+
+.biru {
+  fill: var(--merek-biru);
 }
 
 .besar {
-  font-size: 36px;
+  height: 32px;
 }
 
 .kecil {
-  font-size: 30px;
+  height: 26px;
 }

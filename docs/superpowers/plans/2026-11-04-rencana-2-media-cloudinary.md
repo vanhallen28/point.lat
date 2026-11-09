@@ -1,12 +1,18 @@
 # Rencana 2: Media Cloudinary point.lat
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Memindahkan semua gambar dan video koleksi `media` ke Cloudinary: unggah langsung dari browser (signed upload), incoming transformation, URL pengiriman per preset, video HLS + poster otomatis, image loader Next.js, dan URL gambar OG, semuanya teruji tanpa jaringan.
 
 **Architecture:** Modul `src/modules/media/` berisi fungsi murni (URL, OG, opsi unggah) dan seam `KlienCloudinary` dengan dua implementasi: SDK `cloudinary` (server) dan klien palsu dalam memori. Adapter `GeneratedAdapter` untuk `@payloadcms/plugin-cloud-storage` menyimpan lewat klien itu dengan `disableLocalStorage: true`. Unggah dari admin memakai mekanisme `clientUploads` plugin (pola `@payloadcms/storage-s3`): endpoint server membuat tanda tangan Cloudinary + receipt Payload, browser mengirim file langsung ke `api.cloudinary.com`, lalu Payload memverifikasi receipt dan menyimpan metadata dari Cloudinary.
 
-**Tech Stack:** Next.js 16.3.3, Payload 3.92.1, `@payloadcms/plugin-cloud-storage` 3.92.1, SDK `cloudinary` 2.11.0, Vitest 4, PostgreSQL 16/17, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3, Payload 3.92.1, `@payloadcms/plugin-cloud-storage` 3.92.1, SDK `cloudinary` 2.11.0, Vitest 4, PostgreSQL 16/17, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§5 modul `media`, §6 koleksi `media`, §9 Media Cloudinary, §12 performa gambar, §15 upload gagal, §16 tes `media.url`).
 
@@ -14,7 +20,7 @@
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Payload `3.92.1`, `@payloadcms/plugin-cloud-storage` `3.92.1`, `cloudinary` `2.11.0`, Next `16.3.3`.
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Payload `3.92.1`, `@payloadcms/plugin-cloud-storage` `3.92.1`, `cloudinary` `2.11.0`, Next `16.3.3`.
 - Dependensi baru hanya dua: `@payloadcms/plugin-cloud-storage@3.92.1` (sudah disebut spesifikasi §5/§9) dan `cloudinary@2.11.0` (SDK server, disetujui). Tidak ada dependensi klien tambahan: unggah dari browser memakai `fetch` + `FormData` biasa.
 - Kredensial hanya lewat env server: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Tidak ada `NEXT_PUBLIC_` untuk Cloudinary. API key dikirim ke browser hanya sebagai field signed upload (memang publik menurut Cloudinary); API secret tidak pernah keluar dari server.
 - Tanpa ketiga env itu (lokal, `.env.test`, CI) aplikasi memakai **klien palsu dalam memori**. Tes tidak boleh memanggil jaringan. `tests/int/setup.ts` menghapus `CLOUDINARY_*` dari `process.env` supaya `.env` pengembang tidak bocor ke tes.
@@ -24,8 +30,8 @@
 - Nama domain berbahasa Indonesia seperti Rencana 1 (`unggah`, `bangunUrl`, `publicId`, `jenis`, `durasi`). Nama teknis framework tetap bahasa Inggris (adapter, hook, handler).
 - Copy UI dan pesan galat: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru.
 - **Perubahan skema harus aditif.** Rencana ini hanya menambah kolom `public_id`, `jenis` (enum), `durasi`, `_objectkey` di tabel `media`. Kolom lama (`alt`, `caption`, `kredit`, `url`, `thumbnail_u_r_l`, `filename`, `mime_type`, `filesize`, `width`, `height`, `focal_x`, `focal_y`) tetap; karena itu `focalPoint` **tidak** dimatikan. Bila Payload macet di "Pulling schema from database...", reset database yang bersangkutan:
-  `docker compose exec postgres psql -U postgres -c "DROP DATABASE pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test"` (tanpa Docker: `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c ...`).
-- Setiap kali field koleksi berubah: `pnpm generate:types`, lalu `pnpm typecheck`. Setiap kali menambah komponen admin: `pnpm generate:importmap`.
+  `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c "DROP DATABASE pointlat_test WITH (FORCE)" -c "CREATE DATABASE pointlat_test"` (tanpa Docker: `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c ...`).
+- Setiap kali field koleksi berubah: `npm run generate:types`, lalu `npm run typecheck`. Setiap kali menambah komponen admin: `npm run generate:importmap`.
 - Tes integrasi butuh Postgres jalan dan memakai `.env.test` (database `pointlat_test`).
 
 ## Keputusan teknis (hasil riset, dipakai di semua task)
@@ -38,7 +44,7 @@
 | `sp_auto` | Bisa on the fly ("processed for streaming ... on first request"), tetapi dokumentasi menyarankan eager untuk produksi dan on the fly hanya untuk video kecil (< 60 MB turunan). Dipilih: URL pengiriman `sp_auto/<id>.m3u8` + eager async `sp_auto/m3u8` saat unggah supaya penonton pertama tidak menunggu transkode. Dokumentasi tidak memberi contoh eager khusus `sp_auto`; bila Cloudinary menolaknya, Task 8 mencatat dan fallback ke eager `sp_full_hd/m3u8` (lihat Risiko). | cloudinary.com/documentation/adaptive_bitrate_streaming |
 | Poster | `so_auto` (frame dipilih otomatis berdasarkan distribusi warna) dengan ekstensi `.jpg`: `so_auto/q_auto/<id>.jpg`. | cloudinary.com/documentation/video_previews_and_posters |
 | Font OG | Archivo didukung lewat Google Fonts `l_text:Archivo@google_<ukuran>_<berat>:<teks>`; berat harus numerik (900). Sumbu `wdth` font variable tidak bisa diatur di text overlay, jadi OG memakai Archivo lebar normal (bukan wdth 68/80 seperti situs). Fallback bila suatu saat ditolak: unggah `Archivo-Black.ttf` sebagai raw authenticated dan pakai `l_text:Archivo-Black.ttf_72:...`. | cloudinary.com/documentation/image_text_layer_fonts |
-| Latar OG | Kanvas PNG 1x1 putih `point/sistem/kanvas` (diunggah sekali dengan `pnpm media:siapkan`), diregangkan `w_1200,h_630,c_scale` lalu `e_colorize:100,co_rgb:<warna pilar>`. Teks dikodekan ganda (`%252C` untuk koma, dst.). | cloudinary.com/documentation/image_text_layers, image_text_layer_advanced_options |
+| Latar OG | Kanvas PNG 1x1 putih `point/sistem/kanvas` (diunggah sekali dengan `npm run media:siapkan`), diregangkan `w_1200,h_630,c_scale` lalu `e_colorize:100,co_rgb:<warna pilar>`. Teks dikodekan ganda (`%252C` untuk koma, dst.). | cloudinary.com/documentation/image_text_layers, image_text_layer_advanced_options |
 | Incoming gambar | `c_limit,w_2560,q_auto`: lebar maksimal 2560px sesuai keputusan, tinggi bebas supaya gambar potret tidak jatuh di bawah syarat lebar 1200px gambar utama. | cloudinary.com/documentation/eager_and_incoming_transformations |
 | Incoming video | `c_limit,w_1920,h_1920,br_6m,q_auto`: 9:16 menjadi 1080x1920 (sama dengan batas default `sp_auto` 1080p), bitrate maks 6 Mbps (representasi 1080p H.264 Cloudinary 5,5 Mbps). Format diizinkan lewat `allowed_formats` (ikut ditandatangani). | cloudinary.com/documentation/adaptive_bitrate_streaming (tabel profil), video_optimization (`br_`) |
 | `url` dokumen | `disablePayloadAccessControl: true` sehingga field `url` berisi URL CDN Cloudinary (gambar `f_auto,q_auto`, video MP4 `q_auto`). `/api/media/file/<nama>` mengarah 302 ke CDN. | `plugin-cloud-storage` `hooks/afterRead.js`, `beforeChange.js` |
@@ -64,7 +70,7 @@ src/modules/media/
   loader.ts          image loader kustom Next.js
   props.ts           propsGambar untuk next/image
   siapkan.ts         siapkanCloudinary (kanvas OG)
-src/scripts/siapkan-media.ts   CLI pnpm media:siapkan
+src/scripts/siapkan-media.ts   CLI npm run media:siapkan
 src/collections/Media.ts       + publicId, jenis, durasi; mimeTypes eksplisit
 tests/unit/media-*.test.ts     url, og, unggah, adapter, kirim, loader, siapkan
 tests/int/media.int.spec.ts, tests/int/media-langsung.int.spec.ts
@@ -206,7 +212,7 @@ URL pengiriman diuji dengan string persis supaya preset tidak berubah diam-diam 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media-url.test.ts` dengan `Cannot find package '@/modules/media/url'`.
@@ -361,9 +367,9 @@ URL pengiriman diuji dengan string persis supaya preset tidak berubah diam-diam 
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 11 passed (11)`, `Tests 60 passed (60)`; type check dan lint tanpa error.
@@ -452,7 +458,7 @@ Rencana ini hanya membangun URL dan mengujinya. Halaman belum memakainya; Rencan
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media-og.test.ts` dengan `Cannot find package '@/modules/media/og'`.
@@ -470,7 +476,7 @@ Rencana ini hanya membangun URL dan mengujinya. Halaman belum memakainya; Rencan
    * Gambar OG otomatis lewat transformasi teks Cloudinary (spesifikasi §9).
    *
    * Basis gambar adalah kanvas PNG 1x1 putih (`point/sistem/kanvas`, diunggah sekali dengan
-   * `pnpm media:siapkan`) yang diregangkan ke 1200x630 lalu diwarnai warna pilar.
+   * `npm run media:siapkan`) yang diregangkan ke 1200x630 lalu diwarnai warna pilar.
    * Judul memakai Google Font Archivo lewat sintaks `@google` dengan berat numerik 900
    * (https://cloudinary.com/documentation/image_text_layer_fonts). Sumbu lebar (`wdth`) font
    * variable tidak bisa diatur di text overlay, jadi OG memakai Archivo lebar normal.
@@ -532,9 +538,9 @@ Rencana ini hanya membangun URL dan mengujinya. Halaman belum memakainya; Rencan
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 12 passed (12)`, `Tests 66 passed (66)`; type check dan lint tanpa error.
@@ -781,7 +787,7 @@ Seam ini satu-satunya jalan ke Cloudinary, jadi adapter (Task 4) dan endpoint ta
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media-unggah.test.ts` dengan `Cannot find package '@/modules/media/palsu'`.
@@ -1176,9 +1182,9 @@ Seam ini satu-satunya jalan ke Cloudinary, jadi adapter (Task 4) dan endpoint ta
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
+  npm run test:unit
+  npm run typecheck
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 13 passed (13)`, `Tests 79 passed (79)`; type check dan lint tanpa error.
@@ -1195,7 +1201,7 @@ Seam ini satu-satunya jalan ke Cloudinary, jadi adapter (Task 4) dan endpoint ta
 
 **Files:**
 - Create: `src/modules/media/cloudinary.ts`, `src/modules/media/index.ts`, `src/modules/media/adapter.ts`, `src/modules/media/plugin.ts`
-- Modify: `package.json`, `pnpm-lock.yaml` (lewat `pnpm add`), `src/collections/Media.ts`, `src/payload.config.ts`, `src/payload-types.ts` (generate), `tests/int/setup.ts`, `tests/int/fixtures.ts`, `tests/int/media.int.spec.ts` (ganti seluruh isi)
+- Modify: `package.json`, `package-lock.json` (lewat `npm install`), `src/collections/Media.ts`, `src/payload.config.ts`, `src/payload-types.ts` (generate), `tests/int/setup.ts`, `tests/int/fixtures.ts`, `tests/int/media.int.spec.ts` (ganti seluruh isi)
 - Test: `tests/unit/media-adapter.test.ts`, `tests/int/media.int.spec.ts`
 
 **Interfaces:**
@@ -1219,10 +1225,10 @@ Field `publicId`, `jenis`, `durasi` memakai field access `create`/`update` yang 
   Jalankan:
 
   ```bash
-  pnpm add @payloadcms/plugin-cloud-storage@3.92.1 cloudinary@2.11.0
+  npm install @payloadcms/plugin-cloud-storage@3.92.1 cloudinary@2.11.0
   ```
 
-  Hasil yang diharapkan: `+ @payloadcms/plugin-cloud-storage 3.92.1` dan `+ cloudinary 2.11.0`. Diff `package.json` (pnpm juga mengurutkan ulang `@payloadcms/db-postgres`):
+  Hasil yang diharapkan: `+ @payloadcms/plugin-cloud-storage 3.92.1` dan `+ cloudinary 2.11.0`. Diff `package.json` (npm juga mengurutkan ulang `@payloadcms/db-postgres`):
 
   ```diff
   diff --git a/package.json b/package.json
@@ -1586,7 +1592,7 @@ Field `publicId`, `jenis`, `durasi` memakai field access `create`/`update` yang 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media-adapter.test.ts` dengan `Cannot find package '@/modules/media'`.
@@ -1942,9 +1948,9 @@ Field `publicId`, `jenis`, `durasi` memakai field access `create`/`update` yang 
   Jalankan:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff src/payload-types.ts | grep '^[-+] '
-  pnpm typecheck
+  npm run typecheck
   ```
 
   Hasil yang diharapkan: diff tipe hanya baris tambahan (`+  publicId?`, `+  jenis?`, `+  durasi?`, `+  _objectKey?`, dua kali: `Media` dan `MediaSelect`), tidak ada baris `-`. Type check bersih.
@@ -1954,9 +1960,9 @@ Field `publicId`, `jenis`, `durasi` memakai field access `create`/`update` yang 
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm test:int
-  pnpm lint
+  npm run test:unit
+  npm run test:int
+  npm run lint
   ```
 
   Hasil yang diharapkan: unit `Test Files 14 passed (14)`, `Tests 88 passed (88)`; integrasi `Test Files 9 passed (9)`, `Tests 25 passed (25)`; lint tanpa error. Tes `buatGambar` dan `seed` dari Rencana 1 tetap lulus karena sekarang memakai adapter. Folder `media/` tidak bertambah.
@@ -1964,7 +1970,7 @@ Field `publicId`, `jenis`, `durasi` memakai field access `create`/`update` yang 
 - [ ] **Langkah 11: Commit**
 
   ```bash
-  git add package.json pnpm-lock.yaml src/collections/Media.ts src/payload.config.ts src/payload-types.ts \
+  git add package.json package-lock.json src/collections/Media.ts src/payload.config.ts src/payload-types.ts \
     src/modules/media/cloudinary.ts src/modules/media/index.ts src/modules/media/adapter.ts src/modules/media/plugin.ts \
     tests/int/setup.ts tests/int/fixtures.ts tests/int/media.int.spec.ts tests/unit/media-adapter.test.ts
   git commit -m "feat(media): adapter Cloudinary di atas plugin cloud storage, unggah lewat server"
@@ -2353,8 +2359,8 @@ Tes integrasi memanggil REST API sungguhan lewat `handleEndpoints` dengan token 
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm exec cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/media-langsung.int.spec.ts
+  npm run test:unit
+  npx cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.int.config.mts tests/int/media-langsung.int.spec.ts
   ```
 
   Hasil yang diharapkan: unit FAIL di `tests/unit/media-kirim.test.ts` dan `tests/unit/media-adapter.test.ts` (modul `@/modules/media/kirim` dan `@/modules/media/unggahLangsung` belum ada). Integrasi FAIL karena modul `@/modules/media/tandaTangan` belum ada.
@@ -2771,13 +2777,13 @@ Tes integrasi memanggil REST API sungguhan lewat `handleEndpoints` dengan token 
   Jalankan:
 
   ```bash
-  pnpm generate:importmap
+  npm run generate:importmap
   grep -n "UnggahLangsung" "src/app/(payload)/admin/importMap.js"
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: import map berisi dua baris `UnggahLangsung` (import dan entri `"@/modules/media/UnggahLangsung#UnggahLangsung"`); `payload-types.ts` tidak berubah; type check dan lint bersih; unit `Test Files 15 passed (15)`, `Tests 96 passed (96)`; integrasi `Test Files 10 passed (10)`, `Tests 32 passed (32)`. Log tes integrasi berisi baris `ERROR` yang memang diharapkan (jenis file ditolak, file belum sampai, receipt dipalsukan).
@@ -2787,8 +2793,8 @@ Tes integrasi memanggil REST API sungguhan lewat `handleEndpoints` dengan token 
   Jalankan (tanpa `CLOUDINARY_*` di `.env`, klien palsu dipakai):
 
   ```bash
-  pnpm build
-  (PORT=3107 pnpm start > /tmp/point-lat-start.log 2>&1 &) && sleep 20
+  npm run build
+  (PORT=3107 npm run start > /tmp/point-lat-start.log 2>&1 &) && sleep 20
   curl -s -o /dev/null -w "admin %{http_code}\n" http://localhost:3107/admin/login
   curl -s -X POST -H "Content-Type: application/json" \
     -d '{"collectionSlug":"media","filename":"a.png","filesize":10,"mimeType":"image/png"}' \
@@ -2889,7 +2895,7 @@ Dengan `images.loader: 'custom'`, `next/image` tidak lagi memakai `/_next/image`
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media-loader.test.ts` dengan `Cannot find package '@/modules/media/loader'`.
@@ -2983,10 +2989,10 @@ Dengan `images.loader: 'custom'`, `next/image` tidak lagi memakai `/_next/image`
   Jalankan:
 
   ```bash
-  pnpm test:unit
-  pnpm typecheck
-  pnpm lint
-  pnpm test:int
+  npm run test:unit
+  npm run typecheck
+  npm run lint
+  npm run test:int
   ```
 
   Hasil yang diharapkan: unit `Test Files 16 passed (16)`, `Tests 101 passed (101)`; type check dan lint bersih; integrasi `Tests 32 passed (32)`.
@@ -3013,15 +3019,15 @@ Dengan `images.loader: 'custom'`, `next/image` tidak lagi memakai `/_next/image`
   Jalankan:
 
   ```bash
-  pnpm build
-  (PORT=3108 pnpm start > /tmp/point-lat-start.log 2>&1 &) && sleep 20
+  npm run build
+  (PORT=3108 npm run start > /tmp/point-lat-start.log 2>&1 &) && sleep 20
   curl -s http://localhost:3108/cek-gambar | grep -o '<img[^>]*>' | head -1
   pkill -f "next start"
   rm -rf "src/app/(frontend)/cek-gambar"
-  pnpm build
+  npm run build
   ```
 
-  Hasil yang diharapkan: tag `<img>` berisi `width="1920" height="1440"`, `loading="lazy"`, dan `srcSet` dengan entri seperti `https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,ar_4:3/c_limit,w_640,f_auto,q_auto/point/gambar/contoh-1a2b3c4d 640w` sampai `... c_limit,w_3840,... 3840w`. Build kedua (setelah halaman dihapus) menyegarkan `.next/types` supaya `pnpm typecheck` tidak mencari halaman yang sudah dihapus.
+  Hasil yang diharapkan: tag `<img>` berisi `width="1920" height="1440"`, `loading="lazy"`, dan `srcSet` dengan entri seperti `https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,ar_4:3/c_limit,w_640,f_auto,q_auto/point/gambar/contoh-1a2b3c4d 640w` sampai `... c_limit,w_3840,... 3840w`. Build kedua (setelah halaman dihapus) menyegarkan `.next/types` supaya `npm run typecheck` tidak mencari halaman yang sudah dihapus.
 
 - [ ] **Langkah 7: Commit**
 
@@ -3040,7 +3046,7 @@ Dengan `images.loader: 'custom'`, `next/image` tidak lagi memakai `/_next/image`
 
 **Interfaces:**
 - Consumes: `KANVAS_OG` (Task 2), `KlienCloudinary` (Task 3), `klienDariEnv` (Task 4), `klienPalsu` (Task 3).
-- Produces: `type HasilSiapkan = { kanvas: 'dibuat' | 'sudah-ada' }`; `siapkanCloudinary(klien): Promise<HasilSiapkan>`; skrip `pnpm media:siapkan`.
+- Produces: `type HasilSiapkan = { kanvas: 'dibuat' | 'sudah-ada' }`; `siapkanCloudinary(klien): Promise<HasilSiapkan>`; skrip `npm run media:siapkan`.
 
 Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya tetap 1x1. Skrip menolak jalan tanpa kredensial (klien palsu tidak menyimpan apa pun secara permanen).
 
@@ -3078,7 +3084,7 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/media-siapkan.test.ts` dengan `Cannot find package '@/modules/media/siapkan'`.
@@ -3170,7 +3176,7 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
    SEED_ADMIN_EMAIL=admin@point.lat
    SEED_ADMIN_PASSWORD=ganti-password-ini
   +# Cloudinary (hanya server). Kosongkan di lokal/tes: aplikasi memakai klien palsu dalam memori.
-  +# Wajib diisi di produksi (Vercel). Lalu jalankan sekali: pnpm media:siapkan
+  +# Wajib diisi di produksi (Vercel). Lalu jalankan sekali: npm run media:siapkan
   +CLOUDINARY_CLOUD_NAME=
   +CLOUDINARY_API_KEY=
   +CLOUDINARY_API_SECRET=
@@ -3184,10 +3190,10 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
   --- a/CLAUDE.md
   +++ b/CLAUDE.md
   @@ -19,6 +19,7 @@ Media edukasi praktis berbahasa Indonesia. Spesifikasi: `docs/superpowers/specs/
-   - Tipe Payload: `pnpm generate:types` (jalankan setiap kali field berubah)
-   - Import map admin: `pnpm generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
-   - Data awal: `pnpm seed`
-  +- Aset sistem Cloudinary (sekali per akun, butuh kredensial): `pnpm media:siapkan`
+   - Tipe Payload: `npm run generate:types` (jalankan setiap kali field berubah)
+   - Import map admin: `npm run generate:importmap` (jalankan setiap kali menambah fitur Lexical atau komponen admin)
+   - Data awal: `npm run seed`
+  +- Aset sistem Cloudinary (sekali per akun, butuh kredensial): `npm run media:siapkan`
    
    ## Konvensi
    - Nama domain memakai bahasa Indonesia, sama dengan spesifikasi: slug koleksi (`artikel`, `pilar`), nama field (`judul`, `intinya`), nama fungsi modul (`kabari`, `hitung`, `pathFor` adalah pengecualian yang sudah ada).
@@ -3204,8 +3210,8 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
   -- Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal.
   +- Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`.
    - Tanya dulu sebelum menambah dependensi baru di luar rencana.
-   - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-   - Jalankan `pnpm test` sebelum commit.
+   - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+   - Jalankan `npm test` sebelum commit.
   ```
 
 - [ ] **Langkah 5: Jalankan semua pemeriksaan**
@@ -3213,13 +3219,13 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm build
-  env -u CLOUDINARY_CLOUD_NAME -u CLOUDINARY_API_KEY -u CLOUDINARY_API_SECRET pnpm media:siapkan; echo "exit $?"
-  pnpm seed
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run build
+  env -u CLOUDINARY_CLOUD_NAME -u CLOUDINARY_API_KEY -u CLOUDINARY_API_SECRET npm run media:siapkan; echo "exit $?"
+  npm run seed
   ```
 
   Hasil yang diharapkan: type check dan lint bersih; unit `Test Files 17 passed (17)`, `Tests 102 passed (102)`; integrasi `Test Files 10 passed (10)`, `Tests 32 passed (32)`; build selesai dengan rute `/`, `/admin/[[...segments]]`, `/api/[...slug]`. `media:siapkan` tanpa kredensial mencetak `Isi CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, dan CLOUDINARY_API_SECRET di .env dulu.` dan keluar dengan kode 1. Seed tetap `Seed selesai. Admin: sudah-ada. Pilar: 4. Halaman draf: 6.`
@@ -3240,7 +3246,7 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
 - Tidak ada perubahan kode. Bila langkah 4 menemukan Cloudinary menolak eager `sp_auto/m3u8`, perbaiki `EAGER_VIDEO` di `src/modules/media/url.ts` dan tesnya (lihat langkah 4).
 
 **Interfaces:**
-- Consumes: `pnpm media:siapkan` (Task 7), admin `/admin/collections/media` dengan unggah langsung (Task 5), `bangunUrl`, `urlOg` (Task 1, 2).
+- Consumes: `npm run media:siapkan` (Task 7), admin `/admin/collections/media` dengan unggah langsung (Task 5), `bangunUrl`, `urlOg` (Task 1, 2).
 - Produces: catatan hasil verifikasi di deskripsi PR atau di log keputusan `claude/point-lat-decisions.md`.
 
 - [ ] **Langkah 1: Isi kredensial dan siapkan aset sistem**
@@ -3248,8 +3254,8 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
   Isi di `.env` lokal (atau Environment Variables Vercel untuk Preview dan Production): `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`. Lalu jalankan:
 
   ```bash
-  pnpm media:siapkan
-  pnpm media:siapkan
+  npm run media:siapkan
+  npm run media:siapkan
   ```
 
   Hasil yang diharapkan: baris pertama `Cloudinary siap. Kanvas OG: dibuat.`, baris kedua `Kanvas OG: sudah-ada.`
@@ -3260,7 +3266,7 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
 
   ```bash
   node -e "require('sharp')({create:{width:6000,height:4000,channels:3,background:'#888',noise:{type:'gaussian',mean:128,sigma:60}}}).jpeg({quality:92}).toFile('/tmp/besar.jpg').then(i=>console.log(i.width,i.height,i.size))"
-  pnpm dev
+  npm run dev
   ```
 
   Di `http://localhost:3000/admin/collections/media/create` (atau URL preview Vercel), unggah `/tmp/besar.jpg`, isi alt, simpan. Di DevTools tab Network periksa:
@@ -3301,12 +3307,12 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
 
   Hasil yang diharapkan: dokumen berisi `jenis` video, `durasi` sekitar 10, `width` 1080, `height` 1920. Poster `HTTP/2 200` dengan `content-type: image/jpeg`; manifest dimulai `#EXTM3U` dan berisi beberapa `#EXT-X-STREAM-INF` dengan `RESOLUTION` tertinggi `1080x1920`; MP4 `HTTP/2 200` dengan `content-type: video/mp4`. Di Media Library Cloudinary, aset video menampilkan turunan eager (m3u8, jpg, mp4).
 
-  Bila Cloudinary menolak unggahan karena eager `sp_auto/m3u8` (pesan galat di dialog unggah menyebut `sp_auto` atau `streaming profile`): ganti `EAGER_VIDEO` di `src/modules/media/url.ts` menjadi turunan `sp_full_hd/m3u8` (profil manual, contoh eager resmi di dokumentasi adaptive streaming), perbarui tes `EAGER_VIDEO` dan `parameterTandaTangan` di `tests/unit/media-url.test.ts`, `tests/unit/media-unggah.test.ts`, `tests/unit/media-adapter.test.ts`, `tests/int/media.int.spec.ts`, `tests/int/media-langsung.int.spec.ts`, jalankan `pnpm test`, commit `fix(media): eager HLS memakai profil full_hd`, dan catat di log keputusan. URL pengiriman `sp_auto/<id>.m3u8` tetap.
+  Bila Cloudinary menolak unggahan karena eager `sp_auto/m3u8` (pesan galat di dialog unggah menyebut `sp_auto` atau `streaming profile`): ganti `EAGER_VIDEO` di `src/modules/media/url.ts` menjadi turunan `sp_full_hd/m3u8` (profil manual, contoh eager resmi di dokumentasi adaptive streaming), perbarui tes `EAGER_VIDEO` dan `parameterTandaTangan` di `tests/unit/media-url.test.ts`, `tests/unit/media-unggah.test.ts`, `tests/unit/media-adapter.test.ts`, `tests/int/media.int.spec.ts`, `tests/int/media-langsung.int.spec.ts`, jalankan `npm test`, commit `fix(media): eager HLS memakai profil full_hd`, dan catat di log keputusan. URL pengiriman `sp_auto/<id>.m3u8` tetap.
 
 - [ ] **Langkah 5: Periksa gambar OG**
 
   ```bash
-  URL=$(CLOUDINARY_CLOUD_NAME='<cloud name>' pnpm exec tsx -e "import { urlOg } from './src/modules/media/og'; console.log(urlOg(process.env.CLOUDINARY_CLOUD_NAME ?? '', { judul: 'Cara hitung gaji bersih 2026', warna: 'hijau' }))")
+  URL=$(CLOUDINARY_CLOUD_NAME='<cloud name>' npx tsx -e "import { urlOg } from './src/modules/media/og'; console.log(urlOg(process.env.CLOUDINARY_CLOUD_NAME ?? '', { judul: 'Cara hitung gaji bersih 2026', warna: 'hijau' }))")
   echo "$URL"
   curl -s -o /tmp/og.png -w "%{http_code} %{content_type}\n" "$URL"
   node -e "require('sharp')('/tmp/og.png').metadata().then(m=>console.log(m.width,m.height))"
@@ -3322,7 +3328,7 @@ Kanvas OG diunggah tanpa incoming transformation (`transformation: ''`) supaya t
 
 ## Selesai bila
 
-- `pnpm test` lulus (102 unit, 32 integrasi), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa kredensial Cloudinary dan tanpa akses jaringan ke Cloudinary.
+- `npm test` lulus (102 unit, 32 integrasi), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa kredensial Cloudinary dan tanpa akses jaringan ke Cloudinary.
 - Koleksi `media` menyimpan file lewat adapter Cloudinary (`disableLocalStorage: true`); folder `media/` lokal tidak bertambah; field `url` berisi URL `https://res.cloudinary.com/...`.
 - Admin mengunggah langsung dari browser ke Cloudinary lewat endpoint tanda tangan; receipt yang dipalsukan dan file yang tidak pernah sampai ditolak.
 - Skema database hanya bertambah (`public_id`, `jenis`, `durasi`, `_objectkey`).

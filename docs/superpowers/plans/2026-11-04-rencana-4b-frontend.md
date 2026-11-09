@@ -1,12 +1,18 @@
 # Rencana 4B: Frontend publik lanjutan point.lat (beranda, rubrik, penulis, video, pencarian, halaman statis, indeks tools)
 
+> **Catatan revisi 9 November 2026 (v1.1.0, keputusan pemilik).** Rencana ini sudah selesai dieksekusi; teksnya disesuaikan supaya tidak bertentangan dengan keputusan terbaru:
+> 1. Hosting **Vercel paket gratis (Hobby)**: cron Vercel sekali sehari, jadwal 10 menit opsional lewat Supabase Cron (runbook rilis H5), Pro hanya saat iklan dinyalakan.
+> 2. **Full Next.js dengan perintah npm**: semua perintah `pnpm` diganti padanan npm (`npm run <skrip>`, `npm run <skrip> -- <argumen>`, `npx`, `npm install`, `npm ci`), `pnpm-lock.yaml` menjadi `package-lock.json`. Potongan `package.json` lama yang masih memuat pengaturan khusus pnpm (`onlyBuiltDependencies`) adalah catatan sejarah; versi sekarang memakai `allowScripts`.
+> 3. **Setiap pembaruan dikirim sebagai zip + perintah terminal** (spesifikasi §21).
+> 4. **Tanpa Docker, hanya Next.js, Vercel, dan Supabase**: `docker-compose.yml`, `Dockerfile`, dan `docker/` dihapus di v1.1.0. Langkah yang dulu membuat file itu dibiarkan sebagai sejarah. Tes memakai Postgres di mesin itu sendiri (Postgres bawaan runner GitHub di CI, Postgres sistem di sesi Claude); komputer pemilik memakai proyek Supabase pratinjau.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Melengkapi semua halaman publik MVP di atas fondasi Rencana 4A: beranda dari global `beranda` sesuai mockup Arah 3 "Kartu Intinya" (judul raksasa dengan reveal, pencarian besar, mozaik pilihan redaksi dengan kotak "Hitung sendiri", strip video 9:16 gelap, tulisan terbaru, newsletter), rubrik pilar dan subkategori, halaman statis dari page builder, profil penulis, indeks dan halaman video, indeks tools, dan pencarian `/cari`, lengkap dengan sitemap, revalidasi, E2E + axe di tiga ukuran layar, tes jarak tata letak, dan anggaran JavaScript untuk setiap jenis halaman, semuanya tanpa jaringan, tanpa kredensial Cloudinary, dan tanpa dependensi baru.
 
 **Architecture:** Polanya sama dengan Rencana 4A. Halaman di `src/app/(frontend)/` adalah server component ISR; data lewat `src/modules/konten` (`muat*()` = query Payload di `unstable_cache` bertag `TAG`, `ambil*(payload)` untuk tes integrasi, fungsi murni `susun*` yang menerjemahkan dokumen Payload ke tipe tampilan). Rute catch-all `[...jalur]` kini mencari lewat satu fungsi `muatJalur()` (artikel, pilar, halaman statis; dua segmen: subkategori), rute indeks baru (`/tools`, `/video`) statis lalu ISR, rute dokumen baru (`/penulis/{slug}`, `/video/{slug}`) ISR, dan `/cari` satu-satunya halaman dinamis. Beranda adalah hasil `susunBeranda()` atas blok global `beranda` dengan aturan yang jujur terhadap data yang belum ada (paling dibaca, iklan, newsletter). Komponen baru memakai CSS Module dan token semantik; tidak ada JavaScript klien baru (reveal judul beranda memakai animasi CSS).
 
-**Tech Stack:** Next.js 16.3.3 (App Router, ISR, `unstable_cache`, route handler), Payload 3.92.1 (Local API, operator `like`, global dengan draf), CSS Module + custom properties, Vitest 4 (unit + integrasi, `react-dom/server` untuk tes render), Playwright 1.63 + `@axe-core/playwright` 4.14, PostgreSQL 16/17, pnpm 10, Node 22.23.4+.
+**Tech Stack:** Next.js 16.3.3 (App Router, ISR, `unstable_cache`, route handler), Payload 3.92.1 (Local API, operator `like`, global dengan draf), CSS Module + custom properties, Vitest 4 (unit + integrasi, `react-dom/server` untuk tes render), Playwright 1.63 + `@axe-core/playwright` 4.14, PostgreSQL 16/17, npm 11, Node 22.23.4+.
 
 **Spesifikasi:** `docs/superpowers/specs/2026-11-03-point-lat-design.md` (§3 Brand, rambu kredibilitas, video explainer; §4 Visual "Kartu Intinya" dan pola beranda; §5 Rendering; §6 global `beranda` dan `newsletter`, koleksi `halaman`, `penulis`, `video`, `subkategori`, `tools`; §7 URL `/`, `/{pilar}`, `/{pilar}/{subkategori}`, `/penulis/{slug}`, `/video`, `/video/{slug}`, `/cari`, `/tools`, halaman statis; §8 sitemap; §9 Video; §12 Performa; §13 Motion; §14 Aksesibilitas; §15 404 dengan pencarian; §16 Testing; §17 Cakupan; §20 skill).
 
@@ -22,7 +28,7 @@
 
 **Bila pemilik tetap memilih GSAP untuk beranda**, langkah yang berubah hanya di Task 9 (kode lengkapnya ada di branch `probe/rencana-4b-gsap`, commit `912c382`, sudah lolos type check, lint, dan build):
 
-1. Pasang paketnya: `pnpm add --save-exact gsap@3.15.0`.
+1. Pasang paketnya: `npm install --save-exact gsap@3.15.0`.
 2. Langkah 3 Task 9 diganti: `HeroBeranda` memberi H1 `data-reveal=""` dan merender komponen klien baru `src/components/motion/RevealJudul.tsx` (memuat `import('gsap')` di `useEffect`, berhenti bila `prefers-reduced-motion: reduce`, lalu `gsap.from(kata, { opacity: 0, y: '0.3em', duration: 0.4, ease: 'power3.out', stagger: 0.08 })`), dan `.kata` di `Beranda.module.css` cukup `display: inline-block` tanpa keyframes.
 3. Langkah 1 Task 9 berubah: tes "judul raksasa ... walau JavaScript mati" diganti tes bahwa animasi tidak berjalan dengan reduced motion, dan tes "JS beranda tidak melebihi JS artikel" dihapus.
 4. Anggaran harus diputuskan ulang: dengan GSAP, tes anggaran 160 KiB gagal di beranda (168,6 KiB). Pilihannya menaikkan anggaran beranda (misalnya 175 KiB) atau memakai `gsap/gsap-core` dengan `onUpdate` yang menulis `transform` sendiri (20,0 KB; beranda sekitar 161 KiB, tetap di atas 160 KiB).
@@ -32,7 +38,7 @@ Angka hasil kalkulator (Rencana 5) tidak terkena masalah LCP karena muncul setel
 
 ## Global Constraints
 
-- Node `^22.23.4 || >=24.22.1`, pnpm 10. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru** (lihat bagian sebelumnya).
+- Node `^22.23.4 || >=24.22.1`, npm 11. Versi dikunci: Next `16.3.3`, Payload `3.92.1`, `@playwright/test` `1.63.0`. **Tanpa dependensi baru** (lihat bagian sebelumnya).
 - Nama domain berbahasa Indonesia seperti rencana sebelumnya (`muatJalur`, `susunBeranda`, `kartuTerbit`, `HalamanRubrik`, `KotakNewsletter`, token `--latar-terbalik`). Nama teknis framework tetap bahasa Inggris.
 - Copy UI dan pesan: bahasa Indonesia, sapaan "kamu", tanpa em dash dan en dash, tanpa tanda seru. CTA menyebut hasilnya ("Langganan gratis", "Hitung Gaji Bersih", "Baca kebijakan redaksi").
 - Path publik selalu lewat `pathFor()` atau `PATH_INDEKS` (`src/lib/paths.ts`); URL media lewat `src/modules/media` (`propsGambar`, `bangunUrl`); SEO lewat `src/modules/seo` (`metadata`, `jsonLd`, `remahRoti`, `metadataTidakDitemukan`). Tidak ada `<title>`, canonical, robots, atau JSON-LD manual di halaman.
@@ -40,14 +46,14 @@ Angka hasil kalkulator (Rencana 5) tidak terkena masalah LCP karena muncul setel
 - Warna, tipografi, radius, spasi, dan motion dari token Rencana 4A; komponen hanya memakai token semantik. Warna pilar selalu bersama nama pilarnya. Kuning dan koral tidak dipakai sebagai warna teks di latar terang. Dilarang: gradien biru-ungu, teks gradien, efek kaca, glow.
 - **Tata letak yang isinya diatur editor tidak boleh bergantung jumlah elemen** (misalnya `grid-row: span N`, temuan jarak kosong Rencana 4A). Jarak antarbagian hanya dari `gap` atau satu kelas margin, dan setiap tata letak baru dijaga tes E2E yang mengukur jaraknya.
 - Motion: hanya `transform` dan `opacity`, kurva dan durasi dari token, tanpa animasi yang berjalan terus; `prefers-reduced-motion: reduce` mematikan semuanya.
-- **Perubahan skema harus aditif.** Rencana ini hanya menambah kolom `tampilkan_tools` (blok mozaik, Task 7) dan, bila Task 11 dijalankan, `takarir` (koleksi `video`). Setelah mengubah field: `pnpm generate:types`, lalu `pnpm seed` sebelum `pnpm build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
-- `pnpm build` membaca database dev (`pointlat` dari `.env`): layout, `/`, `/glosarium`, `/tools`, `/video`, dan 404 dirender saat build. Postgres harus jalan.
+- **Perubahan skema harus aditif.** Rencana ini hanya menambah kolom `tampilkan_tools` (blok mozaik, Task 7) dan, bila Task 11 dijalankan, `takarir` (koleksi `video`). Setelah mengubah field: `npm run generate:types`, lalu `npm run seed` sebelum `npm run build` (build membaca database dev). Bila Payload macet di "Pulling schema from database..." (pertanyaan DATA LOSS), jangan menjawab; reset database yang bersangkutan seperti Rencana 2 (`DROP DATABASE ... WITH (FORCE)` lalu `CREATE DATABASE`).
+- `npm run build` membaca database dev (`pointlat` dari `.env`): layout, `/`, `/glosarium`, `/tools`, `/video`, dan 404 dirender saat build. Postgres harus jalan.
 - Tes tidak memanggil jaringan. Unit dan integrasi memakai `.env.test` (database `pointlat_test`). E2E memakai database `pointlat_test_e2e` (dibuat dan diisi ulang `tests/e2e/siapkan.ts`), build produksi di port 3100, kredensial Cloudinary palsu `e2e`, dan permintaan ke `res.cloudinary.com` dicegat browser tes. Tautan contoh ke penyedia newsletter (`https://point.kit.com/intinya`) hanya diperiksa atributnya, tidak pernah dibuka.
-- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `pnpm build` lagi sebelum `pnpm start` biasa.
+- E2E menjalankan `next build` sendiri sehingga isi `.next/` diganti build E2E. Setelah E2E, jalankan `npm run build` lagi sebelum `npm run start` biasa.
 - Server manual memakai port 3200 dan dihentikan dengan `fuser -k 3200/tcp`, jangan `pkill -f` dengan pola luas. Menunggu server: `timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'`.
 - `next dev` dan `next build` di Next 16.3 bisa menambahkan blok "nextjs-agent-rules" ke `CLAUDE.md` bila mendeteksi agen AI. Periksa `git status` sebelum commit; buang blok itu dengan `git checkout CLAUDE.md` (Task 10 sengaja mengubah `CLAUDE.md`; buang blok itu saja).
-- Jalankan `pnpm typecheck` dan `pnpm lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning baru). Setiap task diakhiri unit, integrasi, dan E2E yang hijau.
-- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` karena isi 404 tidak dirender di browser (lihat Risiko). Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `pnpm test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
+- Jalankan `npm run typecheck` dan `npm run lint` di setiap task; keduanya harus bersih (lint tanpa error dan tanpa warning baru). Setiap task diakhiri unit, integrasi, dan E2E yang hijau.
+- **Kegagalan E2E halaman 404 yang jarang (warisan Rencana 4A).** Tes yang membuka `/halaman-yang-tidak-ada` (`galat.spec.ts` "halaman 404 ... lolos axe" dan `motion.spec.ts` "kartu ke artikel memakai View Transitions") sesekali gagal dengan `locator resolved to <html id="__next_error__">` karena isi 404 tidak dirender di browser (lihat Risiko). Bila salah satu tes itu gagal dengan pesan tersebut, jalankan `npm run test:e2e` sekali lagi; bila gagal lagi, atau tes lain yang gagal, berhenti dan laporkan. Jangan menaikkan timeout atau melemahkan tesnya.
 
 ## Keputusan teknis (hasil riset dan probe, dipakai di semua task)
 
@@ -322,7 +328,7 @@ Artikel contoh E2E kini punya subkategori, jadi remah roti panduan menjadi Beran
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/rubrik.test.ts` dengan `Cannot find package '@/components/rubrik/HalamanRubrik'`.
@@ -859,10 +865,10 @@ Artikel contoh E2E kini punya subkategori, jadi remah roti panduan menjadi Beran
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 36 passed (36)`, `Tests 253 passed (253)`; integrasi `Test Files 18 passed (18)`, `Tests 62 passed (62)`.
@@ -1028,7 +1034,7 @@ Artikel contoh E2E kini punya subkategori, jadi remah roti panduan menjadi Beran
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `36 passed`. `/uang-karier` menampilkan navigasi "Semua, Pajak" dan tiga kartu (dana darurat, panduan, explainer; istilah glosarium tidak ikut); `/uang-karier/pajak` berremah roti Beranda, Uang & Karier; `/tekno/pajak` menjawab 404.
@@ -1202,7 +1208,7 @@ Tata letak satu kolom baca selebar 880 px, dan jarak antarblok hanya dari `gap` 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/halaman-statis.test.ts` dengan `Cannot find package '@/components/halaman/HalamanStatis'`.
@@ -1815,10 +1821,10 @@ Tata letak satu kolom baca selebar 880 px, dan jarak antarblok hanya dari `gap` 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 37 passed (37)`, `Tests 257 passed (257)`; integrasi `Test Files 19 passed (19)`, `Tests 63 passed (63)`.
@@ -1957,7 +1963,7 @@ Tata letak satu kolom baca selebar 880 px, dan jarak antarblok hanya dari `gap` 
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `42 passed`. `/tentang` punya satu H1 dari hero, kartu "Prinsip kami", CTA ke `/kebijakan-redaksi`, dan FAQ; `/kebijakan-redaksi` (tanpa hero) memakai judulnya sebagai H1 dan terbuka dari tautan footer; `/pasang-iklan` (masih draf) menjawab 404.
@@ -2096,7 +2102,7 @@ Profil penulis adalah rambu kredibilitas (spesifikasi §3, YMYL): byline dan kot
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/penulis.test.ts` dengan `Cannot find package '@/components/penulis/HalamanPenulis'`.
@@ -2478,10 +2484,10 @@ Profil penulis adalah rambu kredibilitas (spesifikasi §3, YMYL): byline dan kot
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 38 passed (38)`, `Tests 260 passed (260)`; integrasi `Test Files 20 passed (20)`, `Tests 64 passed (64)`.
@@ -2552,7 +2558,7 @@ Profil penulis adalah rambu kredibilitas (spesifikasi §3, YMYL): byline dan kot
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `47 passed`. Byline panduan membuka `/penulis/redaksi` dengan keahlian, tautan Instagram `rel="me noopener"`, dan tulisan redaksi tanpa istilah glosarium; `/penulis/tidak-ada` menjawab 404.
@@ -2760,7 +2766,7 @@ Halaman `/video/{slug}` memakai ulang `VideoSemat` Rencana 4A (HLS + MP4 tanpa J
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/video.test.ts` dengan `Cannot find package '@/components/video/HalamanVideo'`.
@@ -3495,10 +3501,10 @@ Halaman `/video/{slug}` memakai ulang `VideoSemat` Rencana 4A (HLS + MP4 tanpa J
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 39 passed (39)`, `Tests 265 passed (265)`; integrasi `Test Files 21 passed (21)`, `Tests 66 passed (66)`.
@@ -3650,7 +3656,7 @@ Halaman `/video/{slug}` memakai ulang `VideoSemat` Rencana 4A (HLS + MP4 tanpa J
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `52 passed`. `/video` menampilkan dua kartu 9:16 (OTP lebih dulu), `/video/pph-21-satu-slip-gaji` punya pemutar 9:16 walau poster tesnya 16:9, transkrip terbuka, penjelasan ke panduan, dan video lain; video draf menjawab 404.
@@ -3803,7 +3809,7 @@ Tombol Tools di header (Rencana 4A) menunjuk `/tools` dan sampai sekarang menjaw
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/tools.test.ts` dengan `Cannot find package '@/components/tools/IndeksTools'`.
@@ -4234,10 +4240,10 @@ Tombol Tools di header (Rencana 4A) menunjuk `/tools` dan sampai sekarang menjaw
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 40 passed (40)`, `Tests 268 passed (268)`; integrasi `Test Files 22 passed (22)`, `Tests 68 passed (68)`.
@@ -4318,7 +4324,7 @@ Tombol Tools di header (Rencana 4A) menunjuk `/tools` dan sampai sekarang menjaw
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `56 passed`. Tombol Tools membuka `/tools` dengan H2 Uang & Karier dan Sehat, tiga kartu kalkulator, tanpa IPK (draf).
@@ -4452,7 +4458,7 @@ Pencarian memakai operator `like` Payload: adapter Postgres Payload 3.92.1 memec
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/cari.test.ts` dengan `Cannot find package '@/components/cari/FormCari'`.
@@ -4848,10 +4854,10 @@ Pencarian memakai operator `like` Payload: adapter Postgres Payload 3.92.1 memec
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 41 passed (41)`, `Tests 274 passed (274)`; integrasi `Test Files 23 passed (23)`, `Tests 69 passed (69)`.
@@ -4916,7 +4922,7 @@ Pencarian memakai operator `like` Payload: adapter Postgres Payload 3.92.1 memec
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `62 passed`. Form di halaman 404 membuka `/cari?q=gaji+bersih` dengan panduan di urutan pertama dan `noindex, follow`; "penghasilan tidak kena pajak" menemukan istilah PTKP; tanpa hasil dan tanpa kueri ada petunjuk; tombol Cari sebaris dengan isian di 375 px.
@@ -4932,7 +4938,7 @@ Pencarian memakai operator `like` Payload: adapter Postgres Payload 3.92.1 memec
 
 **Files:**
 - Create: `src/modules/konten/beranda.ts`
-- Modify: `src/blocks/beranda.ts`, `src/globals/Beranda.ts`, `src/globals/Newsletter.ts`, `src/hooks/revalidasiPublik.ts`, `src/lib/tag.ts`, `src/modules/konten/tipe.ts`, `src/modules/konten/data.ts`, `src/modules/konten/cache.ts`, `src/modules/konten/index.ts`, `src/modules/seo/data.ts`, `src/payload-types.ts` (hasil `pnpm generate:types`), `tests/unit/tag.test.ts`, `tests/int/sitemap.int.spec.ts`
+- Modify: `src/blocks/beranda.ts`, `src/globals/Beranda.ts`, `src/globals/Newsletter.ts`, `src/hooks/revalidasiPublik.ts`, `src/lib/tag.ts`, `src/modules/konten/tipe.ts`, `src/modules/konten/data.ts`, `src/modules/konten/cache.ts`, `src/modules/konten/index.ts`, `src/modules/seo/data.ts`, `src/payload-types.ts` (hasil `npm run generate:types`), `tests/unit/tag.test.ts`, `tests/int/sitemap.int.spec.ts`
 - Test: `tests/unit/beranda.test.ts`, `tests/int/beranda.int.spec.ts`
 
 **Interfaces:**
@@ -4960,7 +4966,7 @@ Global `beranda` (Rencana 1) menyimpan blok beranda yang bisa diurutkan editor: 
 
 Global dengan draf menyimpan versi publiknya di dokumen utama; `findGlobal` tanpa `draft` membaca dokumen itu (probe: dokumen hasil `updateGlobal` biasa berstatus `draft` di kolom `_status` tetapi tetap dibaca). Simpan draf di admin tidak mengubah dokumen utama, jadi beranda publik tidak berubah sampai editor menerbitkan.
 
-Perubahan skema hanya menambah kolom `tampilkan_tools` (boolean, bawaan `true`) di tabel blok mozaik dan tabel versinya. Setelah `pnpm generate:types`, jalankan `pnpm seed` supaya kolom terdorong ke database dev sebelum `pnpm build`.
+Perubahan skema hanya menambah kolom `tampilkan_tools` (boolean, bawaan `true`) di tabel blok mozaik dan tabel versinya. Setelah `npm run generate:types`, jalankan `npm run seed` supaya kolom terdorong ke database dev sebelum `npm run build`.
 
 - [ ] **Langkah 1: Tulis tes yang gagal**
 
@@ -5169,7 +5175,7 @@ Perubahan skema hanya menambah kolom `tampilkan_tools` (boolean, bawaan `true`) 
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/beranda.test.ts` dengan `Cannot find package '@/modules/konten/beranda'`, lalu FAIL di `tests/unit/tag.test.ts` (tes "tools tampil di kotak Hitung sendiri beranda") dengan `AssertionError: expected [ 'tools', 'tools:5', …(2) ] to deeply equal [ 'tools', 'tools:5', …(3) ]`.
@@ -5300,7 +5306,7 @@ Perubahan skema hanya menambah kolom `tampilkan_tools` (boolean, bawaan `true`) 
   Lalu jalankan:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
   ```
 
@@ -5634,10 +5640,10 @@ Perubahan skema hanya menambah kolom `tampilkan_tools` (boolean, bawaan `true`) 
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 42 passed (42)`, `Tests 281 passed (281)`; integrasi `Test Files 24 passed (24)`, `Tests 72 passed (72)`.
@@ -5647,8 +5653,8 @@ Perubahan skema hanya menambah kolom `tampilkan_tools` (boolean, bawaan `true`) 
   Jalankan:
 
   ```bash
-  pnpm seed
-  pnpm test:e2e
+  npm run seed
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: seed selesai tanpa pertanyaan (kolom baru saja); E2E tetap `62 passed` (beranda baru dirender di Task 8).
@@ -5760,7 +5766,7 @@ Bagian dirender sesuai urutan editor, masing-masing membawa kontainernya sendiri
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/beranda-tampilan.test.ts` dengan `Cannot find package '@/components/beranda/Beranda'`.
@@ -6551,10 +6557,10 @@ Bagian dirender sesuai urutan editor, masing-masing membawa kontainernya sendiri
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 43 passed (43)`, `Tests 285 passed (285)`; integrasi `Test Files 24 passed (24)`, `Tests 72 passed (72)`.
@@ -6747,7 +6753,7 @@ Bagian dirender sesuai urutan editor, masing-masing membawa kontainernya sendiri
   Jalankan:
 
   ```bash
-  pnpm test:e2e
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: `70 passed`. Beranda punya satu H1, form cari ke `/cari?q=thr`, mozaik empat kartu plus kotak "Hitung sendiri" (Gaji Bersih, THR, BMI & Kalori), strip video berlatar `rgb(17, 17, 17)` dengan dua video, "Tulisan terbaru" berisi dua tulisan di luar mozaik, dan newsletter ke form penyedia; slot iklan tidak meninggalkan ruang kosong; jarak antarbagian `[40, 56, 56]`.
@@ -6915,7 +6921,7 @@ Anggaran JavaScript spesifikasi §12 (keputusan pemilik 2026-11-04: total di baw
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/beranda-tampilan.test.ts` dengan `AssertionError: expected '<script type="application/ld+json">{"…' to match /…/` pada tes "hero: satu H1 dan form cari besar dengan placeholder dari CMS" (H1 belum berisi `<span>` per kata`.
@@ -6997,11 +7003,11 @@ Anggaran JavaScript spesifikasi §12 (keputusan pemilik 2026-11-04: total di baw
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 43 passed (43)`, `Tests 285 passed (285)`; integrasi `Test Files 24 passed (24)`, `Tests 72 passed (72)`; E2E `72 passed`. Anotasi tes anggaran mencatat JS setiap halaman (sekitar 142 KiB).
@@ -7055,10 +7061,10 @@ Anggaran JavaScript spesifikasi §12 (keputusan pemilik 2026-11-04: total di baw
    ## Batasan
    - Jangan commit `.env`. `.env.test` boleh di-commit karena hanya untuk database tes lokal dan tidak boleh berisi `CLOUDINARY_*`.
    - Tanya dulu sebelum menambah dependensi baru di luar rencana.
-   - Jalankan `pnpm generate:types` lalu `pnpm typecheck` setelah mengubah koleksi atau global.
-   - Jalankan `pnpm test` sebelum commit, dan `pnpm test:e2e` bila halaman publik berubah.
-  -- `pnpm build` membaca database dev untuk halaman statis (layout, `/glosarium`, 404). Setelah skema berubah, jalankan `pnpm seed` dulu supaya kolom baru terdorong ke database dev.
-  +- `pnpm build` membaca database dev untuk halaman statis (layout, `/`, `/glosarium`, `/tools`, `/video`, 404). Setelah skema berubah, jalankan `pnpm seed` dulu supaya kolom baru terdorong ke database dev.
+   - Jalankan `npm run generate:types` lalu `npm run typecheck` setelah mengubah koleksi atau global.
+   - Jalankan `npm test` sebelum commit, dan `npm run test:e2e` bila halaman publik berubah.
+  -- `npm run build` membaca database dev untuk halaman statis (layout, `/glosarium`, 404). Setelah skema berubah, jalankan `npm run seed` dulu supaya kolom baru terdorong ke database dev.
+  +- `npm run build` membaca database dev untuk halaman statis (layout, `/`, `/glosarium`, `/tools`, `/video`, 404). Setelah skema berubah, jalankan `npm run seed` dulu supaya kolom baru terdorong ke database dev.
   ```
 
 - [ ] **Langkah 2: Pemeriksaan lengkap**
@@ -7066,30 +7072,30 @@ Anggaran JavaScript spesifikasi §12 (keputusan pemilik 2026-11-04: total di baw
   Jalankan:
 
   ```bash
-  pnpm generate:types && git diff --stat src/payload-types.ts
-  pnpm generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
-  pnpm test:e2e
-  pnpm build
+  npm run generate:types && git diff --stat src/payload-types.ts
+  npm run generate:importmap && git diff --stat "src/app/(payload)/admin/importMap.js"
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: `payload-types.ts` dan import map tidak berubah; type check dan lint bersih; unit `Test Files 43 passed (43)`, `Tests 285 passed (285)`; integrasi `Test Files 24 passed (24)`, `Tests 72 passed (72)`; E2E `72 passed`; build mencantumkan `○ /`, `○ /glosarium`, `○ /tools`, `○ /video`, `● /[...jalur]`, `● /glosarium/[slug]`, `● /penulis/[slug]`, `● /video/[slug]`, `ƒ /cari`, dan `ƒ` untuk lima rute teknis Rencana 3.
 
 - [ ] **Langkah 3: Uji visual di tiga ukuran layar**
 
-  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh dari `pnpm test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`):
+  Bangun dan jalankan build dengan database E2E, yang sudah berisi konten contoh dari `npm run test:e2e` di langkah 2 (`set -a` memuat `PAYLOAD_SECRET` dari `.env.test`; nama database diambil dari `DATABASE_URL` tes tanpa query lalu ditambah `_e2e`):
 
   ```bash
   set -a && . ./.env.test && set +a
-  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e pnpm build
-  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e PORT=3200 pnpm start > /tmp/point-lat-start.log 2>&1 &)
+  DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e npm run build
+  (DATABASE_URL="${DATABASE_URL%%\?*}_e2e" CLOUDINARY_CLOUD_NAME=e2e CLOUDINARY_API_KEY=e2e CLOUDINARY_API_SECRET=e2e PORT=3200 npm run start > /tmp/point-lat-start.log 2>&1 &)
   timeout 90 sh -c 'until curl -s -o /dev/null http://localhost:3200/robots.txt; do sleep 1; done'
   ```
 
-  Buka di browser dan periksa `/`, `/uang-karier`, `/uang-karier/pajak`, `/tentang`, `/kebijakan-redaksi`, `/penulis/redaksi`, `/video`, `/video/pph-21-satu-slip-gaji`, `/tools`, `/cari`, `/cari?q=gaji`, dan `/halaman-yang-tidak-ada` di 375, 768, dan 1440 px (DevTools) dan dengan "Emulate CSS prefers-reduced-motion: reduce". Gambar Cloudinary tidak tampil karena cloud `e2e` palsu. Beranda harus sesuai mockup `Kartu.dc.html`: judul raksasa dengan kalimat pembuka dan pencarian sejajar di desktop, kartu besar hijau dengan pil label putih, dua kartu bertumpuk di sampingnya, kartu Tekno dan kotak "Hitung sendiri" di baris kedua, strip video hitam selebar layar, "Tulisan terbaru" dengan titik warna dan newsletter sand di kanannya. Tidak ada geser horizontal, tidak ada ruang kosong di antara bagian selain jarak 40 dan 56 px, dan reduced motion menampilkan judul tanpa animasi. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `pnpm build` lagi dengan env biasa.
+  Buka di browser dan periksa `/`, `/uang-karier`, `/uang-karier/pajak`, `/tentang`, `/kebijakan-redaksi`, `/penulis/redaksi`, `/video`, `/video/pph-21-satu-slip-gaji`, `/tools`, `/cari`, `/cari?q=gaji`, dan `/halaman-yang-tidak-ada` di 375, 768, dan 1440 px (DevTools) dan dengan "Emulate CSS prefers-reduced-motion: reduce". Gambar Cloudinary tidak tampil karena cloud `e2e` palsu. Beranda harus sesuai mockup `Kartu.dc.html`: judul raksasa dengan kalimat pembuka dan pencarian sejajar di desktop, kartu besar hijau dengan pil label putih, dua kartu bertumpuk di sampingnya, kartu Tekno dan kotak "Hitung sendiri" di baris kedua, strip video hitam selebar layar, "Tulisan terbaru" dengan titik warna dan newsletter sand di kanannya. Tidak ada geser horizontal, tidak ada ruang kosong di antara bagian selain jarak 40 dan 56 px, dan reduced motion menampilkan judul tanpa animasi. Hentikan server dengan `fuser -k 3200/tcp`, lalu jalankan `npm run build` lagi dengan env biasa.
 
 - [ ] **Langkah 4: Commit**
 
@@ -7104,7 +7110,7 @@ Anggaran JavaScript spesifikasi §12 (keputusan pemilik 2026-11-04: total di baw
 
 **Files:**
 - Create: `src/app/(frontend)/video/[slug]/takarir.vtt/route.ts`
-- Modify: `src/lib/validasi.ts`, `src/collections/Video.ts`, `src/payload-types.ts` (hasil `pnpm generate:types`), `src/modules/konten/video.ts`, `src/modules/konten/tipe.ts`, `src/modules/konten/data.ts`, `src/modules/konten/cache.ts`, `src/modules/konten/index.ts`, `src/components/isi/VideoSemat.tsx`, `tests/e2e/siapkan.ts`
+- Modify: `src/lib/validasi.ts`, `src/collections/Video.ts`, `src/payload-types.ts` (hasil `npm run generate:types`), `src/modules/konten/video.ts`, `src/modules/konten/tipe.ts`, `src/modules/konten/data.ts`, `src/modules/konten/cache.ts`, `src/modules/konten/index.ts`, `src/components/isi/VideoSemat.tsx`, `tests/e2e/siapkan.ts`
 - Test: `tests/unit/takarir.test.ts`, `tests/int/takarir.int.spec.ts`, `tests/e2e/takarir.spec.ts`
 
 **Interfaces:**
@@ -7199,7 +7205,7 @@ Rencana 4A mencatat video tanpa takarir sebagai risiko WCAG 2.2 1.2.2 (takarir u
   Jalankan:
 
   ```bash
-  pnpm test:unit
+  npm run test:unit
   ```
 
   Hasil yang diharapkan: FAIL di `tests/unit/takarir.test.ts` dengan `TypeError: (0 , __vite_ssr_import_4__.validasiVtt) is not a function` dan `TypeError: (0 , __vite_ssr_import_5__.pathTakarir) is not a function`.
@@ -7268,7 +7274,7 @@ Rencana 4A mencatat video tanpa takarir sebagai risiko WCAG 2.2 1.2.2 (takarir u
   Lalu jalankan:
 
   ```bash
-  pnpm generate:types
+  npm run generate:types
   git diff --stat src/payload-types.ts
   ```
 
@@ -7482,10 +7488,10 @@ Rencana 4A mencatat video tanpa takarir sebagai risiko WCAG 2.2 1.2.2 (takarir u
   Jalankan:
 
   ```bash
-  pnpm typecheck
-  pnpm lint
-  pnpm test:unit
-  pnpm test:int
+  npm run typecheck
+  npm run lint
+  npm run test:unit
+  npm run test:int
   ```
 
   Hasil yang diharapkan: bersih; unit `Test Files 44 passed (44)`, `Tests 287 passed (287)`; integrasi `Test Files 25 passed (25)`, `Tests 73 passed (73)`.
@@ -7563,9 +7569,9 @@ Rencana 4A mencatat video tanpa takarir sebagai risiko WCAG 2.2 1.2.2 (takarir u
   Jalankan:
 
   ```bash
-  pnpm seed
-  pnpm test:e2e
-  pnpm build
+  npm run seed
+  npm run test:e2e
+  npm run build
   ```
 
   Hasil yang diharapkan: seed mendorong kolom `takarir` ke database dev tanpa pertanyaan; E2E `74 passed`; build mencantumkan `ƒ /video/[slug]/takarir.vtt`.
@@ -7581,7 +7587,7 @@ Rencana 4A mencatat video tanpa takarir sebagai risiko WCAG 2.2 1.2.2 (takarir u
 
 ## Selesai bila
 
-- Tanpa Task 11: `pnpm test` lulus (285 tes unit di 43 file dan 72 tes integrasi di 24 file), `pnpm test:e2e` lulus (72 tes E2E, axe tanpa pelanggaran WCAG 2.2 AA di 375, 768, dan 1440 px untuk beranda, rubrik, halaman statis, penulis, video, tools, cari, dan halaman Rencana 4A), `pnpm typecheck` dan `pnpm lint` bersih, `pnpm build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Cloudinary asli. Dengan Task 11: 287 tes unit di 44 file, 73 tes integrasi di 25 file, 74 tes E2E.
+- Tanpa Task 11: `npm test` lulus (285 tes unit di 43 file dan 72 tes integrasi di 24 file), `npm run test:e2e` lulus (72 tes E2E, axe tanpa pelanggaran WCAG 2.2 AA di 375, 768, dan 1440 px untuk beranda, rubrik, halaman statis, penulis, video, tools, cari, dan halaman Rencana 4A), `npm run typecheck` dan `npm run lint` bersih, `npm run build` berhasil, semuanya tanpa jaringan dan tanpa kredensial Cloudinary asli. Dengan Task 11: 287 tes unit di 44 file, 73 tes integrasi di 25 file, 74 tes E2E.
 - `/` menampilkan beranda dari global `beranda` sesuai mockup Kartu Intinya; `/{pilar}`, `/{pilar}/{subkategori}`, halaman statis terbit, `/penulis/{slug}`, `/video`, `/video/{slug}`, `/tools`, dan `/cari` tampil dengan metadata, canonical, robots, dan JSON-LD dari modul SEO; halaman 404 punya form cari.
 - `sitemap/halaman.xml` dimulai dengan `/` dan memuat `/glosarium`, `/tools`, `/video` bila ada isinya; `sitemap/pilar.xml` memuat halaman subkategori.
 - Menyimpan global `beranda` atau `newsletter`, atau menerbitkan artikel, pilar, video, atau tools, membuang cache beranda.
@@ -7612,8 +7618,8 @@ Rencana 4A mencatat video tanpa takarir sebagai risiko WCAG 2.2 1.2.2 (takarir u
 | **Newsletter hanya tautan ke form penyedia**, bukan isian email seperti mockup. | Tidak ada form palsu dan tidak ada email tersimpan. **Pertanyaan:** penyedia mana yang dipilih (Kit, Mailchimp, Brevo)? Setelah ada akun, form sematan bisa ditambah di Rencana 8 bersama persetujuan cookie. Blok tidak tampil sampai global `newsletter` aktif dan `urlForm` terisi. |
 | Kartu tools menautkan `/tools/{slug}` yang baru ada di Rencana 5. | Jangan terbitkan dokumen `tools` sebelum Rencana 5; tanpa tools terbit, `/tools` menampilkan pesan kosong dan kotak "Hitung sendiri" tidak tampil. Sitemap `tools.xml` (Rencana 3) juga hanya memuat tools terbit. |
 | `/cari` dirender per permintaan dan memakai `ILIKE`. | Hasil per kueri di-cache bertag `artikel`; kueri dipotong 80 karakter dan 6 kata; halaman `noindex`. Bila disalahgunakan (banyak kueri unik), tambahkan rate limit (Vercel Firewall) di Rencana 8. |
-| Global `beranda` memakai draf: dokumen hasil `pnpm seed` berstatus `draft` di kolom `_status`, tetapi `findGlobal` tanpa `draft` tetap membacanya sebagai versi publik. | Diuji integrasi (`ambilBeranda`). Menyimpan draf dari admin tidak mengubah dokumen utama, jadi beranda publik baru berubah saat diterbitkan. Hook revalidasi juga jalan saat menyimpan draf; biayanya hanya satu render ulang. |
-| `pnpm build` kini merender `/`, `/tools`, dan `/video` dari database dev. | Sudah tercatat di CLAUDE.md. Build Vercel punya akses Supabase; Rencana 8 wajib menyiapkan migrasi Payload untuk kolom `tampilkan_tools` (dan `takarir`) sebelum deploy. |
+| Global `beranda` memakai draf: dokumen hasil `npm run seed` berstatus `draft` di kolom `_status`, tetapi `findGlobal` tanpa `draft` tetap membacanya sebagai versi publik. | Diuji integrasi (`ambilBeranda`). Menyimpan draf dari admin tidak mengubah dokumen utama, jadi beranda publik baru berubah saat diterbitkan. Hook revalidasi juga jalan saat menyimpan draf; biayanya hanya satu render ulang. |
+| `npm run build` kini merender `/`, `/tools`, dan `/video` dari database dev. | Sudah tercatat di CLAUDE.md. Build Vercel punya akses Supabase; Rencana 8 wajib menyiapkan migrasi Payload untuk kolom `tampilkan_tools` (dan `takarir`) sebelum deploy. |
 | Strip video dengan kurang dari 4 video menyisakan kolom kosong di kanan (grid 4 kolom). | Kartu tetap 9:16 dengan lebar wajar; pemilik disarankan menerbitkan minimal 4 video sebelum menampilkan strip. Bila kurang, blok strip bisa dihapus dari global `beranda`. |
 | Video tanpa takarir (WCAG 2.2 1.2.2). | Transkrip selalu terbuka di halaman video. **Pertanyaan:** jalankan Task 11 (takarir WebVTT dari CMS)? Task itu terpisah dan bisa dilewati tanpa memengaruhi task lain. |
 | **Isi halaman 404 kadang tidak muncul** (warisan Rencana 4A, bukan perubahan rencana ini). Next 16.3.3 mengirim `notFound()` sebagai cangkang `<html id="__next_error__">` lalu merender isi 404 di browser. Pada verifikasi penuh probe (11 run E2E, sekitar 70 kunjungan 404 di browser), 2 kunjungan (tes 404 1440 px di Task 2 dan tes View Transitions di Task 5) tetap berupa cangkang kosong selama 5 dan 30 detik batas tesnya. Jejak Playwright: preload CSS dan font dibatalkan browser (`net::ERR_ABORTED`) saat isi 404 mulai dirender, satu CSS tidak pernah diminta ulang, dan React menahan commit sampai stylesheet selesai dimuat (batas tunggu React 19.2.6 di Next: 60 detik). | Status 404, judul, dan `noindex` tetap benar di HTML awal, jadi SEO tidak terdampak; yang terdampak hanya pembaca yang melihat layar kosong (tanpa form cari dan tulisan terbaru). Tidak bisa direproduksi di luar rangkaian E2E: 0 dari 99 kunjungan dengan skrip Playwright terpisah (termasuk CPU 4x lebih lambat, CPU sibuk, dan CSS ditunda 150 ms) dan 0 dari 30 kunjungan 404 di `galat.spec.ts` + `motion.spec.ts` dengan `--repeat-each=5`; E2E penuh Task 2 dan Task 5 lulus saat diulang. **Pertanyaan:** buat rencana perbaikan terpisah (misalnya cek perilaku di patch Next 16.3 berikutnya dan laporkan ke Next.js dengan jejak ini) sebelum peluncuran di Rencana 8? |
