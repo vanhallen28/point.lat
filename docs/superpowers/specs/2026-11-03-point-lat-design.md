@@ -504,9 +504,11 @@ unzip -q "$(ls -t ~/Downloads/point-lat*.zip | head -1)"
 cp point-lat-lama/.env point-lat/.env
 cd point-lat
 npm ci
-git describe --tags          # harus menampilkan versi zip, misalnya v1.1.0
-git push origin master       # Vercel membangun dan merilis otomatis (migrasi produksi ikut di build)
+git describe --tags
+git push origin master
 ```
+
+`git describe --tags` harus menampilkan versi zip (misalnya `v1.1.0`); `git push origin master` membuat Vercel membangun dan merilis otomatis (migrasi produksi ikut di build). Blok perintah untuk pemilik tidak pernah memuat komentar `#`: zsh, shell bawaan macOS, tidak menganggap `#` sebagai komentar saat perintah ditempel, sehingga `#` dan kata sesudahnya ikut terkirim sebagai argumen (terjadi saat memasang v1.1.0).
 
 Setelah CI di GitHub hijau: `git push origin vX.Y.Z` untuk mengirim tag. Bila pembaruan membawa migrasi dan pemilik memakai pratinjau lokal: `npm run migrate` (ke proyek Supabase pratinjau di `.env`). Langkah sekali jalan (misalnya isi baru di `.env` atau langkah di dashboard) ditulis di kiriman yang membutuhkannya.
 
