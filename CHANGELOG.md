@@ -8,6 +8,17 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.3.1 (10 November 2026)
+
+Pembaruan keamanan. Pasang secepatnya, juga bila v1.3.0 belum sempat di-push (zip ini sudah berisi v1.3.0).
+
+- **Next.js 16.3.8 ke 16.4.5.** Menutup tiga celah Oktober 2026 (dua kritis, salah satunya eksekusi kode lewat optimasi gambar SVG, dan satu yang bisa membuat server sibuk lewat Server Actions, yang dipakai halaman admin) dan tujuh celah sedang November 2026. Celah `use cache` tidak mengenai point. karena fitur itu tidak dipakai, tetapi ikut tertutup.
+- **sharp 0.35.4 ke 0.35.5.** Pustaka gambar yang dipakai Payload saat mengunggah gambar di admin; versi lama membawa celah di pembaca SVG.
+- **Push lebih dari 1 MiB:** zip kini membawa pengaturan git yang mencegah galat `RPC failed; HTTP 400` saat push. Pemecahannya juga dicatat di runbook rilis.
+- Tidak ada perubahan tampilan, isi, atau database.
+
+Sisa peringatan `npm audit` sebagian besar ada di alat tes (Vitest, Lighthouse CI) yang tidak ikut ke Vercel. Sisanya pustaka bawaan Payload yang belum punya versi perbaikan lewat Payload: DOMPurify yang hanya berjalan di editor kode admin (Monaco), dan happy-dom di pengubah HTML ke Lexical yang tidak dipakai point. Jangan menjalankan `npm audit fix --force`: perintah itu menurunkan editor teks Payload ke versi 0.1.9 yang tidak cocok dan merusak admin.
+
 ## v1.3.0 (10 November 2026)
 
 Paket konten awal supaya situs tidak sepi: 12 artikel lengkap dan penjelasan yang lebih panjang untuk keenam kalkulator, masuk lewat satu tombol di beranda admin.

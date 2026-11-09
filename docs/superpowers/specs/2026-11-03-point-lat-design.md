@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.3.0): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.3.1): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -16,6 +16,7 @@
 | 2026-11-09 | v1.2.0 | Admin lebih profesional mengikuti gambar referensi pemilik: tema bermerek, beranda admin baru, Dashboard SEO dengan perbandingan periode. Fitur mirip plugin WordPress lewat halaman Fitur dan Kode sematan (plugin unggahan tidak didukung). Form kontak disimpan di admin, pelanggan newsletter disimpan di Supabase dengan unduhan CSV, dan tombol bagikan (§23) |
 | 2026-11-09 | v1.2.1 | Menu admin: grup yang bisa dilipat berupa baris berikon, jadi ikon setiap bagian tetap terlihat saat grup dilipat (§23, permintaan pemilik) |
 | 2026-11-10 | v1.3.0 | Paket konten awal supaya situs tidak sepi: 12 artikel draf Uang & Karier dan Belajar dengan kartu sampul bergaya point., penjelasan enam kalkulator diperluas, dan tombol Impor paket konten di beranda admin (§24) |
+| 2026-11-10 | v1.3.1 | Pembaruan keamanan: Next.js 16.4.5 dan sharp 0.35.5 (celah Next.js Oktober dan November 2026). Tanpa perubahan perilaku |
 
 ---
 

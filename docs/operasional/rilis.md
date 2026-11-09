@@ -570,6 +570,7 @@ Bila beranda belum punya blok Pilihan redaksi, impor menambahkannya setelah hero
 | Log indexing: Google 403 | Akun layanan belum Owner | G3 |
 | Log indexing: IndexNow 403 | File kunci tidak cocok | Buka `https://point.lat/<kunci>.txt`, cocokkan dengan Pengaturan SEO (G5) |
 | AdSense: ads.txt "Not found" atau "Unauthorized" | ID penerbit belum diisi atau salah | Cocokkan isi `https://point.lat/ads.txt` dengan ID penerbit (J1) |
+| `git push` gagal dengan `RPC failed; HTTP 400 curl 22` dan `the remote end hung up unexpectedly`, lalu `Everything up-to-date` | Kiriman lebih dari 1 MiB (batas bawaan git lewat HTTPS); di atas itu git mengirim bertahap dan GitHub menolaknya. Terjadi di v1.3.0 karena gambar sampul paket | Di folder proyek: `git config http.postBuffer 157286400` dan `git config http.version HTTP/1.1`, lalu ulangi push. Zip sejak v1.3.1 sudah membawa pengaturan ini. Tulisan `Everything up-to-date` tidak berarti push berhasil; cek commit terakhir di halaman GitHub |
 
 ## Rollback
 
@@ -604,6 +605,7 @@ Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sud
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
+| 10 November 2026 | Sesi Claude (v1.3.1) | Pemecahan masalah: push gagal HTTP 400 untuk kiriman di atas 1 MiB. |
 | 10 November 2026 | Sesi Claude (v1.3.0) | Ditambah bagian L: impor paket konten awal, review dan terbit bertahap, penjelasan kalkulator, dan blok Pilihan redaksi di beranda. |
 | 9 November 2026 | Sesi Claude (v1.2.0) | Ditambah bagian K: beranda admin, Kebijakan Privasi lebih dulu, form kontak, newsletter tersimpan, tombol bagikan, dan Kode sematan. |
 | 9 November 2026 | Sesi Claude (v1.1.0) | Runbook disesuaikan keputusan pemilik: Vercel paket gratis, tanpa Docker dan tanpa `psql` (pemeriksaan di SQL Editor Supabase), proyek pratinjau juga untuk `npm run dev`, Supabase Cron 10 menit opsional (H5). Langkah di layanan luar belum dijalankan ulang. |
