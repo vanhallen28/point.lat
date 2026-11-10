@@ -55,7 +55,7 @@ describe('impor paket konten', () => {
     const hasil = await imporPaket(payload, { bacaSampul, paket, mozaik: [], perbaruiTools: false })
     expect(hasil.galat).toEqual([])
     expect(hasil.artikel.dibuat).toEqual([a.slug, b.slug])
-    expect(hasil.subkategori.dibuat).toEqual([a.subkategori.slug])
+    expect(hasil.subkategori.dibuat).toEqual([a.subkategori!.slug])
     expect(hasil.beranda).toBe('dilewati')
 
     const { docs } = await payload.find({ collection: 'artikel', draft: true, where: { slug: { in: [a.slug, b.slug] } }, depth: 1, sort: 'slug' })
@@ -68,7 +68,7 @@ describe('impor paket konten', () => {
     expect(docA.sumber?.map((s) => s.url)).toEqual(a.sumber.map((s) => s.url))
     expect(docA.seo).toMatchObject({ keyphrase: a.seo.keyphrase, judulSEO: a.seo.judulSEO, metaDeskripsi: a.seo.metaDeskripsi })
     expect(docA.gambarUtama).toMatchObject({ alt: a.sampul.alt, width: 1920 })
-    expect(docA.subkategori).toMatchObject({ slug: a.subkategori.slug })
+    expect(docA.subkategori).toMatchObject({ slug: a.subkategori!.slug })
     expect((docA.artikelTerkait ?? []).map((t) => (typeof t === 'object' ? t.id : t))).toEqual([docB.id])
 
     // Tautan internal ke artikel paket lain menunjuk dokumennya, bukan teks biasa (depth 0: relasi berupa id).

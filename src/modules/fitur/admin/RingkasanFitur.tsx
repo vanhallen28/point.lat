@@ -20,10 +20,11 @@ function modeIndexer(): 'asli' | 'palsu' | null {
  * supaya halaman ini terasa seperti daftar plugin WordPress. Hanya membaca; saklarnya ada di halaman masing-masing.
  */
 export async function RingkasanFitur({ payload }: UIFieldServerProps) {
-  const [iklan, asisten, sematan] = await Promise.all([
+  const [iklan, asisten, sematan, otomasi] = await Promise.all([
     ambilIklan(payload),
     payload.findGlobal({ slug: 'asisten-ai', depth: 0, overrideAccess: true }),
     payload.findGlobal({ slug: 'kode-sematan', depth: 0, overrideAccess: true }),
+    payload.findGlobal({ slug: 'otomasi-artikel', depth: 0, overrideAccess: true }),
   ])
   const ai = adapterDariEnv()
   const indexer = modeIndexer()
@@ -42,6 +43,13 @@ export async function RingkasanFitur({ payload }: UIFieldServerProps) {
       status: asisten.aktif === false || ai.mode === 'palsu' ? 'mati' : ai.mode === null ? 'perlu' : 'nyala',
       label: asisten.aktif === false ? 'Mati' : ai.mode === null ? 'Kunci belum diisi' : ai.mode === 'asli' ? 'Nyala' : 'Mode uji',
       href: urlAdmin.global('asisten-ai'),
+    },
+    {
+      nama: 'Otomasi artikel',
+      keterangan: 'Usulan topik, draf otomatis, dan slot jadwal terbit',
+      status: otomasi.aktif ? (asisten.aktif === false || ai.mode !== 'asli' ? 'perlu' : 'nyala') : 'mati',
+      label: otomasi.aktif ? (asisten.aktif === false ? 'Asisten AI mati' : ai.mode === 'asli' ? 'Nyala' : 'Mode uji') : 'Mati',
+      href: urlAdmin.global('otomasi-artikel'),
     },
     {
       nama: 'Mesin Indexing',

@@ -20,6 +20,8 @@ export type OpsiImpor = {
   mozaik?: string[]
   /** Perbarui penjelasan tools dari data awal (bawaan menyala). Tes mematikannya supaya tools bersama tidak berubah. */
   perbaruiTools?: boolean
+  /** Id penulis artikel; bawaan Redaksi point. (slug `redaksi`). Dipakai Otomasi artikel. */
+  penulis?: number | null
   sekarang?: Date
 }
 
@@ -49,7 +51,7 @@ export async function imporPaket(payload: Payload, opsi: OpsiImpor): Promise<Has
   }
 
   const idPilar = await petaPilar(payload, paket)
-  const penulis = await cariPenulis(payload)
+  const penulis = opsi.penulis ?? (await cariPenulis(payload))
   if (!penulis) hasil.galat.push('Penulis "Redaksi point." (slug redaksi) belum ada. Jalankan data awal dulu.')
   const pilarHilang = [...new Set(paket.map((a) => a.pilar))].filter((p) => !idPilar.has(p))
   for (const p of pilarHilang) hasil.galat.push(`Pilar ${p} belum ada.`)
@@ -78,7 +80,7 @@ export async function imporPaket(payload: Payload, opsi: OpsiImpor): Promise<Has
           slug: a.slug,
           tipe: a.tipe,
           pilar,
-          subkategori: idSub.get(`${a.pilar}/${a.subkategori.slug}`) ?? null,
+          subkategori: a.subkategori ? (idSub.get(`${a.pilar}/${a.subkategori.slug}`) ?? null) : null,
           penulis,
           deck: a.deck,
           intinya: a.intinya.map((poin) => ({ poin })),
@@ -141,6 +143,7 @@ async function cariPenulis(payload: Payload): Promise<Id | null> {
 async function siapkanSubkategori(payload: Payload, paket: ArtikelPaket[], idPilar: Map<string, Id>, hasil: HasilImpor): Promise<Map<string, Id>> {
   const peta = new Map<string, Id>()
   for (const a of paket) {
+    if (!a.subkategori) continue
     const kunci = `${a.pilar}/${a.subkategori.slug}`
     const pilar = idPilar.get(a.pilar)
     if (peta.has(kunci) || !pilar) continue

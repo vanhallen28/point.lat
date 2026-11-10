@@ -2,7 +2,7 @@ import type { Endpoint, PayloadRequest } from 'payload'
 
 import { jalankan, type PenggunaAi } from './jalankan'
 import { statusAsisten } from './status'
-import { TUGAS_AI, type TugasAi } from './tipe'
+import { TUGAS_EDITOR, type TugasEditor } from './tipe'
 
 /** Path endpoint di bawah `/api/artikel`, dipanggil sidebar Asisten AI di editor artikel. */
 export const PATH_ASISTEN = '/asisten'
@@ -37,8 +37,8 @@ export const endpointAsisten: Endpoint = {
     const pengguna = penggunaAsisten(req)
     if (pengguna instanceof Response) return pengguna
     const body = ((await req.json?.().catch(() => null)) ?? {}) as { tugas?: unknown; masukan?: unknown; dokumen?: unknown }
-    if (!TUGAS_AI.includes(body.tugas as TugasAi)) return galat(400, 'Tugas asisten tidak dikenal.')
-    const hasil = await jalankan(req.payload, body.tugas as TugasAi, body.masukan, { pengguna, dokumen: idArtikel(body.dokumen) })
+    if (!TUGAS_EDITOR.includes(body.tugas as TugasEditor)) return galat(400, 'Tugas asisten tidak dikenal.')
+    const hasil = await jalankan(req.payload, body.tugas as TugasEditor, body.masukan, { pengguna, dokumen: idArtikel(body.dokumen) })
     return Response.json(hasil, { status: hasil.status === 'berhasil' ? 200 : hasil.kodeHttp })
   },
 }

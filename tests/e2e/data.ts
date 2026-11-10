@@ -140,3 +140,9 @@ export const KUNJUNGAN_CONTOH = [
   { hari: 12, path: '/tools', perujuk: 'https://www.bing.com/', negara: 'ID', kota: 'Medan', ip: '198.51.100.7' },
   { hari: 25, path: `/${SLUG.panduan}`, perujuk: null, negara: 'ID', kota: 'Jakarta', ip: '198.51.100.8' },
 ] as const
+
+/** Usulan topik AI contoh untuk kartu Otomasi artikel di beranda admin. */
+export const USULAN_E2E = [
+  { judul: 'Cara menghitung pajak freelancer', kataKunci: 'pajak freelancer', alasan: 'Banyak pekerja lepas bingung menghitung PPh atas honor.' },
+  { judul: 'Tabungan pensiun untuk pekerja muda', kataKunci: 'tabungan pensiun pekerja muda', alasan: 'Pencarian naik menjelang akhir tahun.' },
+] as const

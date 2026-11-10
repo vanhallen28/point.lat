@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.5.0): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.6.0): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -19,6 +19,7 @@
 | 2026-11-10 | v1.3.1 | Pembaruan keamanan: Next.js 16.4.5 dan sharp 0.35.5 (celah Next.js Oktober dan November 2026). Tanpa perubahan perilaku |
 | 2026-11-10 | v1.4.0 | Tampilan media: kartu artikel bergambar bertanggal dan berpenulis, beranda bergaya portal (blok Strip kalkulator dan Baris rubrik), header dengan tanggal dan Topik hangat, pilar kosong disembunyikan, footer berkolom, tanggal terbit di artikel, dan draf halaman Redaksi (§25, permintaan pemilik) |
 | 2026-11-10 | v1.5.0 | Statistik kunjungan di beranda admin: Hari ini, 7 hari, 30 hari, Total, kalender rentang dan Unduh CSV, grafik, sedang online, negara, kota, sumber (mesin pencari, media sosial, asisten AI, situs lain), halaman dan halaman masuk, perangkat, dan peramban. Dicatat point. sendiri tanpa cookie dan tanpa menyimpan IP, dengan saklar di Fitur (§26, permintaan pemilik) |
+| 2026-11-10 | v1.6.0 | Otomasi artikel: AI mengusulkan topik, pemilik menyetujui, AI menulis draf lengkap dengan kartu sampul, pemilik mereview, lalu draf terbit sendiri di slot jadwal pilihan pemilik dan dikabarkan ke mesin pencari. Cron Vercel menjadi enam jadwal terbit dan lima jadwal otomasi sehari (§27, permintaan pemilik) |
 
 ---
 
@@ -941,6 +942,68 @@ Bagian **Statistik kunjungan** setelah kartu angka, hanya untuk admin:
 - Migrasi `kunjungan` hanya menambah tabel `kunjungan` dan `kunjungan_harian` dan kolom saklar Fitur; hak Data API Supabase dicabut dari kedua tabel dan sequence-nya.
 - Setiap tayangan memanggil satu fungsi Vercel. Kuota Hobby 1 juta pemanggilan dan 4 jam CPU aktif per bulan, dipakai bersama seluruh situs; bila kuota habis, Vercel menghentikan fitur itu sampai 30 hari. Pemantauan dan saklar di runbook rilis, bagian N.
 
+## 27. Otomasi artikel (v1.6.0)
+
+Permintaan pemilik 10 November 2026: "buatkan ai automation, untuk kebutuhan membuat artikel otomatis index otomatis jadi saya tinggal publish saja, jika bisa publish pun otomatis bisa di atur oleh saya sendiri schedule publish nya, anda buatkan workflow automation nya".
+
+Keputusan pemilik (dari empat pilihan yang ditanyakan):
+1. **Review lalu antre:** draf AI dibuat otomatis; pemilik mereview, lalu draf terbit sendiri di slot jadwal yang ia atur. Tidak ada terbit tanpa review manusia (pengaman §10 tetap).
+2. **Topik diusulkan AI**, disetujui atau ditolak pemilik sebelum ditulis. Pemilik juga bisa menambah topik sendiri.
+3. **Jumlah draf diatur di admin.**
+4. **Kartu sampul otomatis** bergaya point.
+
+Rencana implementasi: `docs/superpowers/plans/2026-11-10-rencana-13-otomasi-artikel.md`.
+
+### Alur
+
+1. **Usulan topik.** Claude mengusulkan topik dari pilar dan subkategori, tulisan yang sudah ada, usulan sebelumnya (yang ditolak menandai selera pemilik), halaman paling banyak diklik dari Google, kalkulator, tanggal hari ini (topik musiman), dan arahan pemilik. Usulan yang sama atau sangat mirip dengan tulisan atau usulan lama dibuang (`tingkatMirip`). Usulan masuk koleksi `usulan-topik` berstatus menunggu.
+2. **Persetujuan.** Pemilik menekan Setujui atau Tolak di kartu beranda admin, atau mengubah status di koleksi. Topik yang ditambah pemilik langsung disetujui.
+3. **Draf.** Satu panggilan Claude per draf (`artikel`) menghasilkan judul, slug, deck, Intinya, isi markdown paket (§24), FAQ, sumber resmi, tiga kandidat judul SEO dan meta (dipilih yang panjangnya paling pas), keyphrase sekunder, kata sampul, dan daftar yang perlu dicek. Pemeriksa menolak isi yang tidak bisa diubah ke Lexical, kurang dari 600 kata atau 3 H2, atau tanpa Intinya dan FAQ. Draf dibuat lewat `imporPaket`: kartu sampul, subkategori baru bila perlu, tautan internal ke tulisan terbit, kalkulator tersemat, penulis dari pengaturan, dan tanda `pakaiDrafAi`. Usulan menyimpan daftar yang perlu dicek, jumlah penanda `[cek angka]`, dan skor panel SEO.
+4. **Review.** Angka aturan yang tidak ada di bahan ditandai `[cek angka]`. Pemilik mencocokkan angka dengan sumber, menghapus setiap penanda, menambah pengalaman atau sudut pandangnya, mencentang tiga butir Review sebelum terbit, lalu menyimpan.
+5. **Antrean terbit.** Draf otomatis yang checklist review-nya lengkap, tanpa `[cek angka]`, dan bergambar utama masuk slot kosong berikutnya (paling cepat 30 menit lagi) sebagai job `schedulePublish` Payload, jadi ikut tampil di kalender konten dan hitungan Terjadwal. Tombol Keluarkan menghapus job-nya.
+6. **Terbit dan indexing.** Job terbit dijalankan cron di jam slot; validasi koleksi berjalan lagi saat terbit, lalu Mesin Indexing (§7) mengabari Google dan IndexNow seperti terbit biasa.
+
+### Jadwal (Vercel Hobby)
+
+Hobby mengizinkan 100 cron per proyek, masing-masing sekali sehari dengan ketepatan per jam:
+- `GET /api/jobs/run` enam kali sehari di jam slot terbit: 06.00, 09.00, 12.00, 15.00, 18.00, dan 21.00 WIB (UTC 23, 2, 5, 8, 11, 14). Setiap jalan juga mengantrekan draf yang baru direview. Slot 09.00 terbit antara 09.00 dan 09.59.
+- `GET /api/usulan-topik/jalan` lima kali sehari: 02.30, 07.30, 11.30, 16.30, dan 20.30 WIB. Setiap jalan mengantrekan draf, meminta usulan bila perlu (usulan menunggu habis dan topik disetujui kurang dari dua kali draf per hari, paling sering sekali per 20 jam), lalu menulis paling banyak satu draf bila kuota hari itu belum habis dan jalan itu belum lewat 70 detik. Jadi paling banyak lima draf sehari.
+- Satu draf bisa makan sampai 200 detik (batas tunggu Claude, tanpa kirim ulang), di bawah batas 300 detik fungsi Hobby. Menunggu Claude tidak dihitung CPU aktif Vercel.
+- Kunci `payload_kv` (`otomasi:berjalan`, 6 menit) mencegah cron dan tombol yang bersamaan menulis dua kali; cron yang terpanggil dua kali aman karena status usulan berpindah berurutan.
+
+### Pengaturan (global `otomasi-artikel`, Pengaturan, hanya admin)
+
+- **Nyalakan otomasi** (bawaan mati). Mati berarti tidak ada usulan, draf, atau antrean otomatis; job yang sudah terjadwal tetap terbit. Tombol kartu tetap bisa dipakai.
+- **Draf per hari** 0 sampai 5 (bawaan 1) dan **usulan sekali minta** 3 sampai 15 (bawaan 8).
+- **Pilar yang diotomasi** (kosong berarti semua), **penulis** (kosong berarti Redaksi point.), dan **arahan untuk AI** (dibaca saat mengusulkan dan menulis).
+- **Slot jadwal terbit:** hari (bawaan Senin, Rabu, Jumat) dan jam WIB dari enam jam cron (bawaan 06.00).
+- **Antre terbit otomatis setelah review** (bawaan menyala). Mati berarti pemilik menjadwalkan sendiri lewat tombol Jadwalkan Payload atau tombol Antre sekarang.
+
+### Kartu di beranda admin (hanya admin)
+
+Di bawah kartu paket konten, di atas kartu angka:
+- **Kepala:** status Nyala atau Mati (tautan ke pengaturan), draf hari ini dibanding kuota, dan sisa anggaran AI bulan ini.
+- **Catatan:** otomasi mati, Claude belum tersambung (adapter bukan `asli`), dan galat terakhir (tiga hari).
+- **Usulan menunggu:** sampai enam usulan dengan pilar, keyphrase, alasan, dan tombol Setujui atau Tolak; tombol Minta usulan baru dan tautan Tambah topik sendiri serta Semua usulan.
+- **Draf menunggu review:** judul (tautan ke editor), skor panel SEO, jumlah `[cek angka]`, dan alasan belum masuk antrean atau "Siap masuk antrean terbit"; tombol Tulis 1 draf sekarang.
+- **Antrean terbit:** waktu slot dan judul, dengan tombol Keluarkan; tombol Antre sekarang dan ringkasan slot.
+
+Tombol berjalan di server setelah respons (pola aksi admin §23) dan menanyakan `GET /api/usulan-topik/keadaan` sampai selesai.
+
+### Biaya dan pengaman
+
+- Model bawaan Sonnet untuk usulan dan draf (`AI_MODEL_USULAN`, `AI_MODEL_ARTIKEL`, atau `AI_MODEL`). Biaya dicadangkan dan dicatat dengan anggaran bulanan Asisten AI yang sama (§10); log AI mencatat tugas `usulan` dan `artikel` tanpa pengguna.
+- Tugas otomasi tidak bisa diminta lewat endpoint sidebar editor (`TUGAS_EDITOR`).
+- Saklar Asisten AI yang mati, kunci yang belum dipasang, harga model yang kosong, atau anggaran yang habis menghentikan penulisan tanpa menghabiskan percobaan topik (pesan tampil di kartu).
+- Jawaban Claude yang tidak bisa dipakai atau galat API dicoba lagi di jalan berikutnya, paling banyak tiga kali, lalu usulan berstatus gagal. Pesan galat terakhir tampil di kartu.
+- Kartu sampul digambar `next/og` (Satori dan resvg bawaan Next.js) dengan Archivo statis lebar 72% tebal 900 dan lebar 100% tebal 800 di `src/modules/otomasi/font/` (dibuat dari Archivo variable, lisensi OFL).
+
+### Batasan teknis
+
+- Tanpa dependensi baru.
+- Migrasi `otomasi_artikel` hanya menambah koleksi, global, dan nilai enum tugas log AI; hak Data API Supabase dicabut dari tabel dan sequence baru.
+- Claude tidak membuka web saat menulis, jadi angka aturan bisa usang atau keliru. Karena itu penanda `[cek angka]`, daftar yang perlu dicek, dan checklist review wajib sebelum antrean.
+
 ## Sumber riset
 
 - Google Indexing API: https://developers.google.com/search/apis/indexing-api
@@ -952,6 +1015,8 @@ Bagian **Statistik kunjungan** setelah kartu angka, hanya untuk admin:
 - Payload storage adapters: https://payloadcms.com/docs/v3/upload/storage-adapters
 - Vercel cron limits: https://vercel.com/docs/cron-jobs/usage-and-pricing
 - Vercel Hobby (non-komersial, batas pemakaian, 1 juta pemanggilan fungsi dan 4 jam CPU aktif per bulan): https://vercel.com/docs/plans/hobby
+- Cron Vercel (100 per proyek, Hobby sekali sehari per entri, ketepatan per jam, path sama dengan jadwal berbeda): https://vercel.com/docs/cron-jobs/usage-and-pricing dan https://vercel.com/docs/cron-jobs/manage-cron-jobs
+- Batas fungsi Vercel (Hobby 300 detik, menunggu I/O tidak dihitung CPU aktif): https://vercel.com/docs/functions/limitations
 - Header geolokasi Vercel: https://vercel.com/docs/headers/request-headers
 - Supabase pg_net: https://supabase.com/docs/guides/database/extensions/pg_net
 - Supabase menjadwalkan panggilan HTTP dengan pg_cron dan Vault: https://supabase.com/docs/guides/functions/schedule-functions

@@ -114,6 +114,8 @@ test('beranda admin untuk editor: bagian konten saja, tanpa data Google, kode se
   await expect(page.locator('#nav-pesan-masuk')).toHaveCount(1)
   await expect(page.getByRole('region', { name: 'Paket konten awal' })).toHaveCount(0)
   await expect(page.getByRole('region', { name: 'Statistik kunjungan' })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Otomasi artikel' })).toHaveCount(0)
+  await expect(page.locator('#nav-usulan-topik')).toHaveCount(0)
   await periksaAxe(page, '.redaksi')
   await tutup()
 })

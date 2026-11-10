@@ -6,6 +6,9 @@ import { PATH_ADMIN, urlAdmin } from '@/lib/admin'
 import { bacaRentang, paramRentang } from '@/modules/kunjungan/aturan'
 import { ambilKunjungan } from '@/modules/kunjungan/data'
 import { StatistikKunjungan } from '@/modules/kunjungan/admin/StatistikKunjungan'
+import { statusAsisten } from '@/modules/ai/status'
+import { KartuOtomasi } from '@/modules/otomasi/admin/KartuOtomasi'
+import { ambilOtomasi } from '@/modules/otomasi/data'
 import { KartuPaket } from '@/modules/paket/admin/KartuPaket'
 import { statusPaket } from '@/modules/paket/status'
 import { teksTanggal } from '@/modules/pantau/format'
@@ -37,7 +40,7 @@ const TANGGAL_PANJANG = new Intl.DateTimeFormat('id-ID', {
  * Beranda admin (`admin.components.views.dashboard`, spesifikasi §23), menggantikan daftar koleksi bawaan Payload.
  * Tata letak mengikuti gambar referensi pemilik: kepala dengan pilihan periode dan lencana layanan, empat kartu
  * angka, statistik kunjungan (admin, §26), kalender konten dan kolom Google, lalu terbit terbaru, kesehatan situs,
- * dan perlu perhatian. Semua angka
+ * dan perlu perhatian. Admin juga melihat kartu Otomasi artikel (§27) di atas kartu angka. Semua angka
  * dari database point.; editor melihat bagian konten saja. Payload membungkus view dashboard dengan templat bawaan
  * (menu dan kepala), jadi komponen ini hanya isinya.
  */
@@ -53,6 +56,8 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
   const paket = data.admin ? await statusPaket(req.payload, sekarang) : null
   // Statistik kunjungan (spesifikasi §26): hanya admin. Rentang dari `?kunjungan=` atau `?dari=&sampai=`.
   const kunjungan = data.admin ? await ambilKunjungan(req.payload, (pertama) => bacaRentang(searchParams, sekarang, pertama), sekarang) : null
+  // Otomasi artikel (spesifikasi §27): hanya admin.
+  const [otomasi, asisten] = data.admin ? await Promise.all([ambilOtomasi(req.payload, sekarang), statusAsisten(req.payload, { sekarang })]) : [null, null]
   const paramKunjungan = kunjungan ? paramRentang(kunjungan.rentang) : {}
   const paramPeriode: Record<string, string> = periode === 7 ? {} : { periode: String(periode) }
   const urlPeriode = (p: number) => {
@@ -105,6 +110,8 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
       </header>
 
       {paket && paket.terbit < paket.total && <KartuPaket status={paket} />}
+
+      {otomasi && asisten && <KartuOtomasi data={otomasi} sisaAnggaran={asisten.anggaran.sisa} mode={asisten.mode} sekarang={sekarang} />}
 
       <BarisAngka data={data} />
 

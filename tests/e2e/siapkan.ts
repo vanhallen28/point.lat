@@ -30,6 +30,7 @@ import {
   SLUG_VIDEO,
   tautanKe,
   UA_PEMBACA,
+  USULAN_E2E,
 } from './data'
 
 /**
@@ -62,6 +63,7 @@ const KOLEKSI_DIBERSIHKAN = [
   'pelanggan-newsletter',
   'kunjungan',
   'kunjungan-harian',
+  'usulan-topik',
 ] as const
 for (const koleksi of KOLEKSI_DIBERSIHKAN) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
@@ -457,6 +459,14 @@ for (const k of KUNJUNGAN_CONTOH) {
     process.env.PAYLOAD_SECRET ?? '',
     waktu,
   )
+}
+
+// Otomasi artikel (spesifikasi §27): dua usulan AI menunggu persetujuan di kartu beranda admin. Otomasi tetap mati.
+for (const u of USULAN_E2E) {
+  await payload.create({
+    collection: 'usulan-topik',
+    data: { ...u, pilar: pilar['uang-karier'], tipe: 'panduan', status: 'usulan', sumber: 'ai', tools: ['gaji-bersih'] },
+  })
 }
 
 payload.logger.info('Data E2E siap.')

@@ -12,6 +12,7 @@ import { Artikel } from './collections/Artikel'
 import { Halaman } from './collections/Halaman'
 import { Kunjungan } from './collections/Kunjungan'
 import { KunjunganHarian } from './collections/KunjunganHarian'
+import { UsulanTopik } from './collections/UsulanTopik'
 import { Log404 } from './collections/Log404'
 import { LogAi } from './collections/LogAi'
 import { LogIndexing } from './collections/LogIndexing'
@@ -32,6 +33,7 @@ import { Tools } from './collections/Tools'
 import { TugasSeo } from './collections/TugasSeo'
 import { Video } from './collections/Video'
 import { AsistenAi } from './globals/AsistenAi'
+import { OtomasiArtikel } from './globals/OtomasiArtikel'
 import { Beranda } from './globals/Beranda'
 import { Fitur } from './globals/Fitur'
 import { Footer } from './globals/Footer'
@@ -93,6 +95,7 @@ export default buildConfig({
     Pilar,
     Subkategori,
     Penulis,
+    UsulanTopik,
     PesanMasuk,
     PelangganNewsletter,
     Tools,
@@ -113,7 +116,7 @@ export default buildConfig({
     Kunjungan,
     KunjunganHarian,
   ],
-  globals: [Beranda, Header, Footer, Newsletter, Iklan, PengaturanSEO, Fitur, KodeSematan, AsistenAi],
+  globals: [Beranda, Header, Footer, Newsletter, Iklan, PengaturanSEO, Fitur, KodeSematan, AsistenAi, OtomasiArtikel],
   // `GET /api/jobs/run`: cron Vercel (jadwal di vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.
   endpoints: [endpointJalankanJob],
   editor: lexicalEditor(),

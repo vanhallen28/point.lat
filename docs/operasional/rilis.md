@@ -208,13 +208,13 @@ hasilnya dua migrasi dengan batch 1, `produksi`, dan `false`.
 
 ### D5. Cron, region, dan perlindungan pratinjau
 
-- Settings, Cron Jobs: `/api/jobs/run` dengan jadwal `0 23 * * *` (sekali sehari, sekitar 06.00 WIB; di Hobby bisa meleset sampai 59 menit). Cron hanya berjalan untuk deploy Production. Di Pro, jadwal bisa dikembalikan ke `*/10 * * * *` lewat `vercel.json`.
+- Settings, Cron Jobs: `/api/jobs/run` dengan jadwal `0 23 * * *` (sekali sehari, sekitar 06.00 WIB; di Hobby bisa meleset sampai 59 menit). Cron hanya berjalan untuk deploy Production. Di Pro, jadwal bisa dikembalikan ke `*/10 * * * *` lewat `vercel.json`. Sejak v1.6.0 ada 11 baris: `/api/jobs/run` enam kali sehari (06.00, 09.00, 12.00, 15.00, 18.00, 21.00 WIB) dan `/api/usulan-topik/jalan` lima kali sehari (bagian O).
 - Settings, Functions: region fungsi Singapura (`sin1`).
 - Settings, Deployment Protection: **Vercel Authentication** aktif untuk deploy pratinjau, jadi URL pratinjau hanya bisa dibuka anggota tim.
 
 **Hasil yang diharapkan:** ketiganya sesuai. Setelah jadwal cron berikutnya, Logs dengan filter path `/api/jobs/run` menampilkan permintaan berstatus 200.
 
-Selama di Hobby (cron sekali sehari): artikel terjadwal terbit pada jalan cron berikutnya (paling lambat sehari); kabar ke Google dan IndexNow tetap langsung terkirim saat konten disimpan atau terbit, tetapi kiriman yang tertunda (jendela IndexNow 5 menit dan sitemap 30 menit, kiriman ulang setelah gagal) baru terkirim pada simpan berikutnya atau cron keesokan harinya; cek status indeks dan sinkron Search Console berjalan sekali sehari; tautan ke situs lain dicek paling banyak 10 per hari. Hobby juga hanya untuk penggunaan non-komersial: pindah ke Pro sebelum bagian J (iklan).
+Selama di Hobby (setiap jadwal cron sekali sehari; sejak v1.6.0 enam jadwal `/api/jobs/run` sehari): artikel terjadwal terbit pada jalan cron berikutnya (siang hari paling lambat tiga jam, malam paling lambat sembilan jam; sebelum v1.6.0 paling lambat sehari); kabar ke Google dan IndexNow tetap langsung terkirim saat konten disimpan atau terbit, tetapi kiriman yang tertunda (jendela IndexNow 5 menit dan sitemap 30 menit, kiriman ulang setelah gagal) baru terkirim pada simpan berikutnya atau cron keesokan harinya; cek status indeks dan sinkron Search Console berjalan sekali sehari; tautan ke situs lain dicek paling banyak 10 per hari. Hobby juga hanya untuk penggunaan non-komersial: pindah ke Pro sebelum bagian J (iklan).
 
 ## E. Domain point.lat
 
@@ -614,6 +614,48 @@ Sebagai pengaman, point. berhenti menyimpan kunjungan setelah 50.000 tayangan da
 
 Di kartu rentang, pilih Hari ini, 7 hari, 30 hari, Semua, atau isi kalender **Dari** dan **Sampai** lalu **Tampilkan**. **Unduh CSV** mengunduh rentang yang sedang dilihat: satu baris per hari dan kombinasi halaman, negara, kota, sumber, perangkat, dan peramban, dengan kolom tayangan dan kunjungan. Berkasnya terbuka di Excel atau Google Sheets.
 
+## O. Otomasi artikel (v1.6.0)
+
+Build Vercel menjalankan migrasi `otomasi_artikel` (koleksi Usulan topik, global Otomasi artikel). Otomasi mati sampai kamu nyalakan. Vercel memasang 11 jadwal otomatis (Settings, Cron Jobs): `/api/jobs/run` enam kali sehari dan `/api/usulan-topik/jalan` lima kali sehari.
+
+### O1. Syarat Claude
+
+Otomasi memakai Asisten AI yang sama:
+1. Vercel, Settings, Environment Variables (Production): `AI_ADAPTER` = `asli` dan `ANTHROPIC_API_KEY` terisi (bagian H1). Tanpa itu kartu menulis "Claude belum tersambung" dan draf berisi contoh adapter palsu.
+2. Admin, Pengaturan, **Asisten AI**: menyala, anggaran bulanan cukup (satu draf kira-kira US$0,05 sampai 0,15), dan harga `claude-sonnet-5-5` terisi.
+3. Admin, Pengaturan, **Asisten AI**, Sumber resmi: isi URL sumber resmi per pilar (DJP, BPJS, Kemnaker, Kemdiktisaintek, dan lainnya). AI memakai daftar ini untuk blok Sumber.
+
+### O2. Menyalakan
+
+Admin, Pengaturan, **Otomasi artikel**:
+1. Centang **Nyalakan otomasi**.
+2. **Draf per hari**: mulai dari 1. Setiap draf tetap kamu review, jadi sesuaikan dengan waktumu.
+3. **Pilar yang diotomasi**: misalnya Uang & Karier dan Belajar dulu.
+4. **Arahan untuk AI** (opsional): pembaca sasaran, topik yang dihindari, gaya contoh hitung.
+5. **Slot jadwal terbit**: hari dan jam. Jam 06.00 paling ramai pembaca pagi.
+6. Simpan.
+
+Di beranda admin, kartu **Otomasi artikel** menulis "Nyala". Tekan **Minta usulan baru** untuk usulan pertama (sekitar satu menit), atau tunggu jalan otomatis berikutnya.
+
+### O3. Rutinitas harian
+
+1. **Usulan menunggu**: tekan **Setujui** untuk topik yang ingin ditulis, **Tolak** untuk yang tidak. Topik yang ditolak membuat AI tidak mengusulkan yang serupa.
+2. **Draf menunggu review**: buka draf, lalu:
+   - baca "Yang perlu dicek" di usulan topiknya (Konten, Usulan topik);
+   - cocokkan setiap angka bertanda **[cek angka]** dengan sumber resmi, perbaiki bila perlu, lalu hapus penandanya;
+   - periksa URL di blok Sumber dan isi tanggal Diakses pada;
+   - tambahkan pengalaman atau sudut pandangmu sendiri;
+   - centang tiga butir **Review sebelum terbit**, lalu Simpan (jangan Terbitkan).
+3. Dalam tiga jam (atau tekan **Antre sekarang**), draf pindah ke **Antrean terbit** dengan waktu slotnya. Draf terbit sendiri di jam itu dan dikabarkan ke Google.
+4. Ingin terbit sekarang juga: tekan **Terbitkan** di editor seperti biasa. Usulannya ditandai terbit pada jalan berikutnya.
+
+### O4. Bila ada yang salah
+
+- **Keluarkan** di Antrean terbit membatalkan jadwal; draf kembali ke daftar review.
+- Kartu menulis "Terakhir gagal: ..." selama tiga hari. Usulan yang gagal ditulis tiga kali berstatus Gagal ditulis; ubah statusnya ke Disetujui untuk mencoba lagi.
+- Draf yang tidak kamu inginkan: hapus artikelnya. Usulannya kembali ke Disetujui dan ditulis ulang pada jalan berikutnya; tolak usulannya bila topiknya juga tidak diinginkan.
+- Mematikan semua: matikan **Nyalakan otomasi**. Draf yang sudah terjadwal tetap terbit; keluarkan dulu bila tidak diinginkan.
+
 ## Verifikasi
 
 - [ ] Deploy Production terakhir **Ready** dan log build memuat `Lingkungan produksi siap: env dan database cocok.`
@@ -632,6 +674,8 @@ Di kartu rentang, pilih Hari ini, 7 hari, 30 hari, Semua, atau isi kalender **Da
 | Build: `Database ini milik Production, tetapi deploy ini Preview` | `DATABASE_URL` Preview menunjuk database produksi | Ganti `DATABASE_URL` dan `DATABASE_CA` Preview ke proyek pratinjau (C6), lalu Redeploy. Database produksi tidak diubah karena penjaga berhenti sebelum migrasi |
 | Build: `Lingkungan lokal siap`, atau `missing secret key` sebelum env diisi | `VERCEL_ENV` tidak terbaca, jadi penjaga lingkungan mati | Centang Automatically expose System Environment Variables (D2), lalu Redeploy |
 | Sudah `git push origin master`, tetapi situs tidak berubah; di Vercel, Deployments, deploy commit itu **Blocked** ("commit author does not have contributing access", "Hobby Plan does not support collaboration") | Paket Hobby hanya menerima deploy dari commit yang penulisnya pemilik akun. Commit di zip ditulis sesi Claude, jadi diblokir | Sebelum push, jadikan commit ujung milikmu: `git commit --amend --reset-author -m "vX.Y.Z: ..."` lalu `git tag -f vX.Y.Z`, kemudian push seperti biasa. `git config user.email` harus email akun GitHub-mu (atau alamat noreply GitHub dari Settings, Emails). Bila commit diblokir sudah ter-push, buat commit kosong milikmu: `git commit --allow-empty -m "deploy"` lalu `git push origin master` |
+| Otomasi artikel: tidak ada usulan atau draf baru | Otomasi mati, kuota draf hari ini habis, belum ada topik disetujui, anggaran Asisten AI habis, atau Claude belum tersambung | Lihat kepala dan catatan kartu Otomasi artikel. Di Vercel, Settings, Cron Jobs, pastikan `/api/usulan-topik/jalan` ada dan menjawab 200 (View Logs) |
+| Draf yang sudah direview tidak masuk antrean | Masih ada [cek angka] (termasuk di tabel dan FAQ), checklist review belum lengkap, belum ada gambar utama, atau slot jadwal belum dipilih | Kartu menulis alasannya di bawah judul draf. Perbaiki, simpan, lalu tekan Antre sekarang |
 | Statistik kunjungan kosong padahal ada pembaca | Peramban yang dipakai sedang masuk admin; peramban dengan Global Privacy Control atau Do Not Track (Brave menyalakan GPC sejak awal); saklar Statistik kunjungan mati; atau halaman masih versi lama dari cache | Cek dari HP atau jendela penyamaran (N1). Pastikan saklar di Pengaturan, Fitur menyala. Di Vercel, Logs, cari `Kunjungan tidak tercatat`: galat database tercatat di sana |
 | Statistik kunjungan: negara dan kota "Tidak diketahui" | Header lokasi Vercel tidak ada (pratinjau lokal `npm run dev`) atau jaringan pembaca tidak dikenali | Normal untuk sebagian kecil kunjungan dan untuk semua kunjungan di pratinjau lokal |
 | Build: `unable to verify the first certificate` atau `self-signed certificate in certificate chain` | `DATABASE_CA` bukan sertifikat proyek itu, atau terpotong | Tempel ulang seluruh isi file sertifikat proyek yang sama dengan `DATABASE_URL` |
@@ -680,6 +724,7 @@ Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sud
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
+| 10 November 2026 | Sesi Claude (v1.6.0) | Ditambah bagian O: syarat Claude, menyalakan Otomasi artikel, rutinitas review harian, dan pembatalan. Dua baris pemecahan masalah otomasi. |
 | 10 November 2026 | Sesi Claude (v1.5.0) | Ditambah bagian N: cek pencatatan statistik kunjungan, paragraf Kebijakan Privasi, kuota Vercel Hobby dan saklar Statistik kunjungan, dan Unduh CSV. Dua baris pemecahan masalah statistik. |
 | 10 November 2026 | Sesi Claude (v1.4.0) | Ditambah bagian M: tampilan media, beranda portal, header dan menu, halaman Redaksi, akun sosial, dan artikel THR. |
 | 10 November 2026 | Sesi Claude (v1.3.1) | Pemecahan masalah: push gagal HTTP 400 untuk kiriman di atas 1 MiB. |

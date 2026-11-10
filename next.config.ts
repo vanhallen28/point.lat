@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   // Kartu sampul paket konten (`src/modules/paket/sampul`) dibaca dari disk oleh endpoint impor di API Payload.
   // Path yang dirangkai dari `process.cwd()` tidak dilacak otomatis, jadi folder itu dikemas ke fungsi API.
   outputFileTracingIncludes: {
-    '/api/[...slug]': ['./src/modules/paket/sampul/*.png'],
+    '/api/[...slug]': ['./src/modules/paket/sampul/*.png', './src/modules/otomasi/font/*.ttf'],
   },
   // Header keamanan di semua jawaban (`src/lib/header-keamanan.ts`). Lewat konfigurasi, bukan dibaca atau
   // ditulis saat render, jadi halaman publik tetap ISR.

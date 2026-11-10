@@ -74,6 +74,7 @@ export interface Config {
     pilar: Pilar;
     subkategori: Subkategori;
     penulis: Penuli;
+    'usulan-topik': UsulanTopik;
     'pesan-masuk': PesanMasuk;
     'pelanggan-newsletter': PelangganNewsletter;
     tools: Tool;
@@ -108,6 +109,7 @@ export interface Config {
     pilar: PilarSelect<false> | PilarSelect<true>;
     subkategori: SubkategoriSelect<false> | SubkategoriSelect<true>;
     penulis: PenulisSelect<false> | PenulisSelect<true>;
+    'usulan-topik': UsulanTopikSelect<false> | UsulanTopikSelect<true>;
     'pesan-masuk': PesanMasukSelect<false> | PesanMasukSelect<true>;
     'pelanggan-newsletter': PelangganNewsletterSelect<false> | PelangganNewsletterSelect<true>;
     tools: ToolsSelect<false> | ToolsSelect<true>;
@@ -147,6 +149,7 @@ export interface Config {
     fitur: Fitur;
     'kode-sematan': KodeSematan;
     'asisten-ai': AsistenAi;
+    'otomasi-artikel': OtomasiArtikel;
   };
   globalsSelect: {
     beranda: BerandaSelect<false> | BerandaSelect<true>;
@@ -158,6 +161,7 @@ export interface Config {
     fitur: FiturSelect<false> | FiturSelect<true>;
     'kode-sematan': KodeSematanSelect<false> | KodeSematanSelect<true>;
     'asisten-ai': AsistenAiSelect<false> | AsistenAiSelect<true>;
+    'otomasi-artikel': OtomasiArtikelSelect<false> | OtomasiArtikelSelect<true>;
   };
   locale: null;
   widgets: {
@@ -753,6 +757,60 @@ export interface BlokFormKontak {
   blockType: 'formKontak';
 }
 /**
+ * Topik untuk draf artikel otomatis. Setujui usulan yang ingin ditulis, atau tambah topikmu sendiri. Pengaturan ada di Pengaturan, Otomasi artikel.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "usulan-topik".
+ */
+export interface UsulanTopik {
+  id: number;
+  judul: string;
+  /**
+   * Kata yang diketik orang di Google, 2 sampai 6 kata.
+   */
+  kataKunci: string;
+  pilar: number | Pilar;
+  /**
+   * Kosongkan bila memakai subkategori baru di bawah.
+   */
+  subkategori?: (number | null) | Subkategori;
+  /**
+   * Dibuat saat draf ditulis bila slug-nya belum ada.
+   */
+  subkategoriBaru?: {
+    nama?: string | null;
+    slug?: string | null;
+    deskripsi?: string | null;
+  };
+  tipe: 'panduan' | 'explainer' | 'daftar';
+  /**
+   * Kenapa topik ini dicari dan apa yang didapat pembaca. Ikut dibaca AI saat menulis.
+   */
+  alasan?: string | null;
+  tools?: ('gaji-bersih' | 'thr' | 'cicilan-kpr' | 'dana-darurat' | 'bmi-kalori' | 'ipk')[] | null;
+  /**
+   * Ubah ke Disetujui supaya ditulis, atau Ditolak supaya tidak diusulkan lagi.
+   */
+  status: 'usulan' | 'disetujui' | 'ditolak' | 'menulis' | 'ditulis' | 'terjadwal' | 'terbit' | 'gagal';
+  sumber?: ('ai' | 'pemilik') | null;
+  artikel?: (number | null) | Artikel;
+  jadwal?: string | null;
+  waktuDitulis?: string | null;
+  /**
+   * Cek hijau dari seluruh cek panel SEO saat draf ditulis.
+   */
+  skorSeo?: string | null;
+  cekAngka?: number | null;
+  percobaan?: number | null;
+  /**
+   * Daftar dari AI untuk review: angka, aturan, tanggal, dan nama program yang wajib diperiksa ke sumber resmi.
+   */
+  catatan?: string | null;
+  pesan?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Pesan dari form kontak situs. Tidak ada email pemberitahuan: cek halaman ini atau beranda admin.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1064,7 +1122,7 @@ export interface Pengguna {
 export interface LogAi {
   id: number;
   waktu: string;
-  tugas: 'brief' | 'draf' | 'meta';
+  tugas: 'brief' | 'draf' | 'meta' | 'usulan' | 'artikel';
   status: 'berjalan' | 'berhasil' | 'gagal' | 'anggaran-habis';
   pengguna?: (number | null) | Pengguna;
   dokumen?: (number | null) | Artikel;
@@ -1291,6 +1349,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'penulis';
         value: number | Penuli;
+      } | null)
+    | ({
+        relationTo: 'usulan-topik';
+        value: number | UsulanTopik;
       } | null)
     | ({
         relationTo: 'pesan-masuk';
@@ -1728,6 +1790,38 @@ export interface PenulisSelect<T extends boolean = true> {
         tipeSchema?: T;
         noindex?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "usulan-topik_select".
+ */
+export interface UsulanTopikSelect<T extends boolean = true> {
+  judul?: T;
+  kataKunci?: T;
+  pilar?: T;
+  subkategori?: T;
+  subkategoriBaru?:
+    | T
+    | {
+        nama?: T;
+        slug?: T;
+        deskripsi?: T;
+      };
+  tipe?: T;
+  alasan?: T;
+  tools?: T;
+  status?: T;
+  sumber?: T;
+  artikel?: T;
+  jadwal?: T;
+  waktuDitulis?: T;
+  skorSeo?: T;
+  cekAngka?: T;
+  percobaan?: T;
+  catatan?: T;
+  pesan?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2544,6 +2638,52 @@ export interface AsistenAi {
   createdAt?: string | null;
 }
 /**
+ * AI mengusulkan topik, kamu menyetujui, AI menulis draf lengkap dengan kartu sampul, kamu review, lalu draf terbit sendiri di slot jadwal dan dikabarkan ke Google. Biaya memakai anggaran Asisten AI.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "otomasi-artikel".
+ */
+export interface OtomasiArtikel {
+  id: number;
+  /**
+   * Mati: tidak ada usulan, draf, atau antrean otomatis. Draf yang sudah terjadwal tetap terbit sesuai jadwalnya.
+   */
+  aktif?: boolean | null;
+  /**
+   * 0 sampai 5. Hanya dari topik yang sudah kamu setujui.
+   */
+  drafPerHari: number;
+  /**
+   * Usulan baru diminta otomatis bila usulan yang menunggu sudah habis.
+   */
+  jumlahUsulan: number;
+  /**
+   * Kosongkan untuk semua pilar.
+   */
+  pilar?: (number | Pilar)[] | null;
+  /**
+   * Penulis draf otomatis. Kosongkan untuk Redaksi point.
+   */
+  penulis?: (number | null) | Penuli;
+  /**
+   * Opsional, dibaca saat mengusulkan dan menulis. Contoh: fokus pekerja baru dan mahasiswa, hindari topik kripto, contoh hitung memakai gaji UMR Jakarta.
+   */
+  arahan?: string | null;
+  /**
+   * Draf yang sudah kamu review masuk ke slot kosong berikutnya. Jam mengikuti jadwal otomatis server (Vercel gratis): terbit antara jam itu sampai 59 menit sesudahnya.
+   */
+  slotTerbit?: {
+    hari?: ('minggu' | 'senin' | 'selasa' | 'rabu' | 'kamis' | 'jumat' | 'sabtu')[] | null;
+    jam?: ('06' | '09' | '12' | '15' | '18' | '21')[] | null;
+  };
+  /**
+   * Draf otomatis yang checklist review-nya lengkap, tanpa penanda [cek angka], dan bergambar utama masuk slot berikutnya. Matikan bila kamu ingin menjadwalkan sendiri lewat tombol Jadwalkan di editor.
+   */
+  antreOtomatis?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "beranda_select".
  */
@@ -2833,6 +2973,28 @@ export interface AsistenAiSelect<T extends boolean = true> {
         id?: T;
       };
   frasaKlise?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "otomasi-artikel_select".
+ */
+export interface OtomasiArtikelSelect<T extends boolean = true> {
+  aktif?: T;
+  drafPerHari?: T;
+  jumlahUsulan?: T;
+  pilar?: T;
+  penulis?: T;
+  arahan?: T;
+  slotTerbit?:
+    | T
+    | {
+        hari?: T;
+        jam?: T;
+      };
+  antreOtomatis?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

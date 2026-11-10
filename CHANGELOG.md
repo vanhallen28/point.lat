@@ -8,6 +8,21 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.6.0 (10 November 2026)
+
+Otomasi artikel: AI mengusulkan topik dan menulis draf lengkap, kamu menyetujui dan mereview, lalu draf terbit sendiri di slot jadwal yang kamu atur dan langsung dikabarkan ke Google. Pembaruan ini juga membawa semua isi v1.5.0 (statistik kunjungan) bila belum terpasang.
+
+- **Usulan topik dari AI:** Claude mengusulkan topik dari pilar, tulisan yang sudah ada, halaman yang paling banyak diklik dari Google, kalkulator, dan musim pencarian. Topik yang mirip tulisan atau usulan lama tidak diusulkan lagi. Kamu tinggal menekan **Setujui** atau **Tolak** di beranda admin, atau menambah topikmu sendiri.
+- **Draf lengkap otomatis:** dari topik yang disetujui, AI menulis artikel 900 sampai 1.500 kata. Drafnya berisi judul, deck, Intinya, subjudul, contoh hitung dan tabel, kalkulator tersemat, tautan ke tulisan point. lain, FAQ, sumber resmi, dan isian SEO. **Kartu sampul** bergaya point. dibuat otomatis.
+- **Tetap direview:** angka aturan yang harus dicek ditandai **[cek angka]**, dan setiap draf membawa daftar "Yang perlu dicek". Draf baru masuk antrean setelah checklist review dicentang dan semua [cek angka] dihapus.
+- **Terbit sendiri di slot jadwal:** pilih hari dan jam terbit (06.00, 09.00, 12.00, 15.00, 18.00, atau 21.00 WIB). Draf yang sudah kamu review mengisi slot kosong berikutnya, terbit di jam itu, lalu otomatis dikabarkan ke Google dan IndexNow. Draf bisa dikeluarkan lagi dari antrean.
+- **Kartu Otomasi artikel di beranda admin:** usulan yang menunggu, draf yang menunggu review, dan antrean terbit, dengan tombol Minta usulan baru, Tulis 1 draf sekarang, dan Antre sekarang.
+- **Pengaturan, Otomasi artikel:** saklar (mati sampai kamu nyalakan), draf per hari (0 sampai 5), jumlah usulan, pilar, penulis, arahan untuk AI, dan slot jadwal.
+- **Jadwal otomatis server lebih sering:** antrean terbit berjalan enam kali sehari di jam slot, dan penulisan draf lima kali sehari, masih dalam paket gratis Vercel.
+- **Biaya:** memakai anggaran bulanan Asisten AI yang sudah ada. Satu draf kira-kira US$0,05 sampai 0,15 dengan harga Sonnet bawaan.
+- **Perbaikan deploy:** perintah pasang kini menjadikan commit pembaruan milikmu sebelum push, karena Vercel gratis menolak deploy commit yang ditulis orang lain (lihat runbook rilis, Pemecahan masalah).
+- Database: migrasi `otomasi_artikel` menambah koleksi Usulan topik dan global Otomasi artikel. Tanpa dependensi baru.
+
 ## v1.5.0 (10 November 2026)
 
 Statistik kunjungan di beranda admin: berapa pembaca, dari negara dan kota mana, datang dari mana, dan membaca halaman apa. Dicatat point. sendiri, tanpa cookie dan tanpa menyimpan alamat IP.

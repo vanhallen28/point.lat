@@ -38,7 +38,13 @@ describe('bulan anggaran (waktu Jakarta)', () => {
 describe('model dan harga', () => {
   it('model per tugas: AI_MODEL_{TUGAS}, lalu AI_MODEL, lalu bawaan; isian kosong diabaikan', () => {
     expect(modelTugas('meta', {})).toEqual({ model: MODEL_BAWAAN.meta, sumber: 'bawaan' })
-    expect(MODEL_BAWAAN).toEqual({ brief: 'claude-sonnet-5-5', draf: 'claude-sonnet-5-5', meta: 'claude-haiku-5-5' })
+    expect(MODEL_BAWAAN).toEqual({
+      brief: 'claude-sonnet-5-5',
+      draf: 'claude-sonnet-5-5',
+      meta: 'claude-haiku-5-5',
+      usulan: 'claude-sonnet-5-5',
+      artikel: 'claude-sonnet-5-5',
+    })
     expect(modelTugas('brief', { AI_MODEL: ' claude-opus-5-5 ' })).toEqual({ model: 'claude-opus-5-5', sumber: 'env' })
     expect(modelTugas('meta', { AI_MODEL: 'claude-opus-5-5', AI_MODEL_META: 'claude-sonnet-5-5' })).toEqual({ model: 'claude-sonnet-5-5', sumber: 'env-tugas' })
     expect(modelTugas('draf', { AI_MODEL_DRAF: '  ' })).toEqual({ model: 'claude-sonnet-5-5', sumber: 'bawaan' })

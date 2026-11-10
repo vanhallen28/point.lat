@@ -18,6 +18,10 @@ export type PermintaanClaude = {
   skema: Record<string, unknown>
   maksToken: number
   effort: Effort
+  /** Batas tunggu satu permintaan (ms); bawaan `BATAS_TUNGGU_MS` adapter asli. */
+  batasMs?: number
+  /** Jangan kirim ulang saat galat sementara (tugas panjang yang harus selesai dalam satu jalan cron). */
+  tanpaUlang?: boolean
 }
 
 export type JenisGalatAi =

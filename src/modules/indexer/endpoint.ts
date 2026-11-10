@@ -1,25 +1,16 @@
-import { timingSafeEqual } from 'crypto'
 import type { Endpoint, Payload } from 'payload'
 
 import { tolakSelainAdmin } from '@/lib/aksiAdmin'
 import { jalankanPantau, type AdapterPantau, type RingkasanPantau } from '@/modules/pantau'
 import { bersihkanKunjungan } from '@/modules/kunjungan/data'
 import { bersihkanPembaca } from '@/modules/pembaca/data'
+import { antrekanTerbit, type HasilAntre } from '@/modules/otomasi/data'
 
 import { mintaCekStatus } from './cek'
+import { izinCron } from './cron'
 import { jalankanIndexer, jalankanSetelahRespons, type RingkasanJalan } from './jalan'
 
-/**
- * Header dari Vercel Cron: `Authorization: Bearer <CRON_SECRET>` (dokumentasi Vercel "Securing cron
- * jobs"). Tanpa `CRON_SECRET` di env, permintaan tanpa login admin selalu ditolak. Dibandingkan dengan
- * waktu tetap supaya rahasia tidak bisa ditebak dari lama jawaban.
- */
-export function izinCron(header: string | null | undefined, rahasia: string | undefined): boolean {
-  if (!rahasia || !header) return false
-  const diterima = Buffer.from(header)
-  const diharapkan = Buffer.from(`Bearer ${rahasia}`)
-  return diterima.length === diharapkan.length && timingSafeEqual(diterima, diharapkan)
-}
+export { izinCron } from './cron'
 
 export type HasilJadwal = {
   jadwalTerbit: number
@@ -28,25 +19,32 @@ export type HasilJadwal = {
   pembaca: { sidik: number; pesan: number }
   /** Baris kunjungan mentah lebih dari 13 bulan yang dihapus (spesifikasi §26). */
   kunjungan: number
+  /** Draf otomatis yang masuk antrean terbit pada jalan ini (spesifikasi §27), atau pesan galatnya. */
+  otomasi: HasilAntre | { galat: string }
 }
 
 export type OpsiJadwal = NonNullable<Parameters<typeof jalankanIndexer>[1]> & { adapterPantau?: AdapterPantau }
 
 /**
- * Pekerjaan berkala (spesifikasi §5 "Penjadwal"): job Payload yang jatuh tempo (jadwal terbit artikel,
+ * Pekerjaan berkala (spesifikasi §5 "Penjadwal"): antrean terbit draf otomatis (§27), job Payload yang jatuh tempo (jadwal terbit artikel,
  * `schedulePublish`), lalu antrean Mesin Indexing, lalu tugas Pantau SEO yang jatuh tempo (sinkron
  * Search Analytics dan pindai tautan harian, cek tautan luar), lalu pembersihan data form pembaca dan baris kunjungan
  * mentah lebih dari 13 bulan. Urutan ini membuat artikel yang terbit terjadwal langsung dikabarkan pada
  * jalan yang sama.
  */
 export async function jalankanJadwal(payload: Payload, opsi: OpsiJadwal = {}): Promise<HasilJadwal> {
+  // Draf otomatis yang baru direview masuk slot berikutnya (paling cepat 30 menit lagi), lalu job jatuh tempo berjalan.
+  const otomasi = await antrekanTerbit(payload, { sekarang: opsi.sekarang }).catch((galat: Error) => {
+    payload.logger.error({ err: galat, msg: 'Antrean terbit otomasi gagal.' })
+    return { galat: galat.message }
+  })
   const job = await payload.jobs.run({ allQueues: true, overrideAccess: true, silent: true })
   const indexer = await jalankanIndexer(payload, { sekarang: opsi.sekarang, adapter: opsi.adapter })
   const pantau = await jalankanPantau(payload, { sekarang: opsi.sekarang, adapter: opsi.adapterPantau })
   // Sidik pengirim form lebih dari 24 jam dan pesan masuk lebih dari 12 bulan (spesifikasi §23).
   const pembaca = await bersihkanPembaca(payload, opsi.sekarang)
   const kunjungan = await bersihkanKunjungan(payload, opsi.sekarang)
-  return { jadwalTerbit: Object.keys(job.jobStatus ?? {}).length, indexer, pantau, pembaca, kunjungan }
+  return { jadwalTerbit: Object.keys(job.jobStatus ?? {}).length, indexer, pantau, pembaca, kunjungan, otomasi }
 }
 
 /**

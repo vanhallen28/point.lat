@@ -7,7 +7,9 @@ import { lengkapiBrief } from './brief-data'
 import type { DefinisiTugas } from './prompt/bantu'
 import { definisiBrief } from './prompt/brief'
 import { definisiDraf } from './prompt/draf'
+import { definisiArtikel } from './prompt/artikel'
 import { definisiMeta } from './prompt/meta'
+import { definisiUsulan } from './prompt/usulan'
 import { ambilPengaturanAi } from './status'
 import type { ModeAi, Token, TugasAi } from './tipe'
 
@@ -16,6 +18,8 @@ const DEFINISI: Record<TugasAi, DefinisiTugas<unknown, unknown>> = {
   brief: { ...definisiBrief, lengkapi: lengkapiBrief } as DefinisiTugas<unknown, unknown>,
   draf: definisiDraf as DefinisiTugas<unknown, unknown>,
   meta: definisiMeta as DefinisiTugas<unknown, unknown>,
+  usulan: definisiUsulan as DefinisiTugas<unknown, unknown>,
+  artikel: definisiArtikel as DefinisiTugas<unknown, unknown>,
 }
 
 export type PenggunaAi = { id: number | string; peran?: string | null }
@@ -27,10 +31,11 @@ const KODE_HTTP: Record<AlasanGagal, number> = { masukan: 400, mati: 503, 'belum
 
 export type HasilJalankan =
   | { status: 'berhasil'; tugas: TugasAi; hasil: unknown; model: string; mode: ModeAi; biaya: number; token: Token }
-  | { status: 'gagal'; alasan: AlasanGagal; kodeHttp: number; pesan: string }
+  | { status: 'gagal'; alasan: AlasanGagal; kodeHttp: number; pesan: string; /** Alasan pemeriksa bila jawaban tidak bisa dipakai. */ rinci?: string }
 
 export type OpsiJalankan = {
-  pengguna: PenggunaAi
+  /** `null` untuk jalan sistem (Otomasi artikel lewat cron atau tombol admin), yang dijaga kunci sendiri, bukan batas per menit. */
+  pengguna: PenggunaAi | null
   /** ID artikel yang sedang diedit (untuk log), `null` untuk artikel yang belum disimpan. */
   dokumen?: number | null
   /** Pengganti adapter dari env (tes). */
@@ -61,24 +66,26 @@ export async function jalankan(payload: Payload, tugas: TugasAi, body: unknown, 
   if (typeof dibaca === 'string') return gagal('masukan', dibaca)
   const masukan = definisi.lengkapi ? await definisi.lengkapi(payload, dibaca) : dibaca
 
-  const semenitLalu = new Date(sekarang.getTime() - 60_000).toISOString()
-  const { totalDocs: baruSaja } = await payload.count({
-    collection: 'log-ai',
-    where: { and: [{ pengguna: { equals: opsi.pengguna.id } }, { waktu: { greater_than: semenitLalu } }] },
-  })
-  if (baruSaja >= BATAS_PER_MENIT) return gagal('batas', `Paling banyak ${BATAS_PER_MENIT} permintaan AI per menit. Tunggu sebentar lalu coba lagi.`)
+  if (opsi.pengguna) {
+    const semenitLalu = new Date(sekarang.getTime() - 60_000).toISOString()
+    const { totalDocs: baruSaja } = await payload.count({
+      collection: 'log-ai',
+      where: { and: [{ pengguna: { equals: opsi.pengguna.id } }, { waktu: { greater_than: semenitLalu } }] },
+    })
+    if (baruSaja >= BATAS_PER_MENIT) return gagal('batas', `Paling banyak ${BATAS_PER_MENIT} permintaan AI per menit. Tunggu sebentar lalu coba lagi.`)
+  }
 
   const { model } = modelTugas(tugas, env)
   const harga = hargaModel(model, pengaturan.harga)
   if (!harga) return gagal('harga', `Harga model ${model} belum ada di Pengaturan, Asisten AI, jadi biayanya tidak bisa dihitung. Minta admin mengisinya.`)
 
   const { sistem, pesan, ringkasan } = definisi.prompt(masukan)
-  const { maksToken, effort } = BATAS_TUGAS[tugas]
+  const { maksToken, effort, batasMs, tanpaUlang } = BATAS_TUGAS[tugas]
   const cadangan = cadanganBiaya(bytePrompt(sistem, pesan, JSON.stringify(definisi.skema)), maksToken, harga)
   const bulan = bulanJakarta(sekarang)
   // Artikel yang sudah dihapus atau ID asal tidak dicatat (relasi log ke artikel harus menunjuk dokumen yang ada).
   const dokumen = opsi.dokumen && (await payload.count({ collection: 'artikel', where: { id: { equals: opsi.dokumen } } })).totalDocs ? opsi.dokumen : null
-  const log = { waktu: sekarang.toISOString(), tugas, pengguna: Number(opsi.pengguna.id), dokumen, ringkasan, model, mode: keadaan.mode }
+  const log = { waktu: sekarang.toISOString(), tugas, pengguna: opsi.pengguna ? Number(opsi.pengguna.id) : null, dokumen, ringkasan, model, mode: keadaan.mode }
 
   const cadang = await cadangkanAnggaran(payload, { bulan, cadangan, batas: pengaturan.anggaranBulanan })
   if (!cadang.berhasil) {
@@ -90,7 +97,7 @@ export async function jalankan(payload: Payload, tugas: TugasAi, body: unknown, 
 
   const baris = await payload.create({ collection: 'log-ai', data: { ...log, status: 'berjalan' } })
   const mulai = Date.now()
-  const jawaban = await keadaan.adapter.kirim({ tugas, model, sistem, pesan, skema: definisi.skema, maksToken, effort })
+  const jawaban = await keadaan.adapter.kirim({ tugas, model, sistem, pesan, skema: definisi.skema, maksToken, effort, batasMs, tanpaUlang })
   const durasiMs = Date.now() - mulai
   const ongkos = biaya(jawaban.token, harga)
   await selesaikanAnggaran(payload, { bulan, cadangan, biaya: ongkos })
@@ -110,6 +117,9 @@ export async function jalankan(payload: Payload, tugas: TugasAi, body: unknown, 
       pesan: pesanGagal ? `${pesanGagal}${typeof hasil === 'string' ? ` (${hasil})` : ''}` : null,
     },
   })
-  if (pesanGagal) return gagal('claude', pesanGagal)
+  if (pesanGagal) {
+    const g = gagal('claude', pesanGagal) as Extract<HasilJalankan, { status: 'gagal' }>
+    return typeof hasil === 'string' ? { ...g, rinci: hasil } : g
+  }
   return { status: 'berhasil', tugas, hasil, model, mode: keadaan.mode, biaya: ongkos, token: jawaban.token }
 }

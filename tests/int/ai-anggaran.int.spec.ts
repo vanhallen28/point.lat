@@ -129,6 +129,8 @@ describe('anggaran asisten AI', () => {
       brief: { model: 'claude-sonnet-5-5', sumber: 'bawaan', adaHarga: false },
       draf: { model: 'claude-sonnet-5-5', sumber: 'bawaan', adaHarga: false },
       meta: { model: 'claude-haiku-5-5', sumber: 'bawaan', adaHarga: true },
+      usulan: { model: 'claude-sonnet-5-5', sumber: 'bawaan', adaHarga: false },
+      artikel: { model: 'claude-sonnet-5-5', sumber: 'bawaan', adaHarga: false },
     })
 
     await cadangkanAnggaran(payload, { bulan, cadangan: 0.03, batas: 0.05 })

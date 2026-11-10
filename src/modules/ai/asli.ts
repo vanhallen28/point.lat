@@ -115,7 +115,7 @@ export function adapterAsli(opsi: OpsiAdapterAsli): AdapterAi {
         method: 'POST',
         headers: { 'x-api-key': opsi.kunci, 'anthropic-version': VERSI_API, 'content-type': 'application/json' },
         body: JSON.stringify(badanPermintaan(p)),
-        signal: AbortSignal.timeout(BATAS_TUNGGU_MS),
+        signal: AbortSignal.timeout(p.batasMs ?? BATAS_TUNGGU_MS),
       })
       const idPermintaan = res.headers.get('request-id')
       const retryAfter = bacaRetryAfter(res.headers.get('retry-after'))
@@ -126,7 +126,7 @@ export function adapterAsli(opsi: OpsiAdapterAsli): AdapterAi {
       const g = e as Error & { cause?: { code?: string } }
       const pesan =
         g.name === 'TimeoutError'
-          ? `API Claude tidak menjawab dalam ${BATAS_TUNGGU_MS / 1000} detik. Coba lagi.`
+          ? `API Claude tidak menjawab dalam ${(p.batasMs ?? BATAS_TUNGGU_MS) / 1000} detik. Coba lagi.`
           : `API Claude tidak bisa dihubungi (${g.cause?.code ?? g.message}).`
       return { jawaban: galat('jaringan', pesan, null, { masuk: 0, keluar: 0 }, null), retryAfter: null }
     }
@@ -136,7 +136,7 @@ export function adapterAsli(opsi: OpsiAdapterAsli): AdapterAi {
     nama: 'asli',
     async kirim(p) {
       let hasil = await kirimSekali(p)
-      for (let ke = 2; ke <= PERCOBAAN && bisaDiulang(hasil.jawaban, hasil.retryAfter); ke++) {
+      for (let ke = 2; ke <= (p.tanpaUlang ? 1 : PERCOBAAN) && bisaDiulang(hasil.jawaban, hasil.retryAfter); ke++) {
         await tunggu(hasil.retryAfter !== null ? hasil.retryAfter * 1000 : JEDA_ULANG_MS)
         hasil = await kirimSekali(p)
       }

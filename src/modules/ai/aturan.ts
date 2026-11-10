@@ -18,6 +18,8 @@ export const MODEL_BAWAAN: Record<TugasAi, string> = {
   brief: 'claude-sonnet-5-5',
   draf: 'claude-sonnet-5-5',
   meta: 'claude-haiku-5-5',
+  usulan: 'claude-sonnet-5-5',
+  artikel: 'claude-sonnet-5-5',
 }
 
 /**
@@ -38,10 +40,14 @@ export const ANGGARAN_BAWAAN = 10
  * Batas per tugas: panjang masukan (karakter, setelah dirapikan), `max_tokens` (keluaran termasuk
  * thinking, batas keras API), dan tingkat usaha. Masukan yang lebih panjang dipotong di batas kata.
  */
-export const BATAS_TUGAS: Record<TugasAi, { maksKarakter: number; maksToken: number; effort: Effort }> = {
+export const BATAS_TUGAS: Record<TugasAi, { maksKarakter: number; maksToken: number; effort: Effort; batasMs?: number; tanpaUlang?: boolean }> = {
   brief: { maksKarakter: 6_000, maksToken: 8_000, effort: 'medium' },
   draf: { maksKarakter: 12_000, maksToken: 8_000, effort: 'medium' },
   meta: { maksKarakter: 30_000, maksToken: 4_000, effort: 'low' },
+  // Otomasi (spesifikasi §27): satu draf lengkap per panggilan, jadi tunggu lebih lama dan tanpa kirim ulang
+  // supaya satu jalan cron tetap di bawah batas 300 detik fungsi Vercel Hobby.
+  usulan: { maksKarakter: 40_000, maksToken: 8_000, effort: 'medium', batasMs: 150_000, tanpaUlang: true },
+  artikel: { maksKarakter: 40_000, maksToken: 16_000, effort: 'medium', batasMs: 200_000, tanpaUlang: true },
 }
 
 /** Permintaan per pengguna per menit (dihitung dari log AI, jadi berlaku di semua instance server). */

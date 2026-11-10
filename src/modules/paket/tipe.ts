@@ -10,7 +10,8 @@ export type ArtikelPaket = {
   tipe: TipeArtikel
   /** Slug pilar (`uang-karier`, `belajar`, ...). */
   pilar: string
-  subkategori: SubkategoriPaket
+  /** Subkategori di pilar itu (dibuat bila slug-nya belum ada); `null` untuk artikel tanpa subkategori (draf otomatis). */
+  subkategori: SubkategoriPaket | null
   deck: string
   /** Dua sampai empat poin, masing-masing paling panjang 220 karakter. */
   intinya: string[]
@@ -27,7 +28,8 @@ export type ArtikelPaket = {
 
 export type SubkategoriPaket = { slug: string; nama: string; deskripsi: string }
 
-export type SumberPaket = { judul: string; url: string; penerbit: string; diaksesPada: string }
+/** `diaksesPada` kosong untuk draf otomatis: tanggalnya diisi editor saat memeriksa sumber. */
+export type SumberPaket = { judul: string; url: string; penerbit: string; diaksesPada?: string }
 
 /**
  * Kartu sampul: gambar PNG 1920 x 1080 di `src/modules/paket/sampul/{file}`, dibuat dari templat bergaya
