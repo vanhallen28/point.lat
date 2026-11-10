@@ -581,6 +581,39 @@ Tampilan, Footer, **Akun sosial** (dan Saluran WhatsApp bila ada): isi URL profi
 
 Draf "Cara menghitung THR 2027" sudah diperbaiki migrasi (kolom pertama tabel PPh 21 kini berjudul "Komponen") dan bisa diterbitkan seperti artikel paket lain (bagian L2).
 
+## N. Statistik kunjungan (v1.5.0)
+
+Build Vercel menjalankan migrasi `kunjungan`: tabel `kunjungan` dan `kunjungan_harian` dibuat, hak Data API Supabase atas keduanya dicabut, dan saklar Statistik kunjungan ditambah ke Fitur dalam keadaan menyala. Pencatatan mulai sejak deploy ini; kunjungan sebelumnya tidak ada datanya.
+
+### N1. Cek pencatatan
+
+Kunjungan dari peramban yang sedang masuk admin sengaja tidak dihitung, jadi cek dari peramban lain:
+1. Buka `https://point.lat` di HP, atau di jendela penyamaran yang tidak masuk admin, lalu buka satu artikel.
+2. Di komputer, buka beranda admin. Bagian **Statistik kunjungan** menulis "1 sedang online", dan kartu **Sedang dibaca** memuat judul artikel tadi.
+3. Kartu Hari ini bertambah. Negara dan kota terisi dari lokasi jaringan HP (perkiraan Vercel, bisa berbeda kota).
+
+Bila tetap kosong, lihat Pemecahan masalah (baris "Statistik kunjungan kosong").
+
+### N2. Kebijakan Privasi
+
+Tambahkan paragraf ini ke halaman Kebijakan Privasi (Halaman, Kebijakan Privasi), lalu Terbitkan:
+
+> **Statistik kunjungan.** Untuk mengetahui halaman mana yang dibaca dan dari mana pembaca datang, point. mencatat setiap halaman yang dibuka: alamat halaman, domain situs perujuk, negara dan kota perkiraan dari jaringan, jenis perangkat, dan nama peramban. Pencatatan ini tidak memakai cookie dan tidak menyimpan alamat IP. Untuk menghitung pembaca berbeda dalam satu hari, kami menyimpan kode acak yang dibuat dari alamat IP dan jenis peramban, dan kode itu berganti setiap hari, jadi kunjungan di hari berbeda tidak bisa dihubungkan. Data rinci disimpan 13 bulan, setelah itu hanya jumlah per hari yang tersisa. Peramban yang mengaktifkan Global Privacy Control atau Do Not Track tidak dicatat sama sekali.
+
+### N3. Kuota Vercel
+
+Setiap halaman yang dibuka pembaca memanggil satu fungsi Vercel untuk mencatatnya. Paket Hobby memberi 1 juta pemanggilan fungsi dan 4 jam CPU aktif per bulan untuk seluruh situs. Bila salah satunya habis, Vercel menghentikan fitur itu sampai 30 hari berlalu.
+
+1. Sebulan sekali, buka Vercel, proyek point.lat, **Usage**. Lihat **Function Invocations** dan **Fluid Active CPU** (atau Active CPU).
+2. Bila salah satunya sudah lewat 70% sebelum akhir bulan, buka admin, Pengaturan, **Fitur**, matikan **Statistik kunjungan**, lalu Simpan. Skrip hilang dari semua halaman setelah halamannya dibuat ulang (beberapa menit). Statistik lama tetap bisa dilihat.
+3. Nyalakan lagi di awal periode berikutnya, atau pertimbangkan paket Pro bila trafik memang sudah sebesar itu.
+
+Sebagai pengaman, point. berhenti menyimpan kunjungan setelah 50.000 tayangan dalam sehari (pemanggilan fungsinya tetap terjadi).
+
+### N4. Menarik data
+
+Di kartu rentang, pilih Hari ini, 7 hari, 30 hari, Semua, atau isi kalender **Dari** dan **Sampai** lalu **Tampilkan**. **Unduh CSV** mengunduh rentang yang sedang dilihat: satu baris per hari dan kombinasi halaman, negara, kota, sumber, perangkat, dan peramban, dengan kolom tayangan dan kunjungan. Berkasnya terbuka di Excel atau Google Sheets.
+
 ## Verifikasi
 
 - [ ] Deploy Production terakhir **Ready** dan log build memuat `Lingkungan produksi siap: env dan database cocok.`
@@ -598,6 +631,9 @@ Draf "Cara menghitung THR 2027" sudah diperbaiki migrasi (kolom pertama tabel PP
 | Build: `Env deploy belum benar:` dengan daftar | Env lingkungan itu belum lengkap atau salah | Perbaiki setiap butir sesuai pesannya (D3), lalu Redeploy |
 | Build: `Database ini milik Production, tetapi deploy ini Preview` | `DATABASE_URL` Preview menunjuk database produksi | Ganti `DATABASE_URL` dan `DATABASE_CA` Preview ke proyek pratinjau (C6), lalu Redeploy. Database produksi tidak diubah karena penjaga berhenti sebelum migrasi |
 | Build: `Lingkungan lokal siap`, atau `missing secret key` sebelum env diisi | `VERCEL_ENV` tidak terbaca, jadi penjaga lingkungan mati | Centang Automatically expose System Environment Variables (D2), lalu Redeploy |
+| Sudah `git push origin master`, tetapi situs tidak berubah; di Vercel, Deployments, deploy commit itu **Blocked** ("commit author does not have contributing access", "Hobby Plan does not support collaboration") | Paket Hobby hanya menerima deploy dari commit yang penulisnya pemilik akun. Commit di zip ditulis sesi Claude, jadi diblokir | Sebelum push, jadikan commit ujung milikmu: `git commit --amend --reset-author -m "vX.Y.Z: ..."` lalu `git tag -f vX.Y.Z`, kemudian push seperti biasa. `git config user.email` harus email akun GitHub-mu (atau alamat noreply GitHub dari Settings, Emails). Bila commit diblokir sudah ter-push, buat commit kosong milikmu: `git commit --allow-empty -m "deploy"` lalu `git push origin master` |
+| Statistik kunjungan kosong padahal ada pembaca | Peramban yang dipakai sedang masuk admin; peramban dengan Global Privacy Control atau Do Not Track (Brave menyalakan GPC sejak awal); saklar Statistik kunjungan mati; atau halaman masih versi lama dari cache | Cek dari HP atau jendela penyamaran (N1). Pastikan saklar di Pengaturan, Fitur menyala. Di Vercel, Logs, cari `Kunjungan tidak tercatat`: galat database tercatat di sana |
+| Statistik kunjungan: negara dan kota "Tidak diketahui" | Header lokasi Vercel tidak ada (pratinjau lokal `npm run dev`) atau jaringan pembaca tidak dikenali | Normal untuk sebagian kecil kunjungan dan untuk semua kunjungan di pratinjau lokal |
 | Build: `unable to verify the first certificate` atau `self-signed certificate in certificate chain` | `DATABASE_CA` bukan sertifikat proyek itu, atau terpotong | Tempel ulang seluruh isi file sertifikat proyek yang sama dengan `DATABASE_URL` |
 | Build: `password authentication failed` | Password di `DATABASE_URL` salah | Salin ulang URI transaction pooler (C4) |
 | Build pratinjau gagal terhubung setelah lama tidak dipakai | Proyek Free dijeda | Dashboard Supabase, organisasi pratinjau, proyek pratinjau, **Resume project** |
@@ -644,6 +680,7 @@ Lalu Docker Desktop boleh di-uninstall dari folder Applications. Bila Docker sud
 
 | Tanggal | Oleh | Catatan |
 |---|---|---|
+| 10 November 2026 | Sesi Claude (v1.5.0) | Ditambah bagian N: cek pencatatan statistik kunjungan, paragraf Kebijakan Privasi, kuota Vercel Hobby dan saklar Statistik kunjungan, dan Unduh CSV. Dua baris pemecahan masalah statistik. |
 | 10 November 2026 | Sesi Claude (v1.4.0) | Ditambah bagian M: tampilan media, beranda portal, header dan menu, halaman Redaksi, akun sosial, dan artikel THR. |
 | 10 November 2026 | Sesi Claude (v1.3.1) | Pemecahan masalah: push gagal HTTP 400 untuk kiriman di atas 1 MiB. |
 | 10 November 2026 | Sesi Claude (v1.3.0) | Ditambah bagian L: impor paket konten awal, review dan terbit bertahap, penjelasan kalkulator, dan blok Pilihan redaksi di beranda. |

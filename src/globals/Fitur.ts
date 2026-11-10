@@ -60,5 +60,15 @@ export const Fitur: GlobalConfig = {
       defaultValue: FITUR_BAWAAN.waktuBaca,
       admin: { description: 'Perkiraan "N menit baca" di bawah judul artikel.' },
     },
+    {
+      name: 'statistikKunjungan',
+      type: 'checkbox',
+      label: 'Statistik kunjungan',
+      defaultValue: FITUR_BAWAAN.statistikKunjungan,
+      admin: {
+        description:
+          'Mencatat halaman yang dibuka pembaca untuk Statistik kunjungan di beranda admin, tanpa cookie dan tanpa menyimpan IP. Setiap halaman yang dibuka memakai satu pemanggilan fungsi Vercel; matikan bila kuota Vercel bulan ini hampir habis.',
+      },
+    },
   ],
 }

@@ -3,6 +3,7 @@ import { Ikon } from '@/components/dasar/Ikon'
 import { Tautan } from '@/components/dasar/Tautan'
 import { DaftarKartu } from '@/components/kartu/KartuArtikel'
 import type { DaftarPopuler } from '@/modules/konten/beranda'
+import { PENANDA_404 } from '@/modules/kunjungan/aturan'
 
 import { Catat404 } from './Catat404'
 import gaya from './TidakDitemukan.module.css'
@@ -13,7 +14,7 @@ import gaya from './TidakDitemukan.module.css'
  */
 export function TidakDitemukan({ daftar }: { daftar: DaftarPopuler }) {
   return (
-    <div className={`kontainer ${gaya.halaman}`}>
+    <div className={`kontainer ${gaya.halaman}`} {...{ [PENANDA_404]: '' }}>
       <p className={gaya.kode}>Galat 404</p>
       <h1 className={gaya.judul}>Halaman ini tidak ada.</h1>
       <p className={gaya.teks}>

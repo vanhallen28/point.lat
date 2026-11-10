@@ -1,7 +1,8 @@
-import * as migration_20261106_152942_awal from './20261106_152942_awal';
-import * as migration_20261106_163351_kunci_data_api from './20261106_163351_kunci_data_api';
-import * as migration_20261109_152615_ruang_redaksi from './20261109_152615_ruang_redaksi';
-import * as migration_20261109_202605_beranda_portal from './20261109_202605_beranda_portal';
+import * as migration_20261106_152942_awal from './20261106_152942_awal'
+import * as migration_20261106_163351_kunci_data_api from './20261106_163351_kunci_data_api'
+import * as migration_20261109_152615_ruang_redaksi from './20261109_152615_ruang_redaksi'
+import * as migration_20261109_202605_beranda_portal from './20261109_202605_beranda_portal'
+import * as migration_20261110_142927_kunjungan from './20261110_142927_kunjungan'
 
 export const migrations = [
   {
@@ -22,6 +23,11 @@ export const migrations = [
   {
     up: migration_20261109_202605_beranda_portal.up,
     down: migration_20261109_202605_beranda_portal.down,
-    name: '20261109_202605_beranda_portal'
+    name: '20261109_202605_beranda_portal',
   },
-];
+  {
+    up: migration_20261110_142927_kunjungan.up,
+    down: migration_20261110_142927_kunjungan.down,
+    name: '20261110_142927_kunjungan',
+  },
+]

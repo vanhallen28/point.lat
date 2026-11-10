@@ -91,6 +91,8 @@ export interface Config {
     pengguna: Pengguna;
     'log-ai': LogAi;
     'pemakaian-ai': PemakaianAi;
+    kunjungan: Kunjungan;
+    'kunjungan-harian': KunjunganHarian;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -123,6 +125,8 @@ export interface Config {
     pengguna: PenggunaSelect<false> | PenggunaSelect<true>;
     'log-ai': LogAiSelect<false> | LogAiSelect<true>;
     'pemakaian-ai': PemakaianAiSelect<false> | PemakaianAiSelect<true>;
+    kunjungan: KunjunganSelect<false> | KunjunganSelect<true>;
+    'kunjungan-harian': KunjunganHarianSelect<false> | KunjunganHarianSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -1094,6 +1098,58 @@ export interface PemakaianAi {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kunjungan".
+ */
+export interface Kunjungan {
+  id: number;
+  waktu: string;
+  /**
+   * YYYY-MM-DD, WIB.
+   */
+  tanggal: string;
+  path: string;
+  /**
+   * Kode ISO 2 huruf dari geolokasi Vercel.
+   */
+  negara?: string | null;
+  kota?: string | null;
+  kanal: string;
+  sumber: string;
+  /**
+   * Domain halaman sebelumnya, tanpa path.
+   */
+  perujuk?: string | null;
+  perangkat: string;
+  peramban: string;
+  sidik: string;
+  /**
+   * Tayangan pertama sidik ini hari itu.
+   */
+  baru?: boolean | null;
+  /**
+   * Halaman pertama sebuah kunjungan (perujuk bukan point.).
+   */
+  masuk?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kunjungan-harian".
+ */
+export interface KunjunganHarian {
+  id: number;
+  /**
+   * YYYY-MM-DD, WIB.
+   */
+  tanggal: string;
+  tayangan: number;
+  pengunjung: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1303,6 +1359,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pemakaian-ai';
         value: number | PemakaianAi;
+      } | null)
+    | ({
+        relationTo: 'kunjungan';
+        value: number | Kunjungan;
+      } | null)
+    | ({
+        relationTo: 'kunjungan-harian';
+        value: number | KunjunganHarian;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1981,6 +2045,38 @@ export interface PemakaianAiSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kunjungan_select".
+ */
+export interface KunjunganSelect<T extends boolean = true> {
+  waktu?: T;
+  tanggal?: T;
+  path?: T;
+  negara?: T;
+  kota?: T;
+  kanal?: T;
+  sumber?: T;
+  perujuk?: T;
+  perangkat?: T;
+  peramban?: T;
+  sidik?: T;
+  baru?: T;
+  masuk?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kunjungan-harian_select".
+ */
+export interface KunjunganHarianSelect<T extends boolean = true> {
+  tanggal?: T;
+  tayangan?: T;
+  pengunjung?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -2357,6 +2453,10 @@ export interface Fitur {
    * Perkiraan "N menit baca" di bawah judul artikel.
    */
   waktuBaca?: boolean | null;
+  /**
+   * Mencatat halaman yang dibuka pembaca untuk Statistik kunjungan di beranda admin, tanpa cookie dan tanpa menyimpan IP. Setiap halaman yang dibuka memakai satu pemanggilan fungsi Vercel; matikan bila kuota Vercel bulan ini hampir habis.
+   */
+  statistikKunjungan?: boolean | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2684,6 +2784,7 @@ export interface FiturSelect<T extends boolean = true> {
   tombolBagikan?: T;
   daftarIsi?: T;
   waktuBaca?: T;
+  statistikKunjungan?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

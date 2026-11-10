@@ -1,7 +1,7 @@
 # point.lat · Design Spec
 
 **Tanggal:** 2026-11-03
-**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.4.0): lihat Riwayat revisi.
+**Status:** disetujui dan dibangun (v1.0.0, 7 November 2026). Revisi 9 dan 10 November 2026 (v1.1.0 sampai v1.5.0): lihat Riwayat revisi.
 **Pemilik:** pemilik point.lat (penulis tunggal, dibantu asisten AI di CMS)
 **Kanvas visual:** "point.lat · Arah Visual" (Arah 3 · Kartu Intinya dipilih)
 **Log keputusan:** PROJECT WEB `claude/point-lat-decisions.md`
@@ -18,6 +18,7 @@
 | 2026-11-10 | v1.3.0 | Paket konten awal supaya situs tidak sepi: 12 artikel draf Uang & Karier dan Belajar dengan kartu sampul bergaya point., penjelasan enam kalkulator diperluas, dan tombol Impor paket konten di beranda admin (§24) |
 | 2026-11-10 | v1.3.1 | Pembaruan keamanan: Next.js 16.4.5 dan sharp 0.35.5 (celah Next.js Oktober dan November 2026). Tanpa perubahan perilaku |
 | 2026-11-10 | v1.4.0 | Tampilan media: kartu artikel bergambar bertanggal dan berpenulis, beranda bergaya portal (blok Strip kalkulator dan Baris rubrik), header dengan tanggal dan Topik hangat, pilar kosong disembunyikan, footer berkolom, tanggal terbit di artikel, dan draf halaman Redaksi (§25, permintaan pemilik) |
+| 2026-11-10 | v1.5.0 | Statistik kunjungan di beranda admin: Hari ini, 7 hari, 30 hari, Total, kalender rentang dan Unduh CSV, grafik, sedang online, negara, kota, sumber (mesin pencari, media sosial, asisten AI, situs lain), halaman dan halaman masuk, perangkat, dan peramban. Dicatat point. sendiri tanpa cookie dan tanpa menyimpan IP, dengan saklar di Fitur (§26, permintaan pemilik) |
 
 ---
 
@@ -876,6 +877,70 @@ Byline memuat "Terbit {tanggal}". "Diperbarui {tanggal}" hanya bila tanggalnya b
 - Migrasi `beranda_portal` hanya menambah tabel dan kolom, lalu langkah data lewat Local API dalam transaksi migrasi. Hak Data API Supabase dicabut dari tabel baru.
 - Tanpa komponen klien baru: tanggal header berupa skrip sebaris. Anggaran JavaScript §12 tetap dijaga `motion.spec.ts`.
 
+## 26. Statistik kunjungan (v1.5.0)
+
+Permintaan pemilik 10 November 2026: "di beranda admin tolong tambahkan statistik kunjungan ke website secara real dan detail dari ini 7 hari 30 hari dan total kunjungan tambahkan kalender nya juga agar bisa tarik data, dari negara mana sumber kunjungan dari mana dan mengunjungi halaman mana, jika ada tambahan dari anda untuk lebih melengkapi nya tolong tambahkan".
+
+Statistik dicatat point. sendiri (first-party), tanpa layanan analitik pihak ketiga, tanpa cookie, dan tanpa dependensi baru. Data Google Search Console di beranda admin (§23) tetap terpisah: itu klik dari hasil Google, sedangkan statistik ini semua pembaca dari mana pun.
+
+Rencana implementasi: `docs/superpowers/plans/2026-11-10-rencana-12-statistik-kunjungan.md`.
+
+### Definisi
+
+- **Tayangan:** satu halaman publik yang dibuka, termasuk pindah halaman di dalam point. tanpa muat ulang.
+- **Kunjungan:** pembaca berbeda per hari (sidik harian berbeda), dijumlahkan per hari. Pembaca yang sama besok dihitung lagi, karena sidik berganti setiap hari.
+- **Halaman masuk:** tayangan pertama sebuah kunjungan, yaitu tayangan yang perujuknya bukan point. Kanal, sumber, dan perujuk dihitung dari halaman masuk saja.
+- **Sedang online:** sidik berbeda yang membuka halaman dalam 5 menit terakhir.
+
+### Pencatatan
+
+- **Skrip sebaris** (`skripKunjungan`) di akhir `<body>` layout publik: tanpa berkas JavaScript, jadi anggaran JS §12 tidak berubah. Skrip mengirim `navigator.sendBeacon` berisi `{ p: path, r: perujuk, s: utm_source }` ke `POST /api/kunjungan/catat` saat halaman dimuat dan setelah `pushState`, `replaceState`, atau `popstate` (navigasi klien Next.js), satu kali per path berturut-turut.
+- **Skrip diam** bila `navigator.webdriver` (Playwright, Lighthouse, perambah tanpa kepala), Global Privacy Control, atau Do Not Track menyala, dan di halaman 404 (penanda `data-halaman-404` di `TidakDitemukan`).
+- **Endpoint** selalu menjawab 204 dan mengabaikan: permintaan dari situs lain (`Sec-Fetch-Site`), isian lebih dari 1 KB atau cacat, bot dan alat otomatis (pola user agent), pengguna admin yang sedang masuk (cookie `payload-token`), dan path admin, API, atau aset.
+- **Batas:** paling banyak 30 tayangan per sidik per menit dan 50.000 tayangan per hari untuk seluruh situs. Galat database hanya dicatat di log server; pembaca tidak pernah melihatnya.
+- **Satu pernyataan SQL** (CTE): baris `kunjungan` (dengan `baru` bila sidik belum terlihat hari itu dan `masuk` bila perujuk bukan point.) dan tambah satu di `kunjungan-harian` (`INSERT ... ON CONFLICT`).
+
+### Privasi
+
+- **Tanpa cookie** dan tanpa penyimpanan peramban.
+- **IP tidak disimpan.** `sidik` = HMAC-SHA256 dari tanggal WIB, IP, dan user agent dengan `PAYLOAD_SECRET`, dipotong 24 karakter. Sidik berganti setiap hari, jadi pembaca tidak bisa dilacak antarhari.
+- **Lokasi** hanya negara dan kota dari header geolokasi Vercel (`x-vercel-ip-country`, `x-vercel-ip-city`); tidak ada koordinat.
+- **Perujuk** disimpan sebagai domain saja, tanpa path. Aplikasi Android (`android-app://`) disimpan sebagai nama paketnya.
+- **Masa simpan:** baris mentah 13 bulan (400 hari, dihapus cron harian `bersihkanKunjungan`); total per hari disimpan selamanya.
+- Saklar **Statistik kunjungan** di Pengaturan, Fitur mematikan skrip di semua halaman.
+- Kebijakan Privasi perlu satu paragraf statistik kunjungan (teks contoh di runbook rilis, bagian N).
+
+### Sumber kunjungan
+
+Urutan penentuan kanal:
+1. `utm_source` mengalahkan perujuk: nama yang dikenal (misalnya `instagram`, `facebook`) masuk Media sosial, selain itu Kampanye.
+2. Perujuk aplikasi Android dicocokkan nama paketnya (Google untuk aplikasi Google dan Discover, Gmail, YouTube, WhatsApp, dan lainnya).
+3. Tanpa perujuk: Langsung (diketik, markah, aplikasi chat).
+4. Perujuk point. sendiri: pindah halaman (bukan halaman masuk).
+5. Domain dikenal: Asisten AI (ChatGPT, Perplexity, Gemini, Copilot, Claude; dicek sebelum Google karena Gemini memakai domain google.com), Mesin pencari (Google, Bing, Yahoo, DuckDuckGo, lainnya), Media sosial (Facebook, Instagram, X, TikTok, YouTube, LinkedIn, Threads, WhatsApp, Telegram, Pinterest, Reddit).
+6. Selain itu: Situs lain, dengan nama domainnya.
+
+### Beranda admin
+
+Bagian **Statistik kunjungan** setelah kartu angka, hanya untuk admin:
+- **Kepala:** jumlah pengunjung yang sedang online (titik hijau berdenyut, diam saat reduced motion).
+- **Empat kartu ringkas** (tautan pilihan rentang): Hari ini, 7 hari, 30 hari, dan Total, masing-masing kunjungan, tayangan, dan perubahan dibanding periode sebelumnya. Hari ini dibandingkan dengan kemarin sampai jam yang sama, supaya pagi hari tidak selalu tampak turun. Total sejak data pertama.
+- **Kartu rentang:**
+  - judul rentang dan tombol **Unduh CSV** (`GET /api/kunjungan/csv?dari=&sampai=`, hanya admin; satu baris per hari dan kombinasi halaman, negara, kota, kanal, sumber, perujuk, perangkat, dan peramban; sel rumus dinetralkan);
+  - pilihan Hari ini, 7 hari, 30 hari, Semua, dan **kalender** (`<input type="date">` Dari dan Sampai dalam form GET, tanpa JavaScript). Rentang tertukar dibalik, masa depan dipotong ke hari ini, paling panjang 400 hari. Parameter periode Google (`?periode=`) dipertahankan, begitu pula sebaliknya;
+  - angka rentang: kunjungan, tayangan halaman (keduanya dengan perubahan), dan halaman per kunjungan;
+  - **grafik** (skill dataviz): batang biru kunjungan dan garis oranye tayangan pada satu sumbu, per jam untuk rentang satu hari, per hari sampai 92 hari, per bulan untuk rentang lebih panjang. Tooltip per kolom dan tabel tersembunyi untuk pembaca layar. Palet lolos validator dataviz di tema terang dan gelap.
+- **Sedang dibaca:** halaman yang dibuka pengunjung online, dengan judul.
+- **Rincian** (10 baris teratas, kolom kunjungan dan tayangan, meter): Halaman paling banyak dibuka (dengan judul artikel, pilar, halaman, kalkulator, video, penulis, atau subkategori), Sumber kunjungan (kanal dengan persen), Negara (dengan bendera), Kota, Mesin pencari, media sosial, dan AI, Halaman masuk, Situs perujuk, Perangkat, dan Peramban.
+- **Cara membaca angka ini:** definisi singkat. Bila rentang lebih panjang dari masa simpan baris mentah, catatan bahwa rincian hanya 13 bulan terakhir.
+- Diperbarui setiap kali halaman dibuka; tautan Perbarui di kartu Sedang dibaca.
+
+### Batasan teknis
+
+- Tanpa dependensi baru dan tanpa komponen klien baru.
+- Migrasi `kunjungan` hanya menambah tabel `kunjungan` dan `kunjungan_harian` dan kolom saklar Fitur; hak Data API Supabase dicabut dari kedua tabel dan sequence-nya.
+- Setiap tayangan memanggil satu fungsi Vercel. Kuota Hobby 1 juta pemanggilan dan 4 jam CPU aktif per bulan, dipakai bersama seluruh situs; bila kuota habis, Vercel menghentikan fitur itu sampai 30 hari. Pemantauan dan saklar di runbook rilis, bagian N.
+
 ## Sumber riset
 
 - Google Indexing API: https://developers.google.com/search/apis/indexing-api
@@ -886,7 +951,8 @@ Byline memuat "Terbit {tanggal}". "Diperbarui {tanggal}" hanya bila tanggalnya b
 - Payload 2026: https://techsy.io/fi/blog/payload-cms-2026-why-figma-bought-it-and-should-you-adopt-it
 - Payload storage adapters: https://payloadcms.com/docs/v3/upload/storage-adapters
 - Vercel cron limits: https://vercel.com/docs/cron-jobs/usage-and-pricing
-- Vercel Hobby (non-komersial, batas pemakaian): https://vercel.com/docs/plans/hobby
+- Vercel Hobby (non-komersial, batas pemakaian, 1 juta pemanggilan fungsi dan 4 jam CPU aktif per bulan): https://vercel.com/docs/plans/hobby
+- Header geolokasi Vercel: https://vercel.com/docs/headers/request-headers
 - Supabase pg_net: https://supabase.com/docs/guides/database/extensions/pg_net
 - Supabase menjadwalkan panggilan HTTP dengan pg_cron dan Vault: https://supabase.com/docs/guides/functions/schedule-functions
 - Header pg_net bisa dibaca role database: https://supabase.com/docs/guides/troubleshooting/database-roles-can-read-request-headers-queued-by-pg_net-ad6357

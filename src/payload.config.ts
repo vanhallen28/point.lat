@@ -10,6 +10,8 @@ import { AnalitikSitus } from './collections/AnalitikSitus'
 import { AntreanIndexing } from './collections/AntreanIndexing'
 import { Artikel } from './collections/Artikel'
 import { Halaman } from './collections/Halaman'
+import { Kunjungan } from './collections/Kunjungan'
+import { KunjunganHarian } from './collections/KunjunganHarian'
 import { Log404 } from './collections/Log404'
 import { LogAi } from './collections/LogAi'
 import { LogIndexing } from './collections/LogIndexing'
@@ -108,6 +110,8 @@ export default buildConfig({
     Pengguna,
     LogAi,
     PemakaianAi,
+    Kunjungan,
+    KunjunganHarian,
   ],
   globals: [Beranda, Header, Footer, Newsletter, Iklan, PengaturanSEO, Fitur, KodeSematan, AsistenAi],
   // `GET /api/jobs/run`: cron Vercel (jadwal di vercel.json), jadwal terbit, Mesin Indexing, dan Pantau SEO.

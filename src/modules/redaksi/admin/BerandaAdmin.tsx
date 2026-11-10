@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import type { AdminViewServerProps } from 'payload'
 
 import { PATH_ADMIN, urlAdmin } from '@/lib/admin'
+import { bacaRentang, paramRentang } from '@/modules/kunjungan/aturan'
+import { ambilKunjungan } from '@/modules/kunjungan/data'
+import { StatistikKunjungan } from '@/modules/kunjungan/admin/StatistikKunjungan'
 import { KartuPaket } from '@/modules/paket/admin/KartuPaket'
 import { statusPaket } from '@/modules/paket/status'
 import { teksTanggal } from '@/modules/pantau/format'
@@ -33,7 +36,8 @@ const TANGGAL_PANJANG = new Intl.DateTimeFormat('id-ID', {
 /**
  * Beranda admin (`admin.components.views.dashboard`, spesifikasi §23), menggantikan daftar koleksi bawaan Payload.
  * Tata letak mengikuti gambar referensi pemilik: kepala dengan pilihan periode dan lencana layanan, empat kartu
- * angka, kalender konten dan kolom Google, lalu terbit terbaru, kesehatan situs, dan perlu perhatian. Semua angka
+ * angka, statistik kunjungan (admin, §26), kalender konten dan kolom Google, lalu terbit terbaru, kesehatan situs,
+ * dan perlu perhatian. Semua angka
  * dari database point.; editor melihat bagian konten saja. Payload membungkus view dashboard dengan templat bawaan
  * (menu dan kepala), jadi komponen ini hanya isinya.
  */
@@ -47,6 +51,14 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
   const data = await ambilRuangRedaksi(req.payload, pengguna, { sekarang, periode })
   // Paket konten awal (spesifikasi §24): hanya admin, dan hanya sampai semua artikel paketnya terbit.
   const paket = data.admin ? await statusPaket(req.payload, sekarang) : null
+  // Statistik kunjungan (spesifikasi §26): hanya admin. Rentang dari `?kunjungan=` atau `?dari=&sampai=`.
+  const kunjungan = data.admin ? await ambilKunjungan(req.payload, (pertama) => bacaRentang(searchParams, sekarang, pertama), sekarang) : null
+  const paramKunjungan = kunjungan ? paramRentang(kunjungan.rentang) : {}
+  const paramPeriode: Record<string, string> = periode === 7 ? {} : { periode: String(periode) }
+  const urlPeriode = (p: number) => {
+    const kueri = new URLSearchParams({ ...(p === 7 ? {} : { periode: String(p) }), ...paramKunjungan }).toString()
+    return kueri ? `${PATH_ADMIN}?${kueri}` : PATH_ADMIN
+  }
   const namaDepan = data.nama.split(/\s+/)[0]
 
   return (
@@ -68,7 +80,7 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
               {PERIODE_BERANDA.map((p) => (
                 <a
                   key={p}
-                  href={p === 7 ? PATH_ADMIN : `${PATH_ADMIN}?periode=${p}`}
+                  href={urlPeriode(p)}
                   aria-current={p === periode ? 'true' : undefined}
                 >
                   {p} hari
@@ -95,6 +107,8 @@ export async function BerandaAdmin({ initPageResult, searchParams }: AdminViewSe
       {paket && paket.terbit < paket.total && <KartuPaket status={paket} />}
 
       <BarisAngka data={data} />
+
+      {kunjungan && <StatistikKunjungan data={kunjungan} lain={paramPeriode} />}
 
       <div className={`redaksi-baris-dua${data.admin ? '' : ' redaksi-baris-dua--penuh'}`}>
         <KalenderKonten kalender={data.kalender} />

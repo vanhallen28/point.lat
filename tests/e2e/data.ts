@@ -121,3 +121,22 @@ export const blok = (fields: Node): Node => ({ type: 'block', version: 2, format
 export const isi = (...children: Node[]) => ({
   root: { type: 'root', format: '' as const, indent: 0, version: 1, direction: 'ltr' as const, children: children as { type: string; version: number }[] },
 })
+
+/** User agent peramban HP biasa (bukan bot) untuk kunjungan contoh dan beacon yang dikirim tes langsung. */
+export const UA_PEMBACA =
+  'Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'
+
+/**
+ * Kunjungan contoh Statistik kunjungan (spesifikasi §26), dicatat `siapkan.ts` lewat `catatKunjungan`: `hari` mundur
+ * dari hari ini (0 = hari ini), perujuk, negara, dan IP berbeda per pengunjung.
+ */
+export const KUNJUNGAN_CONTOH = [
+  { hari: 0, path: '/', perujuk: 'https://www.google.com/', negara: 'ID', kota: 'Jakarta', ip: '198.51.100.1' },
+  { hari: 0, path: `/${SLUG.panduan}`, perujuk: 'https://l.facebook.com/', negara: 'ID', kota: 'Bandung', ip: '198.51.100.2' },
+  { hari: 0, path: '/tools/gaji-bersih', perujuk: 'https://chatgpt.com/', negara: 'SG', kota: 'Singapore', ip: '198.51.100.3' },
+  { hari: 1, path: `/${SLUG.panduan}`, perujuk: 'https://www.google.co.id/', negara: 'ID', kota: 'Surabaya', ip: '198.51.100.4' },
+  { hari: 1, path: '/', perujuk: null, negara: 'ID', kota: 'Jakarta', ip: '198.51.100.5' },
+  { hari: 4, path: `/${SLUG.explainer}`, perujuk: 'https://kompas.com/read/1', negara: 'MY', kota: 'Kuala Lumpur', ip: '198.51.100.6' },
+  { hari: 12, path: '/tools', perujuk: 'https://www.bing.com/', negara: 'ID', kota: 'Medan', ip: '198.51.100.7' },
+  { hari: 25, path: `/${SLUG.panduan}`, perujuk: null, negara: 'ID', kota: 'Jakarta', ip: '198.51.100.8' },
+] as const

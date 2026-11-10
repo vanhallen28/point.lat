@@ -2,6 +2,8 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 import sharp from 'sharp'
 
+import { catatKunjungan } from '@/modules/kunjungan/data'
+import { jenisPerangkat, namaPeramban } from '@/modules/kunjungan/aturan'
 import { pakaiKlien } from '@/modules/media'
 import type { Halaman } from '@/payload-types'
 import { klienPalsu } from '@/modules/media/palsu'
@@ -18,6 +20,7 @@ import {
   JUDUL_PANDUAN,
   KLIK_CONTOH,
   KUNCI_INDEXNOW,
+  KUNJUNGAN_CONTOH,
   p,
   PAGINASI_E2E,
   PENERBIT_E2E,
@@ -26,6 +29,7 @@ import {
   SLUG_SUB,
   SLUG_VIDEO,
   tautanKe,
+  UA_PEMBACA,
 } from './data'
 
 /**
@@ -56,6 +60,8 @@ const KOLEKSI_DIBERSIHKAN = [
   // Kiriman form pembaca dari run sebelumnya ikut dihitung batas 5 kiriman per jam (pengirim E2E selalu localhost).
   'pesan-masuk',
   'pelanggan-newsletter',
+  'kunjungan',
+  'kunjungan-harian',
 ] as const
 for (const koleksi of KOLEKSI_DIBERSIHKAN) {
   await payload.delete({ collection: koleksi, where: { id: { exists: true } } })
@@ -439,6 +445,19 @@ await payload.create({
 await payload.create({ collection: 'redirect', data: { dari: '/promo-lama', ke: '/glosarium', kode: '301' } })
 await payload.create({ collection: 'redirect', data: { dari: '/glosarium/ptkp-lama', ke: '/glosarium/ptkp', kode: '301' } })
 await payload.create({ collection: 'redirect', data: { dari: '/tulisan-dihapus', kode: '410' } })
+
+// Statistik kunjungan beranda admin: kunjungan contoh 30 hari terakhir (jam yang sama `hari` hari lalu; untuk hari ini
+// satu jam lalu), lewat jalur catat yang sama dengan beacon.
+for (const k of KUNJUNGAN_CONTOH) {
+  const waktu = k.hari === 0 ? new Date(Date.now() - 3_600_000) : new Date(Date.now() - k.hari * 86_400_000)
+  await catatKunjungan(
+    payload,
+    { path: k.path, perujuk: k.perujuk, utm: null },
+    { ua: UA_PEMBACA, ip: k.ip, negara: k.negara, kota: k.kota, hostSitus: ['localhost'], perangkat: jenisPerangkat(UA_PEMBACA), peramban: namaPeramban(UA_PEMBACA) },
+    process.env.PAYLOAD_SECRET ?? '',
+    waktu,
+  )
+}
 
 payload.logger.info('Data E2E siap.')
 process.exit(0)

@@ -8,6 +8,26 @@ Setiap pembaruan yang dikirim ke pemilik punya nomor versi `vX.Y.Z`, dipakai di 
 
 Versi yang terpasang di komputer: jalankan `git describe --tags` di folder proyek. Versi yang jalan di Vercel: lihat commit deploy di Deployments, sama dengan commit tag versinya.
 
+## v1.5.0 (10 November 2026)
+
+Statistik kunjungan di beranda admin: berapa pembaca, dari negara dan kota mana, datang dari mana, dan membaca halaman apa. Dicatat point. sendiri, tanpa cookie dan tanpa menyimpan alamat IP.
+
+- **Empat kartu ringkas:** Hari ini, 7 hari, 30 hari, dan Total. Setiap kartu memuat kunjungan, tayangan, dan perubahan dibanding periode sebelumnya. Hari ini dibandingkan dengan kemarin sampai jam yang sama, jadi pagi hari tidak selalu tampak turun.
+- **Kalender untuk menarik data:** pilih Hari ini, 7 hari, 30 hari, atau Semua, atau isi tanggal Dari dan Sampai sendiri (paling panjang 400 hari). **Unduh CSV** mengunduh rentang yang sedang dilihat, siap dibuka di Excel atau Google Sheets.
+- **Grafik:** batang kunjungan dan garis tayangan, per jam untuk satu hari, per hari sampai 3 bulan, dan per bulan untuk rentang lebih panjang. Arahkan kursor ke batang untuk melihat angkanya.
+- **Sedang online:** jumlah pembaca dalam 5 menit terakhir dan halaman yang sedang mereka baca.
+- **Rincian (10 teratas):**
+  - halaman paling banyak dibuka dan halaman masuk (halaman pertama saat tiba), dengan judul tulisannya;
+  - sumber kunjungan: mesin pencari, media sosial, asisten AI (ChatGPT, Gemini, Perplexity, Copilot, Claude), situs lain, langsung, dan kampanye `utm_source`. Kunjungan dari aplikasi Google dan Google Discover di Android juga dikenali;
+  - nama sumbernya (Google, Facebook, Instagram, ChatGPT, dan seterusnya) dan situs perujuk;
+  - negara (dengan bendera) dan kota;
+  - perangkat (HP, tablet, desktop) dan peramban.
+- **Angka bersih:** bot dan perambah mesin pencari, pratinjau tautan (WhatsApp, Facebook), alat otomatis, dan kunjunganmu sendiri saat sedang masuk admin tidak dihitung.
+- **Privasi:** tanpa cookie, alamat IP tidak disimpan, dan kode pembaca berganti setiap hari, jadi pembaca tidak bisa dilacak antarhari. Peramban dengan Global Privacy Control atau Do Not Track tidak dicatat. Rincian disimpan 13 bulan, total per hari selamanya. Teks tambahan untuk Kebijakan Privasi ada di runbook rilis, bagian N2.
+- **Saklar baru di Pengaturan, Fitur: Statistik kunjungan** (menyala). Setiap halaman yang dibuka memakai satu pemanggilan fungsi Vercel, jadi matikan bila kuota Vercel Hobby bulan itu hampir habis (runbook rilis, bagian N3).
+- Hanya admin yang melihat statistik dan bisa mengunduh CSV. Halaman publik tidak bertambah berkas JavaScript.
+- Database: migrasi `kunjungan` menambah tabel `kunjungan` dan `kunjungan_harian` serta kolom saklar di Fitur. Tanpa dependensi baru.
+
 ## v1.4.0 (10 November 2026)
 
 Tampilan seperti media: kartu bergambar, beranda bergaya portal, header dan footer lengkap. Ada juga perbaikan untuk artikel THR yang gagal diterbitkan.

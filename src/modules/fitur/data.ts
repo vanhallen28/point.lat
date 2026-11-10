@@ -11,9 +11,18 @@ export type Fitur = {
   tombolBagikan: boolean
   daftarIsi: boolean
   waktuBaca: boolean
+  /** Skrip Statistik kunjungan di halaman publik (spesifikasi §26); bisa dimatikan bila kuota Vercel menipis. */
+  statistikKunjungan: boolean
 }
 
-export const FITUR_BAWAAN: Fitur = { formKontak: false, newsletter: false, tombolBagikan: false, daftarIsi: true, waktuBaca: true }
+export const FITUR_BAWAAN: Fitur = {
+  formKontak: false,
+  newsletter: false,
+  tombolBagikan: false,
+  daftarIsi: true,
+  waktuBaca: true,
+  statistikKunjungan: true,
+}
 
 /** Dokumen global `fitur` menjadi `Fitur`; kolom kosong memakai nilai bawaan. */
 export function susunFitur(doc: Partial<DokFitur> | null | undefined): Fitur {
@@ -25,6 +34,7 @@ export function susunFitur(doc: Partial<DokFitur> | null | undefined): Fitur {
     tombolBagikan: pilih('tombolBagikan'),
     daftarIsi: pilih('daftarIsi'),
     waktuBaca: pilih('waktuBaca'),
+    statistikKunjungan: pilih('statistikKunjungan'),
   }
 }
 

@@ -12,9 +12,11 @@ import { KodeSematan } from '@/components/sematan/KodeSematan'
 import { Footer } from '@/components/tata-letak/Footer'
 import { Header } from '@/components/tata-letak/Header'
 import { pathFor } from '@/lib/paths'
+import { muatFitur } from '@/modules/fitur/cache'
 import { iklanSiap, muatIklan, SLUG_KEBIJAKAN_PRIVASI } from '@/modules/iklan'
 import { muatFooter, muatHeader } from '@/modules/konten'
 import { butuhPersetujuan, layananPersetujuan } from '@/modules/sematan'
+import { skripKunjungan } from '@/modules/kunjungan/aturan'
 import { muatKodeSematan } from '@/modules/sematan/cache'
 
 import { archivo } from './font'
@@ -32,7 +34,7 @@ export const metadata: Metadata = {
  * karena skrip itu menulis atribut `<html>` sebelum React hidrasi.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [header, footer, iklan, sematan] = await Promise.all([muatHeader(), muatFooter(), muatIklan(), muatKodeSematan()])
+  const [header, footer, iklan, sematan, fitur] = await Promise.all([muatHeader(), muatFooter(), muatIklan(), muatKodeSematan(), muatFitur()])
   const adaIklan = iklanSiap(iklan)
   const analitik = butuhPersetujuan(sematan)
   const persetujuan = adaIklan || analitik
@@ -60,6 +62,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <PemicuMasuk />
         {adaIklan && <PemuatIklan />}
         <KodeSematan kode={sematan} />
+        {/* Statistik kunjungan (spesifikasi §26): skrip sebaris tanpa cookie, tanpa berkas JavaScript; saklar di Fitur. */}
+        {fitur.statistikKunjungan && <script dangerouslySetInnerHTML={{ __html: skripKunjungan() }} />}
       </body>
     </html>
   )

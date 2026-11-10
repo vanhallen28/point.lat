@@ -3,6 +3,7 @@ import type { Endpoint, Payload } from 'payload'
 
 import { tolakSelainAdmin } from '@/lib/aksiAdmin'
 import { jalankanPantau, type AdapterPantau, type RingkasanPantau } from '@/modules/pantau'
+import { bersihkanKunjungan } from '@/modules/kunjungan/data'
 import { bersihkanPembaca } from '@/modules/pembaca/data'
 
 import { mintaCekStatus } from './cek'
@@ -20,14 +21,22 @@ export function izinCron(header: string | null | undefined, rahasia: string | un
   return diterima.length === diharapkan.length && timingSafeEqual(diterima, diharapkan)
 }
 
-export type HasilJadwal = { jadwalTerbit: number; indexer: RingkasanJalan; pantau: RingkasanPantau; pembaca: { sidik: number; pesan: number } }
+export type HasilJadwal = {
+  jadwalTerbit: number
+  indexer: RingkasanJalan
+  pantau: RingkasanPantau
+  pembaca: { sidik: number; pesan: number }
+  /** Baris kunjungan mentah lebih dari 13 bulan yang dihapus (spesifikasi §26). */
+  kunjungan: number
+}
 
 export type OpsiJadwal = NonNullable<Parameters<typeof jalankanIndexer>[1]> & { adapterPantau?: AdapterPantau }
 
 /**
  * Pekerjaan berkala (spesifikasi §5 "Penjadwal"): job Payload yang jatuh tempo (jadwal terbit artikel,
  * `schedulePublish`), lalu antrean Mesin Indexing, lalu tugas Pantau SEO yang jatuh tempo (sinkron
- * Search Analytics dan pindai tautan harian, cek tautan luar), lalu pembersihan data form pembaca. Urutan ini membuat artikel yang terbit terjadwal langsung dikabarkan pada
+ * Search Analytics dan pindai tautan harian, cek tautan luar), lalu pembersihan data form pembaca dan baris kunjungan
+ * mentah lebih dari 13 bulan. Urutan ini membuat artikel yang terbit terjadwal langsung dikabarkan pada
  * jalan yang sama.
  */
 export async function jalankanJadwal(payload: Payload, opsi: OpsiJadwal = {}): Promise<HasilJadwal> {
@@ -36,7 +45,8 @@ export async function jalankanJadwal(payload: Payload, opsi: OpsiJadwal = {}): P
   const pantau = await jalankanPantau(payload, { sekarang: opsi.sekarang, adapter: opsi.adapterPantau })
   // Sidik pengirim form lebih dari 24 jam dan pesan masuk lebih dari 12 bulan (spesifikasi §23).
   const pembaca = await bersihkanPembaca(payload, opsi.sekarang)
-  return { jadwalTerbit: Object.keys(job.jobStatus ?? {}).length, indexer, pantau, pembaca }
+  const kunjungan = await bersihkanKunjungan(payload, opsi.sekarang)
+  return { jadwalTerbit: Object.keys(job.jobStatus ?? {}).length, indexer, pantau, pembaca, kunjungan }
 }
 
 /**
